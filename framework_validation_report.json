@@ -1,48 +1,16 @@
 {
-  "framework_name": "Hyena-GLT",
-  "version": "0.1.0",
-  "validation_results": {
-    "directory_structure": {
-      "passed": false,
-      "issues": [
-        "File: notebooks/02_tokenization.ipynb",
-        "File: notebooks/03_model_architecture.ipynb",
-        "File: notebooks/04_training.ipynb",
-        "File: notebooks/05_evaluation.ipynb",
-        "File: notebooks/06_fine_tuning.ipynb",
-        "File: notebooks/07_generation.ipynb"
-      ],
-      "issue_count": 6
-    },
-    "python_syntax": {
-      "passed": true,
-      "issues": [],
-      "issue_count": 0
-    },
-    "module_imports": {
-      "passed": true,
-      "issues": [],
-      "issue_count": 0
-    },
-    "documentation": {
-      "passed": true,
-      "issues": [],
-      "issue_count": 0
-    },
-    "test_coverage": {
-      "passed": true,
-      "issues": [],
-      "issue_count": 0
-    },
-    "examples": {
-      "passed": true,
-      "issues": [],
-      "issue_count": 0
-    }
+  "completion_percentage": 90.0,
+  "total_files": 90,
+  "categories": {
+    "Core Models": 5,
+    "Data Processing": 4,
+    "Training Components": 10,
+    "Utilities": 12,
+    "Documentation": 10,
+    "Examples": 20,
+    "Tests": 17,
+    "Notebooks": 8,
+    "Configuration": 4
   },
-  "summary": {
-    "total_checks": 6,
-    "passed_checks": 5,
-    "completion_percentage": 83.3
-  }
+  "status": "IN_PROGRESS"
 }
