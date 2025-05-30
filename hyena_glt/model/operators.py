@@ -255,7 +255,7 @@ class HyenaOperator(nn.Module):
         # Perform convolution
         output = F.conv1d(
             x_padded,
-            filter_truncated.view(1, 1, -1).expand(d_model, 1, -1),
+            filter_truncated.reshape(1, 1, -1).expand(d_model, 1, -1),
             groups=d_model,
             padding=0
         )

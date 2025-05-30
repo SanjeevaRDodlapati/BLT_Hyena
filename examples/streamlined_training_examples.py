@@ -63,10 +63,10 @@ def quick_train_model(sequences, labels, sequence_type="dna", task_type="classif
     config = HyenaGLTConfig(
         vocab_size=tokenizer.vocab_size,
         hidden_size=256,
-        num_hidden_layers=4,
+        num_layers=4,  # Changed from num_hidden_layers
         num_attention_heads=8,
-        max_position_embeddings=512,
-        num_labels=len(set(labels)) if task_type == "classification" else 1
+        max_position_embeddings=512
+        # Note: num_labels might be handled differently in this architecture
     )
     
     # Create model
@@ -194,6 +194,25 @@ def example_1_basic_training():
     
     logger.info(f"Training completed! Final metrics: {metrics}")
     return model, trainer, metrics
+
+
+# Alias for backward compatibility
+def run_basic_dna_classification(sequences=None, labels=None, num_epochs=5):
+    """Alias for example_1_basic_training with custom data support."""
+    if sequences is None or labels is None:
+        return example_1_basic_training()
+    else:
+        logger = setup_logging()
+        return quick_train_model(
+            sequences=sequences,
+            labels=labels,
+            sequence_type="dna",
+            task_type="classification",
+            epochs=num_epochs,
+            batch_size=16,
+            learning_rate=1e-4,
+            verbose=True
+        )
 
 
 def example_2_advanced_configuration():

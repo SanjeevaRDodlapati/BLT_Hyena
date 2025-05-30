@@ -155,8 +155,8 @@ class EnhancedTrainingPipeline:
     
     def __init__(self, config: EnhancedTrainingConfig):
         self.config = config
-        self.setup_logging()
         self.setup_directories()
+        self.setup_logging()
         self.set_random_seeds()
         
         # Initialize components

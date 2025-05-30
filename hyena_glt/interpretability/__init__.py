@@ -22,7 +22,8 @@ import pandas as pd
 
 # Import genomic-specific utilities
 from hyena_glt.data.tokenizer import DNATokenizer, RNATokenizer, ProteinTokenizer
-from examples.utils.visualization_utils import plot_attention_heatmap
+# Note: Using matplotlib directly for visualizations
+# from examples.utils.visualization_utils import plot_attention_heatmap
 
 
 @dataclass
