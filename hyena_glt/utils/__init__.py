@@ -33,6 +33,29 @@ from .genomic_utils import (
     validate_sequence
 )
 
+from .performance import (
+    ProfilerContext,
+    memory_usage,
+    gpu_memory_usage,
+    benchmark_model,
+    measure_throughput,
+    monitor_resources
+)
+
+__version__ = "1.0.1"
+__author__ = "Hyena-GLT Development Team"
+
+from .performance import (
+    ProfilerContext,
+    memory_usage,
+    gpu_memory_usage,
+    benchmark_model,
+    measure_throughput
+)
+
+__version__ = "1.0.1"
+__author__ = "Hyena-GLT Development Team"
+
 __all__ = [
     # Visualization
     "plot_attention_maps",
@@ -57,5 +80,13 @@ __all__ = [
     "translate_dna",
     "gc_content",
     "find_orfs",
-    "validate_sequence"
+    "validate_sequence",
+    
+    # Performance monitoring
+    "ProfilerContext",
+    "memory_usage",
+    "gpu_memory_usage",
+    "benchmark_model",
+    "measure_throughput",
+    "monitor_resources"
 ]
