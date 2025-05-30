@@ -45,17 +45,6 @@ from .performance import (
 __version__ = "1.0.1"
 __author__ = "Hyena-GLT Development Team"
 
-from .performance import (
-    ProfilerContext,
-    memory_usage,
-    gpu_memory_usage,
-    benchmark_model,
-    measure_throughput
-)
-
-__version__ = "1.0.1"
-__author__ = "Hyena-GLT Development Team"
-
 __all__ = [
     # Visualization
     "plot_attention_maps",
