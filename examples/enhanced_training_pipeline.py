@@ -55,11 +55,12 @@ from hyena_glt.data import (
 )
 from hyena_glt.evaluation.metrics import MultiTaskEvaluator
 from hyena_glt.utils.performance import ProfilerContext
-from examples.utils.visualization_utils import (
-    plot_training_history,
-    plot_attention_heatmap,
-    plot_confusion_matrix
-)
+# Note: Using matplotlib/seaborn directly instead of custom visualization utils
+# from examples.utils.visualization_utils import (
+#     plot_training_history,
+#     plot_attention_heatmap,
+#     plot_confusion_matrix
+# )
 
 
 @dataclass

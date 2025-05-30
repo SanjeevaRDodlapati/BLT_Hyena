@@ -24,7 +24,85 @@ from hyena_glt.config import HyenaGLTConfig
 from hyena_glt.training import HyenaGLTTrainer, TrainingConfig
 from hyena_glt.model import HyenaGLTForSequenceClassification
 from hyena_glt.data import DNATokenizer
-from examples.utils.model_utils import quick_train_model
+# Note: Using built-in training utilities instead of custom utils
+# from examples.utils.model_utils import quick_train_model
+
+
+def quick_train_model(sequences, labels, sequence_type="dna", task_type="classification", 
+                     epochs=5, batch_size=16, learning_rate=1e-4, verbose=True, save_path=None):
+    """
+    Quick training utility function for genomic models.
+    
+    Args:
+        sequences: List of genomic sequences
+        labels: List of labels
+        sequence_type: Type of sequences ('dna', 'rna', 'protein')
+        task_type: Type of task ('classification', 'regression')
+        epochs: Number of training epochs
+        batch_size: Training batch size
+        learning_rate: Learning rate
+        verbose: Whether to print progress
+        save_path: Path to save the model
+    
+    Returns:
+        Tuple of (model, trainer, metrics)
+    """
+    from hyena_glt.data import GenomicDataset, DNATokenizer
+    from torch.utils.data import DataLoader
+    import torch
+    
+    # Setup tokenizer
+    tokenizer = DNATokenizer()
+    
+    # Create dataset
+    data = [{"sequence": seq, "labels": label} for seq, label in zip(sequences, labels)]
+    dataset = GenomicDataset(data, tokenizer, max_length=512)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    
+    # Create model config
+    config = HyenaGLTConfig(
+        vocab_size=tokenizer.vocab_size,
+        hidden_size=256,
+        num_hidden_layers=4,
+        num_attention_heads=8,
+        max_position_embeddings=512,
+        num_labels=len(set(labels)) if task_type == "classification" else 1
+    )
+    
+    # Create model
+    model = HyenaGLTForSequenceClassification(config)
+    
+    # Create trainer config
+    training_config = TrainingConfig(
+        output_dir=save_path or "./outputs/quick_train",
+        num_train_epochs=epochs,
+        per_device_train_batch_size=batch_size,
+        learning_rate=learning_rate,
+        save_steps=500,
+        logging_steps=100,
+        evaluation_strategy="no"
+    )
+    
+    # Create trainer
+    trainer = HyenaGLTTrainer(
+        model=model,
+        config=training_config,
+        train_dataloader=dataloader,
+        tokenizer=tokenizer
+    )
+    
+    # Train model
+    if verbose:
+        print(f"Starting training for {epochs} epochs...")
+    
+    metrics = trainer.train()
+    
+    if save_path:
+        trainer.save_model(save_path)
+        if verbose:
+            print(f"Model saved to {save_path}")
+    
+    return model, trainer, metrics
 
 
 def setup_logging():
