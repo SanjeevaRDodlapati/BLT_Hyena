@@ -5,12 +5,6 @@
     "directory_structure": {
       "passed": false,
       "issues": [
-        "File: hyena_glt/utils/__init__.py",
-        "File: examples/basic_usage.py",
-        "File: examples/fine_tuning.py",
-        "File: examples/evaluation.py",
-        "File: examples/generation.py",
-        "File: notebooks/01_introduction.ipynb",
         "File: notebooks/02_tokenization.ipynb",
         "File: notebooks/03_model_architecture.ipynb",
         "File: notebooks/04_training.ipynb",
@@ -18,7 +12,7 @@
         "File: notebooks/06_fine_tuning.ipynb",
         "File: notebooks/07_generation.ipynb"
       ],
-      "issue_count": 12
+      "issue_count": 6
     },
     "python_syntax": {
       "passed": true,
@@ -41,19 +35,14 @@
       "issue_count": 0
     },
     "examples": {
-      "passed": false,
-      "issues": [
-        "Missing example: examples/basic_usage.py",
-        "Missing example: examples/fine_tuning.py",
-        "Missing example: examples/evaluation.py",
-        "Missing example: examples/generation.py"
-      ],
-      "issue_count": 4
+      "passed": true,
+      "issues": [],
+      "issue_count": 0
     }
   },
   "summary": {
     "total_checks": 6,
-    "passed_checks": 4,
-    "completion_percentage": 66.7
+    "passed_checks": 5,
+    "completion_percentage": 83.3
   }
 }
