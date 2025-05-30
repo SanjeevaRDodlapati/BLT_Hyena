@@ -55,6 +55,14 @@ class GenomicTokenizer(PreTrainedTokenizer):
                 "stop_token": "[STOP]",  # Stop codon
             })
         
+        # Build vocabulary BEFORE calling parent __init__
+        if vocab_file and Path(vocab_file).exists():
+            self.vocab = self._load_vocab(vocab_file)
+        else:
+            self.vocab = self._build_vocab()
+        
+        self.ids_to_tokens = {v: k for k, v in self.vocab.items()}
+        
         super().__init__(
             pad_token=self.special_tokens["pad_token"],
             unk_token=self.special_tokens["unk_token"],
@@ -67,14 +75,6 @@ class GenomicTokenizer(PreTrainedTokenizer):
             model_max_length=max_length,
             **kwargs
         )
-        
-        # Build vocabulary
-        if vocab_file and Path(vocab_file).exists():
-            self.vocab = self._load_vocab(vocab_file)
-        else:
-            self.vocab = self._build_vocab()
-        
-        self.ids_to_tokens = {v: k for k, v in self.vocab.items()}
         
     def _build_vocab(self) -> Dict[str, int]:
         """Build vocabulary based on sequence type and k-mer size."""
