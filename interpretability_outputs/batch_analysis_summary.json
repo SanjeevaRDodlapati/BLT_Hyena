@@ -1,18 +1,22 @@
 {
   "individual_results": [
     {
-      "sequence": "<tensor_sequence_length_64>",
-      "length": 64
+      "sequence": "<tensor_sequence_length_32>",
+      "length": 32
     },
     {
-      "sequence": "<tensor_sequence_length_64>",
-      "length": 64
+      "sequence": "<tensor_sequence_length_32>",
+      "length": 32
+    },
+    {
+      "sequence": "<tensor_sequence_length_32>",
+      "length": 32
     }
   ],
   "consensus_motifs": [],
   "summary_statistics": {
-    "num_sequences": 2,
-    "avg_length": 64.0,
+    "num_sequences": 3,
+    "avg_length": 32.0,
     "attention_stats": {},
     "gradient_stats": {}
   }
