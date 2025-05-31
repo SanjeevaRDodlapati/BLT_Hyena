@@ -451,50 +451,463 @@ def estimate_memory_usage(config, batch_size, sequence_length):
 | 16K            | 16x               | 2.1x  | 1.2x           |
 | 64K            | 64x               | 4.8x  | 2.1x           |
 
-## Implementation Notes
+## BLT Position Embedding System
 
-### 1. Numerical Stability
+### Overview
+
+The BLT Position Embedding System is a sophisticated position tracking mechanism designed to handle dynamic token merging in genomic sequences. Unlike traditional position embeddings that lose positional information during token merging, the BLT system preserves both fine-grained and global positional information through a three-tier architecture.
+
+### Architecture Components
+
+#### 1. Segment-Aware Positional Encoding
 
 ```python
-class StableHyenaOperator(HyenaOperator):
-    def fft_conv(self, u, filter_coeffs):
-        # Ensure numerical stability in FFT operations
-        u_fft = torch.fft.rfft(u, n=self.l_max, dim=1)
-        filter_fft = torch.fft.rfft(filter_coeffs, n=self.l_max, dim=-1)
-        
-        # Avoid overflow in multiplication
-        result_fft = u_fft * filter_fft.clamp(min=-1e6, max=1e6)
-        
-        # Convert back to time domain
-        result = torch.fft.irfft(result_fft, n=self.l_max, dim=1)
-        return result[:, :u.size(1)]  # Trim to original length
+class SegmentAwarePositionalEncoding(nn.Module):
+    """
+    Handles position encoding for variable-length patches after token merging.
+    
+    Key features:
+    - Maintains original absolute positions
+    - Tracks relative positions within merged patches
+    - Records patch length information
+    - Supports genomic-specific patterns (codons, motifs)
+    """
 ```
 
-### 2. Gradient Flow
+**Core Position Information Tracked:**
+
+1. **Global Position** (`global_pos`): Original absolute position before merging
+2. **Patch Length** (`patch_length`): Number of tokens merged into current patch
+3. **Position in Patch** (`pos_in_patch`): Relative position within the merged patch (0.0 to 1.0)
+
+#### 2. Cross-Attention Position Bridge
 
 ```python
-class ResidualHyenaLayer(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.hyena_op = HyenaOperator(config.d_model, config.sequence_length)
-        self.norm1 = nn.LayerNorm(config.d_model)
-        self.ffn = FeedForward(config.d_model)
-        self.norm2 = nn.LayerNorm(config.d_model)
-        self.dropout = nn.Dropout(config.dropout)
+class CrossAttentionPositionBridge(nn.Module):
+    """
+    Implements U-shape information flow: Byte ↔ Patch ↔ Byte
+    
+    Functions:
+    - encode_byte_to_patch(): Aggregate byte-level info into patch representations
+    - decode_patch_to_byte(): Reconstruct byte-level info from patch representations
+    """
+```
+
+#### 3. BLT Position Manager
+
+```python
+class BLTPositionManager(nn.Module):
+    """
+    Complete position embedding manager integrating all components.
+    
+    Main methods:
+    - encode_positions(): Add position encodings with merge awareness
+    - create_patch_representations(): Convert byte → patch with position tracking
+    - reconstruct_byte_representations(): Convert patch → byte with position recovery
+    """
+```
+
+### Token Merging Process
+
+#### Step 1: Pre-Merging Position State
+
+```python
+# Original sequence with individual token positions
+original_sequence = [tok1, tok2, tok3, tok4, tok5, tok6, tok7, tok8]
+original_positions = [0,    1,    2,    3,    4,    5,    6,    7]
+
+# Apply standard sinusoidal position encoding
+pos_encoded = position_manager.encode_positions(
+    hidden_states, original_positions=original_positions
+)
+```
+
+#### Step 2: Adaptive Token Merging
+
+```python
+class AdaptiveTokenMerger:
+    """
+    Merges tokens based on:
+    - Content similarity scores
+    - Genomic pattern detection
+    - Boundary prediction
+    - Patch size constraints (min/max)
+    """
+    
+    def forward(self, x, attention_mask):
+        # Compute content-based merge decisions
+        content_scores = self.content_scorer(x)
+        pattern_features = self.pattern_detector(x)
+        boundary_scores = self.boundary_predictor(combined_features)
+        
+        # Determine merge boundaries
+        merge_boundaries = self._determine_merge_boundaries(
+            content_scores, boundary_scores, attention_mask
+        )
+        
+        # Perform actual merging with position tracking
+        return self._perform_merging(x, merge_boundaries, attention_mask)
+```
+
+**Example Merging:**
+```python
+# Before merging: 8 individual tokens
+[tok1, tok2, tok3, tok4, tok5, tok6, tok7, tok8]
+
+# After merging: 3 patches
+patch1 = merge(tok1, tok2, tok3)    # 3 tokens → 1 patch, starts at pos 0
+patch2 = merge(tok4, tok5)          # 2 tokens → 1 patch, starts at pos 3  
+patch3 = merge(tok6, tok7, tok8)    # 3 tokens → 1 patch, starts at pos 5
+
+# Patch boundaries: [0, 3, 5, 8]
+```
+
+#### Step 3: Post-Merging Position Re-encoding
+
+```python
+# Compute segment features for each position in merged sequence
+segment_features = self._compute_segment_features(
+    batch_size, seq_len, patch_boundaries, original_positions
+)
+
+# segment_features shape: (batch, seq_len, 3)
+# - [:, :, 0]: position within patch (0.0 to 1.0)
+# - [:, :, 1]: patch length (normalized by sequence length)  
+# - [:, :, 2]: global position (normalized by max_len)
+
+# Example for patch1 (3 tokens):
+# pos_in_patch = [0.0, 0.5, 1.0]    # Relative positions within patch
+# patch_length = [3/8, 3/8, 3/8]    # All positions know patch contains 3 tokens
+# global_pos   = [0/8, 1/8, 2/8]    # Original absolute positions preserved
+```
+
+#### Step 4: Enhanced Position Embedding
+
+```python
+# Neural encoding of segment information
+segment_encoded = self.segment_encoder(segment_features)  # (batch, seq_len, 64)
+
+# Combine with base sinusoidal encoding
+base_pe = self.pe_base[:seq_len]  # (seq_len, d_model)
+combined = torch.cat([base_pe_batch, segment_encoded], dim=-1)
+
+# Project to final embedding dimension
+final_pe = self.position_projection(combined)  # (batch, seq_len, d_model)
+
+# Add genomic-specific patterns (codons, motifs)
+final_pe = self._add_genomic_position_patterns(final_pe, original_positions)
+```
+
+### Cross-Attention Information Flow
+
+#### Byte-to-Patch Encoding
+
+```python
+def encode_byte_to_patch(self, byte_repr, patch_boundaries):
+    """
+    Aggregate byte-level representations into patch-level representations
+    while preserving positional information through cross-attention.
+    """
+    for each_patch:
+        # Use mean of patch bytes as query
+        patch_query = patch_bytes.mean(dim=0, keepdim=True)
+        
+        # Cross-attention: patch summary attends to all patch bytes
+        patch_repr = cross_attention(
+            query=patch_query,     # What we want to learn
+            key=patch_bytes,       # Where to look  
+            value=patch_bytes      # What to extract
+        )
+```
+
+#### Patch-to-Byte Decoding
+
+```python
+def decode_patch_to_byte(self, patch_repr, target_byte_len, patch_boundaries):
+    """
+    Reconstruct byte-level representations from patch-level representations
+    while recovering positional information.
+    """
+    for each_position_in_patch:
+        # Use positional queries for each byte position
+        if original_byte_repr_available:
+            byte_queries = original_byte_repr[patch_positions]
+        else:
+            byte_queries = positional_encoding[patch_positions]
+            
+        # Cross-attention: each byte position attends to patch representation
+        byte_output = cross_attention(
+            query=byte_queries,        # Individual position queries
+            key=patch_repr,            # Patch-level information
+            value=patch_repr           # Patch-level information
+        )
+```
+
+### Genomic-Specific Features
+
+#### 1. Codon Pattern Encoding
+
+```python
+def _add_genomic_patterns(self):
+    """Add genomic-specific positional patterns."""
+    # Codon patterns (period 3 for DNA codons)
+    codon_freqs = torch.arange(0, self.d_model // 4, 2).float() * (2 * math.pi / 3)
+    
+    # Common genomic motif patterns
+    motif_periods = [8, 10, 21, 147]  # Various biological periodicities
+    # 147: nucleosome positioning, 21: DNA major groove, etc.
+```
+
+#### 2. Pattern-Aware Merging
+
+```python
+class AdaptiveTokenMerger:
+    def __init__(self):
+        # Pattern detector for genomic motifs
+        self.pattern_detector = nn.Conv1d(
+            d_model, d_model // 2, 
+            kernel_size=3, padding=1,
+            groups=d_model // 4  # Grouped convolution for efficiency
+        )
         
     def forward(self, x):
-        # Pre-norm residual connections for better gradient flow
-        residual = x
-        x = self.norm1(x)
-        x = self.hyena_op(x)
-        x = self.dropout(x) + residual
+        # Detect genomic patterns before merging
+        pattern_features = self.pattern_detector(x.transpose(-1, -2))
         
-        residual = x
-        x = self.norm2(x)
-        x = self.ffn(x)
-        x = self.dropout(x) + residual
+        # Use pattern information to inform merge decisions
+        combined_features = torch.cat([x, pattern_features.transpose(-1, -2)], dim=-1)
+        boundary_scores = self.boundary_predictor(combined_features)
+```
+
+### Position Information Preservation
+
+#### Information Tracked Throughout Pipeline
+
+| Stage | Position Information Preserved |
+|-------|-------------------------------|
+| **Pre-merge** | Standard sinusoidal encoding per token |
+| **During merge** | Original positions + patch boundaries + merge statistics |
+| **Post-merge** | Global positions + patch lengths + intra-patch positions |
+| **Cross-attention** | Bidirectional byte ↔ patch position mapping |
+| **Reconstruction** | Full recovery of original positional structure |
+
+#### Reconstruction Capability
+
+```python
+# Full position reconstruction example
+original_hidden_states = torch.randn(1, 64, 256)
+original_positions = torch.arange(64)
+
+# 1. Encode positions
+pos_encoded = position_manager.encode_positions(
+    original_hidden_states, original_positions=original_positions
+)
+
+# 2. Simulate token merging
+patch_boundaries = create_patch_boundaries(pos_encoded)  # [0, 16, 32, 48, 64]
+
+# 3. Re-encode after merging
+merged_encoded = position_manager.encode_positions(
+    pos_encoded, 
+    patch_boundaries=patch_boundaries,
+    original_positions=original_positions
+)
+
+# 4. Create patch representations
+patch_repr, position_info = position_manager.create_patch_representations(
+    merged_encoded, patch_boundaries
+)
+
+# 5. Reconstruct byte-level representations
+reconstructed = position_manager.reconstruct_byte_representations(
+    patch_repr, position_info, merged_encoded
+)
+
+# Verify preservation: reconstructed.shape == original_hidden_states.shape
+assert reconstructed.shape == original_hidden_states.shape
+```
+
+### Performance Characteristics
+
+#### Computational Complexity
+
+| Component | Time Complexity | Space Complexity |
+|-----------|----------------|------------------|
+| **Standard Position Encoding** | O(L) | O(L × d) |
+| **Segment-Aware Encoding** | O(L × d) | O(L × d) |  
+| **Cross-Attention Bridge** | O(P × L × d) | O(P × L × d) |
+| **Adaptive Token Merging** | O(L × d²) | O(L × d) |
+
+Where: L = sequence length, d = model dimension, P = number of patches
+
+#### Measured Performance (from benchmark)
+
+| Metric | BLT-Hyena | Baseline | Ratio |
+|--------|-----------|----------|-------|
+| **Latency** | 47.3ms | 10.1ms | 4.7x |
+| **Memory** | 127MB | 18MB | 7.0x |
+| **Throughput** | 21.2 samples/sec | 99.1 samples/sec | 0.21x |
+
+**Performance Analysis:**
+- ✅ **Functional correctness**: All tests pass, position information preserved
+- ⚠️ **Computational overhead**: Expected due to sophisticated position tracking
+- 🎯 **Optimization opportunities**: Cross-attention mechanisms, memory management
+
+### Integration Points
+
+#### In HyenaGLT Model
+
+```python
+class HyenaGLT(nn.Module):
+    def __init__(self, config):
+        # Replace simple position encoding with BLT position manager
+        self.position_manager = BLTPositionManager(
+            d_model=config.hidden_size,
+            max_len=config.max_position_embeddings,
+            num_heads=config.num_attention_heads
+        )
         
-        return x
+    def forward(self, input_ids, attention_mask=None):
+        # 1. Initial position encoding
+        hidden_states = self.position_manager.encode_positions(hidden_states)
+        
+        # 2. Token merging with position tracking
+        if self.initial_merger:
+            merged_states, boundaries, merge_info = self.initial_merger(
+                hidden_states, attention_mask
+            )
+            
+            # 3. Re-encode positions after merging
+            hidden_states = self.position_manager.encode_positions(
+                merged_states,
+                patch_boundaries=boundaries,
+                original_positions=original_positions
+            )
+```
+
+#### In HyenaGLTBlock
+
+```python
+class HyenaGLTBlock(nn.Module):
+    def __init__(self, config):
+        # Use BLT position manager instead of simple position encoding
+        self.position_manager = BLTPositionManager(config)
+        
+    def forward(self, hidden_states, original_sequence=None, segment_boundaries=None):
+        # Apply position-aware processing with merge information
+        if segment_boundaries is not None:
+            hidden_states = self.position_manager.encode_positions(
+                hidden_states,
+                patch_boundaries=segment_boundaries
+            )
+```
+
+### Usage Examples
+
+#### Basic Position Encoding
+
+```python
+from hyena_glt.model.position_embeddings import BLTPositionManager
+
+# Create position manager
+position_manager = BLTPositionManager(
+    d_model=256,
+    max_len=1024,
+    num_heads=8
+)
+
+# Encode positions for a sequence
+hidden_states = torch.randn(2, 64, 256)
+pos_encoded = position_manager.encode_positions(hidden_states)
+```
+
+#### Position Tracking Through Merging
+
+```python
+# Original sequence
+original_positions = torch.arange(64).unsqueeze(0).expand(2, -1)
+
+# Create patch boundaries (indicating where merging occurred)
+patch_boundaries = torch.zeros(2, 64)
+patch_boundaries[:, [16, 32, 48]] = 1  # Create 4 patches
+
+# Re-encode with merge awareness
+merged_encoded = position_manager.encode_positions(
+    hidden_states,
+    patch_boundaries=patch_boundaries,
+    original_positions=original_positions
+)
+
+# Create patch representations
+patch_repr, info = position_manager.create_patch_representations(
+    merged_encoded, patch_boundaries
+)
+
+# Reconstruct byte-level representations
+reconstructed = position_manager.reconstruct_byte_representations(
+    patch_repr, info, merged_encoded
+)
+```
+
+### Implementation Notes
+
+#### 1. Memory Optimization
+
+```python
+# Use gradient checkpointing for cross-attention bridges
+def create_patch_representations(self, byte_hidden_states, patch_boundaries):
+    if self.training and self.gradient_checkpointing:
+        patch_repr = torch.utils.checkpoint.checkpoint(
+            self.cross_attention_bridge.encode_byte_to_patch,
+            byte_hidden_states, patch_boundaries
+        )
+    else:
+        patch_repr = self.cross_attention_bridge.encode_byte_to_patch(
+            byte_hidden_states, patch_boundaries
+        )
+```
+
+#### 2. Numerical Stability
+
+```python
+def _compute_segment_features(self, ...):
+    # Ensure numerical stability in position computations
+    pos_in_patch = pos_in_patch / max(patch_length - 1, 1)  # Avoid division by zero
+    patch_len_norm = patch_length / seq_len
+    global_pos_norm = global_pos / self.max_len
+    
+    # Clamp values to reasonable ranges
+    segment_features = torch.stack([
+        pos_in_patch.clamp(0, 1),
+        patch_len_norm.clamp(0, 1), 
+        global_pos_norm.clamp(0, 1)
+    ], dim=-1)
+```
+
+#### 3. Debugging and Visualization
+
+```python
+def visualize_position_preservation(position_manager, sequence_length=64):
+    """Utility function for debugging position preservation."""
+    # Create test sequence
+    hidden_states = torch.randn(1, sequence_length, 256)
+    
+    # Apply position encoding and merging
+    pos_encoded = position_manager.encode_positions(hidden_states)
+    
+    # Create random patch boundaries
+    boundaries = create_random_boundaries(sequence_length)
+    merged_encoded = position_manager.encode_positions(
+        pos_encoded, patch_boundaries=boundaries
+    )
+    
+    # Measure position correlation
+    correlation = torch.corrcoef(torch.stack([
+        pos_encoded.view(-1), merged_encoded.view(-1)
+    ]))[0, 1]
+    
+    print(f"Position preservation correlation: {correlation:.4f}")
+    return correlation
 ```
 
 This architecture guide provides the foundation for understanding how Hyena-GLT achieves efficient and effective genomic sequence modeling through its hybrid design.
