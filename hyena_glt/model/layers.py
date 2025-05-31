@@ -122,8 +122,21 @@ class AdaptiveTokenMerger(nn.Module):
         # Combine content and boundary information
         merge_signal = content_scores * (1 - boundary_scores)
         
-        # Apply attention mask
+        # Apply attention mask - ensure it matches current sequence length
         if attention_mask is not None:
+            # If attention mask doesn't match current sequence length, create a new one
+            if attention_mask.size(-1) != seq_len:
+                # Create new attention mask that matches current sequence length
+                current_mask = torch.ones(
+                    (batch_size, seq_len), 
+                    device=merge_signal.device, 
+                    dtype=attention_mask.dtype
+                )
+                # Copy values up to the minimum length
+                min_len = min(attention_mask.size(-1), seq_len)
+                current_mask[:, :min_len] = attention_mask[:, :min_len]
+                attention_mask = current_mask
+            
             merge_signal = merge_signal * attention_mask
         
         # Use adaptive thresholding

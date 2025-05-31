@@ -244,19 +244,41 @@ class HyenaOperator(nn.Module):
         # Reshape for convolution
         x_conv = rearrange(x, 'b l d -> b d l')
         
-        # Apply 1D convolution
-        filter_len = min(filter_coeffs.size(-1), seq_len)
+        # Apply 1D convolution with adaptive filter length
+        # Limit filter to reasonable size relative to sequence length
+        max_filter_len = min(seq_len, 64)  # Cap at 64 for stability
+        filter_len = min(filter_coeffs.size(-1), max_filter_len)
         filter_truncated = filter_coeffs[..., :filter_len]
+        
+        # DEBUG: Print shapes
+        # print(f"DEBUG _segment_aware_convolution: seq_len={seq_len}, d_model={d_model}")
+        # print(f"DEBUG filter_coeffs.shape: {filter_coeffs.shape}")
+        # print(f"DEBUG filter_len: {filter_len}, max_filter_len: {max_filter_len}")
+        # print(f"DEBUG filter_truncated.shape: {filter_truncated.shape}")
+        # print(f"DEBUG x_conv.shape: {x_conv.shape}")
+        
+        # CRITICAL FIX: Handle multi-channel filter correctly
+        # filter_truncated shape: (d_model, filter_len) 
+        # We need to create a grouped convolution where each input channel has its own filter
+        
+        if filter_truncated.dim() == 2 and filter_truncated.size(0) == d_model:
+            # Multi-channel filter: (d_model, filter_len) -> (d_model, 1, filter_len)
+            conv_filter = filter_truncated.unsqueeze(1)  # (d_model, 1, filter_len)
+        else:
+            # Single filter for all channels: expand to (d_model, 1, filter_len)
+            conv_filter = filter_truncated.view(1, 1, -1).expand(d_model, 1, -1)
+        
+        # print(f"DEBUG conv_filter.shape: {conv_filter.shape}")
         
         # Pad for causal convolution
         padding = filter_len - 1
         x_padded = F.pad(x_conv, (padding, 0))
         
-        # Perform convolution
+        # Perform grouped convolution (each input channel convolved with its own filter)
         output = F.conv1d(
             x_padded,
-            filter_truncated.reshape(1, 1, -1).expand(d_model, 1, -1),
-            groups=d_model,
+            conv_filter,
+            groups=d_model,  # Each input channel uses its own filter
             padding=0
         )
         

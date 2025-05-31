@@ -587,6 +587,20 @@ def example_interpretability_analysis():
     return results, batch_results
 
 
+# Create main framework class alias for backward compatibility
+HyenaInterpretabilityFramework = ModelInterpreter
+
+# Export main classes
+__all__ = [
+    'InterpretabilityConfig',
+    'AttentionAnalyzer',
+    'GradientAnalyzer', 
+    'GenomicMotifAnalyzer',
+    'ModelInterpreter',
+    'HyenaInterpretabilityFramework',
+    'example_interpretability_analysis'
+]
+
 if __name__ == "__main__":
     # Run example
     example_interpretability_analysis()
