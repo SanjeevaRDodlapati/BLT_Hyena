@@ -126,6 +126,9 @@ This index provides an organized overview of all documentation available for the
 ### 📚 [State Documentation Guide](STATE_DOCUMENTATION_GUIDE.md)
 *Guidelines for maintaining project documentation*
 
+### 🔍 [Anti-Duplication Workflow](ANTI_DUPLICATION_WORKFLOW.md)
+*Systematic approach to prevent recreating existing functionality*
+
 ### 🔄 [Multi-Push Guide](../MULTI_PUSH_GUIDE.md)
 *Repository management procedures*
 

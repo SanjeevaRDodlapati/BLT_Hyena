@@ -44,6 +44,33 @@
 
 ---
 
+## 🔍 Anti-Duplication Check
+
+### Existing Functionality Search
+- [ ] Semantic search completed: [keywords used]
+- [ ] File pattern search completed: [patterns used] 
+- [ ] Content search completed: [strings searched]
+- [ ] Discovery script run: `python scripts/anti_duplication_discovery.py "[feature description]"`
+
+### Assessment Results
+**Files Discovered:**
+- [path/to/file1]: [relevance score/5] - [brief description]
+- [path/to/file2]: [relevance score/5] - [brief description]
+
+**Decision Made:**
+- [ ] Use existing functionality as-is
+- [ ] Enhance existing functionality  
+- [ ] Create new implementation
+- [ ] Combine multiple existing solutions
+
+**Rationale:**
+[Detailed explanation of why this approach was chosen]
+
+### Integration Notes
+[How existing solutions were incorporated or why they were rejected]
+
+---
+
 ## 🛠️ Work Performed
 
 ### Major Changes
