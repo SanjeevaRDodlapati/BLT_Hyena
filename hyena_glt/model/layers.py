@@ -8,6 +8,7 @@ from einops import rearrange
 
 from ..config import HyenaGLTConfig
 from .operators import HyenaOperator, GenomicPositionalEncoding
+from .position_embeddings import BLTPositionManager
 
 
 class AdaptiveTokenMerger(nn.Module):
@@ -435,10 +436,13 @@ class HyenaGLTBlock(nn.Module):
             self.cross_attention = None
             self.cross_norm = None
         
-        # Positional encoding
-        self.pos_encoding = GenomicPositionalEncoding(
+        # BLT-style position manager for handling dynamic token merging
+        self.position_manager = BLTPositionManager(
             d_model=config.hidden_size,
             max_len=config.max_position_embeddings,
+            num_heads=config.num_attention_heads,
+            dropout=config.dropout,
+            max_patch_size=config.max_patch_size,
         )
         
     def forward(
@@ -458,10 +462,12 @@ class HyenaGLTBlock(nn.Module):
             return_merge_info: Whether to return merge information
         """
         
-        # Add positional encoding
-        seq_len = hidden_states.size(1)
-        pos_encoding = self.pos_encoding(seq_len)
-        hidden_states = hidden_states + pos_encoding.unsqueeze(0)
+        # Add positional encoding using BLT position manager
+        hidden_states = self.position_manager.encode_positions(
+            hidden_states=hidden_states,
+            patch_boundaries=segment_boundaries,
+            original_positions=None,  # Could be passed from higher level if needed
+        )
         
         # Apply main Hyena layer
         hidden_states, merge_info = self.hyena_layer(

@@ -11,6 +11,7 @@ from ..config import HyenaGLTConfig
 from .layers import DynamicHyenaLayer, AdaptiveTokenMerger, GenomicPositionalEncoding
 from .operators import HyenaOperator, DynamicConvolution
 from .heads import SequenceClassificationHead, TokenClassificationHead, SequenceGenerationHead
+from .position_embeddings import BLTPositionManager, SegmentAwarePositionalEncoding, CrossAttentionPositionBridge
 
 __all__ = [
     "HyenaGLT",
@@ -26,5 +27,7 @@ __all__ = [
     "DynamicConvolution",
     "SequenceClassificationHead",
     "TokenClassificationHead",
-    "SequenceGenerationHead",
+    "BLTPositionManager",
+    "SegmentAwarePositionalEncoding", 
+    "CrossAttentionPositionBridge",
 ]

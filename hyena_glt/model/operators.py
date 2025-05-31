@@ -455,8 +455,11 @@ class GenomicPositionalEncoding(nn.Module):
         # Add periodic patterns for common genomic motifs
         for period in [8, 10, 21]:  # Common motif lengths
             if d_model >= 6:
-                motif_encoding = torch.sin(2 * math.pi * torch.arange(max_len) / period)
-                pe[:, -(d_model % period + 1)] += motif_encoding * 0.05
+                # Use modulo to ensure we stay within bounds
+                dim_idx = (d_model - 1) - (period % (d_model - 2))
+                if dim_idx >= 0 and dim_idx < d_model:
+                    motif_encoding = torch.sin(2 * math.pi * torch.arange(max_len) / period)
+                    pe[:, dim_idx] += motif_encoding * 0.05
     
     def forward(self, seq_len: int) -> torch.Tensor:
         """

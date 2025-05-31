@@ -9,6 +9,7 @@ from ..config import HyenaGLTConfig
 from .layers import HyenaGLTBlock, AdaptiveTokenMerger
 from .heads import SequenceClassificationHead, TokenClassificationHead, SequenceGenerationHead, MultiTaskHead
 from .operators import GenomicPositionalEncoding
+from .position_embeddings import BLTPositionManager
 
 
 class HyenaGLTPretrainedModel(PreTrainedModel):
@@ -50,10 +51,13 @@ class HyenaGLT(HyenaGLTPretrainedModel):
             padding_idx=0
         )
         
-        # Positional encoding
-        self.pos_encoding = GenomicPositionalEncoding(
+        # Positional encoding - upgraded to BLT-style position manager
+        self.position_manager = BLTPositionManager(
             d_model=config.hidden_size,
             max_len=config.max_position_embeddings,
+            num_heads=config.num_attention_heads,
+            dropout=config.dropout,
+            max_patch_size=config.max_patch_size,
         )
         
         # Local encoder (BLT-inspired)
@@ -162,15 +166,23 @@ class HyenaGLT(HyenaGLTPretrainedModel):
         # Token embeddings
         hidden_states = self.token_embeddings(input_ids)  # (batch, seq_len, hidden_size)
         
-        # Add positional encoding
-        pos_encoding = self.pos_encoding(seq_len)
-        hidden_states = hidden_states + pos_encoding.unsqueeze(0)
+        # Add positional encoding using BLT position manager
+        hidden_states = self.position_manager.encode_positions(
+            hidden_states=hidden_states,
+            patch_boundaries=None,  # Will be updated after merging
+            original_positions=None,  # Will be tracked during merging
+        )
         
         # Apply dropout
         hidden_states = self.dropout(hidden_states)
         
         # Store original sequence for cross-attention
         original_sequence = hidden_states.clone()
+        
+        # Track original positions for proper position embedding
+        original_positions = torch.arange(
+            seq_len, device=input_ids.device, dtype=torch.long
+        ).unsqueeze(0).expand(batch_size, -1)
         
         # Local encoder processing
         if self.local_encoder is not None:
@@ -182,7 +194,7 @@ class HyenaGLT(HyenaGLTPretrainedModel):
                 else:
                     hidden_states = layer(hidden_states, src_key_padding_mask=attention_mask == 0)
         
-        # Initial token merging
+        # Initial token merging with position-aware handling
         merge_info_list = []
         segment_boundaries = None
         
@@ -190,7 +202,13 @@ class HyenaGLT(HyenaGLTPretrainedModel):
             merged_states, segment_boundaries, merge_info = self.initial_merger(
                 hidden_states, attention_mask
             )
-            hidden_states = merged_states
+            
+            # Re-encode positions after merging using BLT position manager
+            hidden_states = self.position_manager.encode_positions(
+                hidden_states=merged_states,
+                patch_boundaries=segment_boundaries,
+                original_positions=original_positions,
+            )
             
             # Update attention mask for merged sequence
             new_seq_len = hidden_states.size(1)
