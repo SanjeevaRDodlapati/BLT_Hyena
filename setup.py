@@ -35,6 +35,12 @@ def get_install_requires():
         "seaborn>=0.11.0",
         "scikit-learn>=1.0.0",
         "tensorboard>=2.8.0",
+        # Add packages needed for benchmark and distributed training
+        "omegaconf>=2.3.0",
+        "sentencepiece>=0.2.0",
+        "plotly>=5.0.0",
+        "psutil>=5.8.0",
+        "pynvml>=11.0.0",
     ]
     
     # Add platform-specific requirements
@@ -62,14 +68,12 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.11",
     install_requires=get_install_requires(),
     extras_require={
         "dev": [

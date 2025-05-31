@@ -1,0 +1,168 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hyena-glt"
+dynamic = ["version"]
+description = "Genome Language Transformer combining BLT and Hyena architectures"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Hyena-GLT Team", email = "contact@hyena-glt.ai"}
+]
+keywords = ["genomics", "transformer", "hyena", "blt", "bioinformatics", "machine-learning"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research", 
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+dependencies = [
+    "torch>=2.0.0",
+    "transformers>=4.20.0", 
+    "numpy>=1.21.0",
+    "scipy>=1.7.0",
+    "datasets>=2.0.0",
+    "tokenizers>=0.13.0",
+    "wandb>=0.13.0",
+    "tqdm>=4.62.0",
+    "einops>=0.6.0",
+    "biopython>=1.79",
+    "pandas>=1.3.0",
+    "matplotlib>=3.5.0",
+    "seaborn>=0.11.0",
+    "scikit-learn>=1.0.0",
+    "tensorboard>=2.8.0",
+    "omegaconf>=2.3.0",
+    "sentencepiece>=0.2.0",
+    "plotly>=5.0.0",
+    "psutil>=5.8.0",
+    "pynvml>=11.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.2.0",
+    "pytest-cov>=2.12.0",
+    "black>=21.0.0",
+    "isort>=5.9.0", 
+    "flake8>=3.9.0",
+    "mypy>=0.910",
+    "pre-commit>=2.15.0",
+    "ruff>=0.1.0",
+]
+docs = [
+    "sphinx>=4.0.0",
+    "sphinx-rtd-theme>=0.5.0", 
+    "sphinx-autodoc-typehints>=1.12.0",
+]
+notebooks = [
+    "jupyter>=1.0.0",
+    "ipywidgets>=7.6.0",
+    "plotly>=5.0.0",
+]
+gpu = [
+    "triton>=2.0.0",
+    "flash-attn>=2.0.0",
+]
+
+[project.scripts]
+hyena-glt-train = "hyena_glt.cli.train:main"
+hyena-glt-eval = "hyena_glt.cli.eval:main"
+hyena-glt-preprocess = "hyena_glt.cli.preprocess:main"
+
+[project.urls]
+Homepage = "https://github.com/your-username/hyena-glt"
+Documentation = "https://hyena-glt.readthedocs.io"
+Repository = "https://github.com/your-username/hyena-glt.git"
+Issues = "https://github.com/your-username/hyena-glt/issues"
+
+[tool.setuptools.dynamic]
+version = {attr = "hyena_glt.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["hyena_glt*"]
+
+[tool.setuptools.package-data]
+hyena_glt = [
+    "config/presets/*.json",
+    "data/vocab/*.txt",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["hyena_glt"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers"
+testpaths = [
+    "tests",
+    "test",
+]
+filterwarnings = [
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "gpu: marks tests that require GPU",
+    "integration: marks tests as integration tests",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings  
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+"test_*.py" = ["F401", "F811"]
