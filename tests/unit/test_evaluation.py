@@ -7,7 +7,7 @@ and visualization components of the Hyena-GLT framework.
 
 import os
 import tempfile
-from typing import Any, Dict, List
+from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import matplotlib.pyplot as plt
@@ -298,7 +298,7 @@ class TestModelAnalyzer:
         x = torch.randn(2, 10, 4)
 
         with patch.object(model_analyzer, "register_hooks") as mock_hooks:
-            activation_stats = model_analyzer.analyze_activations(model, x)
+            model_analyzer.analyze_activations(model, x)
             mock_hooks.assert_called_once()
 
 

@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+import torch
 
 from hyena_glt.cli.evaluate import evaluate_command
 from hyena_glt.cli.generate import generate_command
@@ -220,7 +221,7 @@ class TestEvaluateCommand:
         """Test evaluate command with output file."""
         with (
             patch("hyena_glt.cli.evaluate.HyenaGLTEvaluator") as mock_evaluator_class,
-            patch("hyena_glt.cli.evaluate.HyenaGLT.from_pretrained") as mock_model,
+            patch("hyena_glt.cli.evaluate.HyenaGLT.from_pretrained"),
             patch("hyena_glt.cli.evaluate.GenomicDataset"),
             patch("builtins.open", create=True) as mock_open,
             patch("json.dump") as mock_json_dump,
@@ -486,7 +487,7 @@ class TestCLIPerformance:
         # Import main CLI module
         from hyena_glt.cli.main import create_parser
 
-        parser = create_parser()
+        create_parser()
 
         end_time = time.time()
         startup_time = end_time - start_time

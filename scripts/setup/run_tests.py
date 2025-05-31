@@ -230,7 +230,7 @@ def generate_test_report(args, results):
         <h1>Hyena-GLT Test Report</h1>
         <p class="timestamp">Generated on: {time.strftime('%Y-%m-%d %H:%M:%S')}</p>
     </div>
-    
+
     <div class="summary">
         <h2>Summary</h2>
         <p>Total Tests Run: {len(results)}</p>

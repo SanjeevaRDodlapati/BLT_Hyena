@@ -114,7 +114,7 @@ def run_quantization_optimization(model, sample_input, save_path):
 
         for method, quantized_model in quantized_models.items():
             try:
-                results = benchmark.benchmark(
+                benchmark.benchmark(
                     model, quantized_model, test_loader, metrics=["latency", "memory"]
                 )
                 print(f"  {method} quantization benchmark completed")
@@ -212,7 +212,7 @@ def run_distillation_optimization(
         test_dataset = torch.utils.data.TensorDataset(sample_input, sample_target)
         test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=4)
 
-        results = benchmark.benchmark(
+        benchmark.benchmark(
             teacher_model=model,
             student_model=student_model,
             distilled_model=distilled_model,
@@ -265,7 +265,7 @@ def run_deployment_optimization(model, sample_input, save_path):
                 available_formats[format_name] = model_path
 
         if available_formats:
-            results = profiler.profile_model(
+            profiler.profile_model(
                 available_formats,
                 cpu_input[:1],  # Single sample for profiling
                 num_runs=10,
@@ -306,7 +306,7 @@ def run_memory_optimization(model, sample_input, sample_target):
     benchmark = MemoryBenchmark()
 
     try:
-        results = benchmark.benchmark_optimizations(
+        benchmark.benchmark_optimizations(
             base_model=model,
             optimization_configs=configs,
             sample_input=sample_input,

@@ -8,7 +8,7 @@ and optimization pipelines of the Hyena-GLT framework.
 import json
 import os
 import tempfile
-from typing import Any, Dict, List
+from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
@@ -90,7 +90,7 @@ class TestEndToEndWorkflow:
 
         # Create and train model
         model = HyenaGLTModel(config)
-        tokenizer = DNATokenizer()
+        DNATokenizer()
 
         # Mock trained model
         model.eval()
@@ -276,7 +276,7 @@ class TestTrainingPipeline:
 
         model = HyenaGLTModel(config)
 
-        with patch("torch.distributed.init_process_group") as mock_init:
+        with patch("torch.distributed.init_process_group"):
             with patch("torch.nn.parallel.DistributedDataParallel") as mock_ddp:
                 mock_ddp.return_value = model
 
@@ -422,7 +422,7 @@ class TestEvaluationWorkflow:
             mock_attention = torch.randn(1, 4, 20, 20)  # (batch, heads, seq, seq)
             mock_extract.return_value = mock_attention
 
-            x = torch.randint(0, 4, (1, 20))
+            torch.randint(0, 4, (1, 20))
             patterns = attention_analyzer.analyze_attention_patterns(mock_attention)
 
             assert "head_diversity" in patterns

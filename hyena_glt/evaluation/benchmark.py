@@ -108,7 +108,7 @@ class ModelProfiler:
     ) -> dict[str, float]:
         """Estimate FLOPs for model inference."""
         try:
-            from fvcore.nn import FlopCountMode, flop_count
+            from fvcore.nn import flop_count
 
             # Create sample inputs
             inputs = {}

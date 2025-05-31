@@ -333,7 +333,7 @@ def main():
 
         logger.info("Evaluation results:")
         for metric, value in eval_results.items():
-            if isinstance(value, (int, float)):
+            if isinstance(value, int | float):
                 logger.info(f"  {metric}: {value:.4f}")
             else:
                 logger.info(f"  {metric}: {value}")

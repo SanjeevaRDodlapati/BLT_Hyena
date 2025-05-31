@@ -81,7 +81,7 @@ class DistributedHyenaGLT(nn.Module):
             else:
                 raise AttributeError(
                     f"'{type(self).__name__}' object has no attribute '{name}'"
-                )
+                ) from None
 
     def get_model_size(self) -> dict[str, Any]:
         """Get model size information."""
@@ -193,13 +193,13 @@ class ModelParallelHyenaGLT(nn.Module):
         # Pass input through each GPU sequentially
         current_device = x.device
 
-        for gpu_name, gpu_module in self.gpu_modules.items():
+        for _gpu_name, gpu_module in self.gpu_modules.items():
             # Move input to current GPU
             gpu_device = next(gpu_module.parameters()).device
             x = x.to(gpu_device)
 
             # Forward through layers on this GPU
-            for layer_name, layer in gpu_module.items():
+            for _layer_name, layer in gpu_module.items():
                 x = layer(x)
 
         # Move final output back to original device if needed

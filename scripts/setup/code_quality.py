@@ -28,7 +28,11 @@ class CodeQualityManager:
         try:
             if check_only:
                 result = subprocess.run(
-                    cmd, capture_output=True, text=True, cwd=self.project_root
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    cwd=self.project_root,
+                    check=False,
                 )
                 if result.returncode == 0:
                     print("   ✅ PASSED")
@@ -46,7 +50,7 @@ class CodeQualityManager:
                     return False
             else:
                 # Actually fix issues
-                result = subprocess.run(cmd, cwd=self.project_root)
+                result = subprocess.run(cmd, cwd=self.project_root, check=False)
                 return result.returncode == 0
         except FileNotFoundError:
             print("   ❌ Tool not installed")

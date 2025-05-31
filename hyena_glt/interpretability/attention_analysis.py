@@ -6,6 +6,7 @@ with focus on genomic sequence understanding and pattern discovery.
 """
 
 import logging
+from collections.abc import Callable
 from typing import Any
 
 import matplotlib.pyplot as plt
@@ -40,8 +41,8 @@ class HyenaAttentionAnalyzer:
         # Hook function to capture intermediate activations
         activations = {}
 
-        def hook_fn(name):
-            def hook(module, input, output):
+        def hook_fn(name: str) -> Callable:
+            def hook(module: torch.nn.Module, input: Any, output: Any) -> None:
                 if hasattr(output, "shape") and len(output.shape) >= 3:
                     # Store activation patterns
                     activations[name] = output.detach()
@@ -109,10 +110,10 @@ class HyenaAttentionAnalyzer:
                 end_mask = min(seq_len, i + 11)
                 long_range_mask[i, start_mask:end_mask] = 0
 
-            long_range_attention = (
+            long_range_attention_tensor = (
                 pattern * long_range_mask.unsqueeze(0)
             ).sum() / long_range_mask.sum()
-            long_range_attention = long_range_attention.item()
+            long_range_attention = float(long_range_attention_tensor.item())
 
             # Periodicity detection (for genomic repeats)
             periodicity_scores = []
@@ -129,11 +130,11 @@ class HyenaAttentionAnalyzer:
             avg_periodicity = np.mean(periodicity_scores) if periodicity_scores else 0.0
 
             analysis[layer_name] = {
-                "local_attention": local_attention,
-                "long_range_attention": long_range_attention,
-                "periodicity": avg_periodicity,
-                "sparsity": (pattern < 0.1).float().mean().item(),
-                "max_attention": pattern.max().item(),
+                "local_attention": float(local_attention),
+                "long_range_attention": float(long_range_attention),
+                "periodicity": float(avg_periodicity),
+                "sparsity": float((pattern < 0.1).float().mean().item()),
+                "max_attention": float(pattern.max().item()),
             }
 
         return analysis
@@ -144,7 +145,7 @@ class HyenaAttentionAnalyzer:
         sequence: str | None = None,
         save_path: str | None = None,
         title: str = "Genomic Attention Pattern",
-    ):
+    ) -> None:
         """Visualize attention patterns with genomic sequence annotations."""
         # Take first batch item
         pattern = attention_pattern[0].cpu().numpy()
@@ -188,7 +189,7 @@ class HyenaAttentionAnalyzer:
             plt.savefig(save_path, dpi=300, bbox_inches="tight")
         plt.show()
 
-    def _annotate_genomic_features(self, ax, sequence: str):
+    def _annotate_genomic_features(self, ax: Any, sequence: str) -> None:
         """Add genomic feature annotations to attention plot."""
         # Look for common genomic patterns
         features = []
@@ -211,7 +212,7 @@ class HyenaAttentionAnalyzer:
                 features.append(("TATA Box", i, i + 4, "green"))
 
         # Add feature markers
-        for feature_name, start, end, color in features[:10]:  # Limit annotations
+        for _feature_name, start, _end, color in features[:10]:  # Limit annotations
             ax.axhline(y=start, color=color, alpha=0.7, linewidth=1)
             ax.axvline(x=start, color=color, alpha=0.7, linewidth=1)
 
@@ -226,10 +227,9 @@ class HyenaAttentionAnalyzer:
 
         for layer_name, patterns in attention_patterns.items():
             # Find high-attention regions
-            for batch_idx, (pattern, sequence) in enumerate(
+            for _batch_idx, (pattern, sequence) in enumerate(
                 zip(patterns, sequences, strict=False)
             ):
-                high_attention_positions = []
 
                 # Find positions with high attention
                 attention_scores = pattern.sum(dim=-1)  # Sum over keys

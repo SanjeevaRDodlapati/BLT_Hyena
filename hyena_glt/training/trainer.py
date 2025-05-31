@@ -229,12 +229,9 @@ class HyenaGLTTrainer:
         """Setup optimizer and scheduler."""
         # Configure weight decay
         if self.config.weight_decay > 0:
-            param_groups = configure_weight_decay(
-                self.model, weight_decay=self.config.weight_decay
-            )
-            optimizer_params = param_groups
+            configure_weight_decay(self.model, weight_decay=self.config.weight_decay)
         else:
-            optimizer_params = self.model.parameters()
+            self.model.parameters()
 
         # Create optimizer
         self.optimizer = create_optimizer(
@@ -564,7 +561,7 @@ class HyenaGLTTrainer:
 
         # Log to console
         metric_str = " | ".join(
-            [f"{k}: {v:.4f}" for k, v in metrics.items() if isinstance(v, (int, float))]
+            [f"{k}: {v:.4f}" for k, v in metrics.items() if isinstance(v, int | float)]
         )
         self.logger.info(f"Step {self.global_step} | {metric_str}")
 

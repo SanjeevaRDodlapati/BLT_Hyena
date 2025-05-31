@@ -436,10 +436,11 @@ class ModelConverter:
     ):
         """Convert model to ONNX format."""
         try:
-            import onnx
             import torch.onnx
-        except ImportError:
-            raise ImportError("ONNX not installed. Install with: pip install onnx")
+        except ImportError as e:
+            raise ImportError(
+                "ONNX not installed. Install with: pip install onnx"
+            ) from e
 
         model.eval()
         dummy_input = torch.randint(0, 1000, input_shape)

@@ -17,7 +17,6 @@ import torch
 import torch.nn as nn
 
 try:
-    import onnx
     import onnxruntime as ort
 
     HAS_ONNX = True
@@ -129,7 +128,7 @@ class ModelOptimizer:
         """Apply various inference optimizations."""
         # Freeze batch normalization
         for module in model.modules():
-            if isinstance(module, (nn.BatchNorm1d, nn.BatchNorm2d)):
+            if isinstance(module, nn.BatchNorm1d | nn.BatchNorm2d):
                 module.eval()
                 for param in module.parameters():
                     param.requires_grad = False
@@ -521,7 +520,7 @@ class ModelProfiler:
             logger.info(f"Profiling {format_name} model...")
 
             # Load model
-            engine = inference_engine.load_model(model_path, format_name)
+            inference_engine.load_model(model_path, format_name)
 
             # Warm up
             for _ in range(10):

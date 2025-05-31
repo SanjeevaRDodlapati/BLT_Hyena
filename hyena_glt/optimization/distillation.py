@@ -5,6 +5,7 @@ This module provides comprehensive knowledge distillation support for creating
 smaller, more efficient Hyena-GLT models while maintaining performance.
 """
 
+import copy
 import json
 import logging
 from dataclasses import dataclass
@@ -143,7 +144,7 @@ class KnowledgeDistiller:
             self.student_model.train()
             epoch_loss = 0.0
 
-            for batch_idx, (data, target) in enumerate(train_loader):
+            for _batch_idx, (data, target) in enumerate(train_loader):
                 optimizer.zero_grad()
 
                 # Get teacher and student outputs
@@ -198,28 +199,23 @@ class KnowledgeDistiller:
 
         criterion = nn.CrossEntropyLoss()
 
+        # Define hook creation functions outside the training loop
+        def create_feature_hook(features_dict, layer_name):
+            def hook(module, input, output):
+                features_dict[layer_name] = output
+
+            return hook
+
         for epoch in range(self.config.epochs):
             self.student_model.train()
             epoch_loss = 0.0
 
-            for batch_idx, (data, target) in enumerate(train_loader):
+            for _batch_idx, (data, target) in enumerate(train_loader):
                 optimizer.zero_grad()
 
                 # Get outputs and features
                 teacher_features = {}
                 student_features = {}
-
-                def teacher_hook(name):
-                    def hook(module, input, output):
-                        teacher_features[name] = output
-
-                    return hook
-
-                def student_hook(name):
-                    def hook(module, input, output):
-                        student_features[name] = output
-
-                    return hook
 
                 # Register hooks
                 teacher_hooks = []
@@ -230,7 +226,7 @@ class KnowledgeDistiller:
                         teacher_layer = getattr(self.teacher_model, layer_name)
                         teacher_hooks.append(
                             teacher_layer.register_forward_hook(
-                                teacher_hook(layer_name)
+                                create_feature_hook(teacher_features, layer_name)
                             )
                         )
 
@@ -238,7 +234,7 @@ class KnowledgeDistiller:
                         student_layer = getattr(self.student_model, layer_name)
                         student_hooks.append(
                             student_layer.register_forward_hook(
-                                student_hook(layer_name)
+                                create_feature_hook(student_features, layer_name)
                             )
                         )
 
@@ -300,7 +296,7 @@ class KnowledgeDistiller:
             self.student_model.train()
             epoch_loss = 0.0
 
-            for batch_idx, (data, target) in enumerate(train_loader):
+            for _batch_idx, (data, target) in enumerate(train_loader):
                 optimizer.zero_grad()
 
                 # Get attention maps
@@ -354,7 +350,7 @@ class KnowledgeDistiller:
         logger.info("Starting comprehensive knowledge distillation...")
 
         # Combine all distillation methods
-        feature_distiller = FeatureDistiller(self.config)
+        FeatureDistiller(self.config)
         attention_distiller = AttentionDistiller(self.config)
 
         optimizer = torch.optim.Adam(
@@ -367,12 +363,10 @@ class KnowledgeDistiller:
             self.student_model.train()
             epoch_loss = 0.0
 
-            for batch_idx, (data, target) in enumerate(train_loader):
+            for _batch_idx, (data, target) in enumerate(train_loader):
                 optimizer.zero_grad()
 
                 # Get all outputs and intermediate representations
-                teacher_features = {}
-                student_features = {}
 
                 # Feature extraction (similar to feature distillation)
                 # ... (implementation would be similar to _feature_distillation)

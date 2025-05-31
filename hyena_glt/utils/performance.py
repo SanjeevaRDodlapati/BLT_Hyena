@@ -30,14 +30,14 @@ class ProfilerContext:
     def __init__(self, name: str = "operation", enable_gpu: bool = True):
         self.name = name
         self.enable_gpu = enable_gpu and TORCH_AVAILABLE
-        self.start_time = None
-        self.end_time = None
-        self.start_memory = None
-        self.end_memory = None
-        self.start_gpu_memory = None
-        self.end_gpu_memory = None
+        self.start_time: float | None = None
+        self.end_time: float | None = None
+        self.start_memory: float | None = None
+        self.end_memory: float | None = None
+        self.start_gpu_memory: float | None = None
+        self.end_gpu_memory: float | None = None
 
-    def __enter__(self):
+    def __enter__(self) -> "ProfilerContext":
         self.start_time = time.perf_counter()
         self.start_memory = psutil.Process().memory_info().rss / 1024 / 1024  # MB
 
@@ -48,7 +48,7 @@ class ProfilerContext:
         logger.info(f"Started profiling: {self.name}")
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         if self.enable_gpu and torch.cuda.is_available():
             torch.cuda.synchronize()
             self.end_gpu_memory = torch.cuda.memory_allocated() / 1024 / 1024  # MB
@@ -56,22 +56,33 @@ class ProfilerContext:
         self.end_time = time.perf_counter()
         self.end_memory = psutil.Process().memory_info().rss / 1024 / 1024  # MB
 
-        duration = self.end_time - self.start_time
-        memory_delta = self.end_memory - self.start_memory
+        # Ensure we have valid start values before calculating deltas
+        if self.start_time is not None and self.start_memory is not None:
+            duration = self.end_time - self.start_time
+            memory_delta = self.end_memory - self.start_memory
 
-        result_msg = f"Completed profiling: {self.name}\n"
-        result_msg += f"  Duration: {duration:.4f}s\n"
-        result_msg += f"  Memory delta: {memory_delta:+.2f}MB\n"
+            result_msg = f"Completed profiling: {self.name}\n"
+            result_msg += f"  Duration: {duration:.4f}s\n"
+            result_msg += f"  Memory delta: {memory_delta:+.2f}MB\n"
 
-        if self.enable_gpu and self.start_gpu_memory is not None:
-            gpu_memory_delta = self.end_gpu_memory - self.start_gpu_memory
-            result_msg += f"  GPU memory delta: {gpu_memory_delta:+.2f}MB"
+            if (
+                self.enable_gpu
+                and self.start_gpu_memory is not None
+                and self.end_gpu_memory is not None
+            ):
+                gpu_memory_delta = self.end_gpu_memory - self.start_gpu_memory
+                result_msg += f"  GPU memory delta: {gpu_memory_delta:+.2f}MB"
 
-        logger.info(result_msg)
+            logger.info(result_msg)
 
     def get_metrics(self) -> dict[str, float]:
         """Get profiling metrics as a dictionary."""
-        if self.start_time is None or self.end_time is None:
+        if (
+            self.start_time is None
+            or self.end_time is None
+            or self.start_memory is None
+            or self.end_memory is None
+        ):
             raise RuntimeError("Profiler context not completed")
 
         metrics = {
@@ -80,7 +91,11 @@ class ProfilerContext:
             "peak_memory_mb": self.end_memory,
         }
 
-        if self.enable_gpu and self.start_gpu_memory is not None:
+        if (
+            self.enable_gpu
+            and self.start_gpu_memory is not None
+            and self.end_gpu_memory is not None
+        ):
             metrics.update(
                 {
                     "gpu_memory_delta_mb": self.end_gpu_memory - self.start_gpu_memory,
@@ -162,7 +177,7 @@ def benchmark_model(
         with ProfilerContext(
             f"benchmark_run_{run_idx}", enable_gpu=TORCH_AVAILABLE
         ) as profiler:
-            result = model_fn(input_data)
+            model_fn(input_data)
 
         metrics = profiler.get_metrics()
         run_times.append(metrics["duration_seconds"])
@@ -215,7 +230,7 @@ def measure_throughput(
     total_items = 0
 
     while time.perf_counter() < end_time:
-        result = model_fn(input_data)
+        model_fn(input_data)
         iterations += 1
 
         if batch_size is not None:
@@ -240,7 +255,7 @@ def measure_throughput(
 
 
 @contextmanager
-def monitor_resources(interval_seconds: float = 1.0):
+def monitor_resources(interval_seconds: float = 1.0) -> Any:
     """Context manager for continuous resource monitoring.
 
     Args:
@@ -252,7 +267,7 @@ def monitor_resources(interval_seconds: float = 1.0):
     snapshots = []
     monitoring = True
 
-    def monitor_loop():
+    def monitor_loop() -> None:
         while monitoring:
             snapshot = {
                 "timestamp": time.time(),

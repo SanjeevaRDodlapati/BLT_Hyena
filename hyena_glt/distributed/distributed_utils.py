@@ -34,9 +34,8 @@ def init_distributed_training(
 
     if device_manager.is_distributed:
         # Set timeout for large clusters
-        timeout = torch.distributed.default_pg_timeout
         if timeout_minutes > 0:
-            timeout = torch.timedelta(minutes=timeout_minutes)
+            torch.timedelta(minutes=timeout_minutes)
 
         device_manager.setup_distributed(backend=backend)
 

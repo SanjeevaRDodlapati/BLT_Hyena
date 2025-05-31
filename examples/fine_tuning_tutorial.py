@@ -5,43 +5,33 @@ This notebook demonstrates how to fine-tune pre-trained Hyena-GLT models
 for various genomic tasks with step-by-step examples.
 """
 
+"""
+Fine-tuning Tutorial for Hyena-GLT Models
+
+This notebook demonstrates how to fine-tune pre-trained Hyena-GLT models
+for various genomic tasks with step-by-step examples.
+"""
+
 # %%
+import json
+import logging
 import sys
 from pathlib import Path
+
+import numpy as np
+
+# Import Hyena-GLT components
+from hyena_glt.training.finetuning import FinetuningConfig, TaskSpecificFineTuner
+from hyena_glt.training.metrics import GenomicMetrics
+from hyena_glt.training.pretrained import list_pretrained_models
 
 # Add project root to path
 project_root = Path.cwd().parent
 sys.path.append(str(project_root))
 
-import torch
-import numpy as np
-import pandas as pd
-from typing import List, Dict, Any
-import json
-import logging
-
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# %%
-# Import Hyena-GLT components
-from hyena_glt.config import HyenaGLTConfig
-from hyena_glt.training.finetuning import (
-    FineTuner, 
-    FinetuningConfig, 
-    TaskSpecificFineTuner,
-    finetune_for_sequence_classification
-)
-from hyena_glt.training.pretrained import (
-    PretrainedModelManager,
-    load_pretrained_model,
-    list_pretrained_models
-)
-from hyena_glt.data.tokenizer import DNATokenizer, RNATokenizer, ProteinTokenizer
-from hyena_glt.data.dataset import SequenceClassificationDataset, TokenClassificationDataset
-from hyena_glt.training.metrics import GenomicMetrics
-from hyena_glt.evaluation.metrics import ClassificationMetrics
 
 print("✓ Hyena-GLT imports successful")
 
@@ -82,27 +72,27 @@ print("2. CREATING SAMPLE DATA")
 print("=" * 60)
 
 # Create sample DNA sequences for classification
-def create_sample_classification_data(num_samples: int = 100) -> Dict[str, List]:
+def create_sample_classification_data(num_samples: int = 100) -> dict[str, list]:
     """Create sample DNA sequence classification data."""
     np.random.seed(42)
-    
+
     sequences = []
     labels = []
-    
+
     # Generate promoter sequences (label 0)
     for _ in range(num_samples // 2):
         # Promoter-like sequence with TATA box
         seq = "TATAAA" + "".join(np.random.choice(["A", "T", "G", "C"], size=194))
         sequences.append(seq)
         labels.append(0)
-    
-    # Generate enhancer sequences (label 1)  
+
+    # Generate enhancer sequences (label 1)
     for _ in range(num_samples // 2):
         # Enhancer-like sequence with some motifs
         seq = "GGGCGG" + "".join(np.random.choice(["A", "T", "G", "C"], size=194))
         sequences.append(seq)
         labels.append(1)
-    
+
     return {
         "sequences": sequences,
         "labels": labels,
@@ -110,28 +100,28 @@ def create_sample_classification_data(num_samples: int = 100) -> Dict[str, List]
     }
 
 # Create sample token classification data
-def create_sample_token_data(num_samples: int = 50) -> Dict[str, List]:
+def create_sample_token_data(num_samples: int = 50) -> dict[str, list]:
     """Create sample DNA sequence token classification data."""
     np.random.seed(42)
-    
+
     sequences = []
     token_labels = []
-    
+
     for _ in range(num_samples):
         # Create sequence with gene structure
         seq_len = 500
         seq = "".join(np.random.choice(["A", "T", "G", "C"], size=seq_len))
-        
+
         # Create labels: 0=intergenic, 1=exon, 2=intron
         labels = [0] * seq_len
-        
+
         # Add some exon regions
         for _ in range(2):
             start = np.random.randint(0, seq_len - 50)
             end = start + np.random.randint(30, 50)
             for i in range(start, min(end, seq_len)):
                 labels[i] = 1
-        
+
         # Add some intron regions
         for _ in range(1):
             start = np.random.randint(0, seq_len - 100)
@@ -139,10 +129,10 @@ def create_sample_token_data(num_samples: int = 50) -> Dict[str, List]:
             for i in range(start, min(end, seq_len)):
                 if labels[i] == 0:  # Don't override exons
                     labels[i] = 2
-        
+
         sequences.append(seq)
         token_labels.append(labels)
-    
+
     return {
         "sequences": sequences,
         "token_labels": token_labels,
@@ -164,17 +154,17 @@ print(f"Sample sequence length: {len(token_data['sequences'][0])}")
 
 # %%
 # Save sample data to files
-def save_classification_data(data: Dict, filepath: str):
+def save_classification_data(data: dict, filepath: str):
     """Save classification data to JSONL format."""
     with open(filepath, 'w') as f:
-        for seq, label in zip(data['sequences'], data['labels']):
+        for seq, label in zip(data['sequences'], data['labels'], strict=False):
             json.dump({"sequence": seq, "label": label}, f)
             f.write('\n')
 
-def save_token_data(data: Dict, filepath: str):
+def save_token_data(data: dict, filepath: str):
     """Save token classification data to JSONL format."""
     with open(filepath, 'w') as f:
-        for seq, labels in zip(data['sequences'], data['token_labels']):
+        for seq, labels in zip(data['sequences'], data['token_labels'], strict=False):
             json.dump({"sequence": seq, "labels": labels}, f)
             f.write('\n')
 
@@ -329,7 +319,7 @@ seq_clf_config = TaskSpecificFineTuner.create_sequence_classification_config(
     batch_size=8
 )
 
-print(f"\nTask-specific config created:")
+print("\nTask-specific config created:")
 print(f"• Learning rate: {seq_clf_config.learning_rate}")
 print(f"• Batch size: {seq_clf_config.batch_size}")
 print(f"• Task type: {seq_clf_config.task_type}")
@@ -366,28 +356,28 @@ advanced_config = FinetuningConfig(
     output_dir="outputs/advanced",
     task_type="sequence_classification",
     num_labels=5,
-    
+
     # Layer-wise learning
     use_layer_wise_decay=True,
     layer_wise_lr_decay=0.95,
     freeze_layers=["embeddings"],  # Freeze embeddings
-    
+
     # Regularization
     label_smoothing=0.1,
     mixup_alpha=0.2,
-    
+
     # Training strategy
     learning_rate=1e-5,
     batch_size=4,
     gradient_accumulation_steps=8,
     warmup_ratio=0.2,
-    
+
     # Early stopping
     early_stopping_patience=3,
     early_stopping_threshold=0.001
 )
 
-print(f"\nAdvanced configuration example:")
+print("\nAdvanced configuration example:")
 print(f"• Layer-wise decay: {advanced_config.layer_wise_lr_decay}")
 print(f"• Label smoothing: {advanced_config.label_smoothing}")
 print(f"• Mixup alpha: {advanced_config.mixup_alpha}")
@@ -410,16 +400,16 @@ def example_compute_metrics(eval_pred):
     """Example metrics function for fine-tuning."""
     metrics = GenomicMetrics()
     predictions, labels = eval_pred
-    
+
     # For classification
     predictions = predictions.argmax(axis=-1)
-    
+
     # Compute standard metrics
     results = metrics.compute_classification_metrics(predictions, labels)
-    
+
     # Add custom genomic metrics
     results['custom_metric'] = 0.95  # Placeholder
-    
+
     return results
 
 print("\nExample metrics function created ✓")

@@ -3,7 +3,7 @@
 import json
 import os
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 from transformers import PretrainedConfig
 
@@ -59,8 +59,8 @@ class HyenaGLTConfig(PretrainedConfig):
         # Hardware specific
         device: str = "auto",
         precision: str = "float16",  # "float16", "bfloat16", "float32"
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         # Set default task weights
         if task_weights is None:
             task_weights = {
@@ -127,7 +127,7 @@ class HyenaGLTConfig(PretrainedConfig):
 
         super().__init__(**kwargs)
 
-    def _validate_config(self):
+    def _validate_config(self) -> None:
         """Validate configuration parameters."""
         if self.sequence_type not in ["dna", "rna", "protein", "mixed"]:
             raise ValueError(f"Invalid sequence_type: {self.sequence_type}")
@@ -144,7 +144,7 @@ class HyenaGLTConfig(PretrainedConfig):
             )
 
     @classmethod
-    def from_dict(cls, config_dict: dict) -> "HyenaGLTConfig":
+    def from_dict(cls, config_dict: dict[str, Any], **kwargs: Any) -> "HyenaGLTConfig":
         """Create config from dictionary."""
         return cls(**config_dict)
 
@@ -155,7 +155,7 @@ class HyenaGLTConfig(PretrainedConfig):
             config_dict = json.load(f)
         return cls.from_dict(config_dict)
 
-    def save(self, save_path: str):
+    def save(self, save_path: str) -> None:
         """Save config to JSON file."""
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         with open(save_path, "w") as f:

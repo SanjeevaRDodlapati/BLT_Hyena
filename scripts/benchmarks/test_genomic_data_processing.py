@@ -10,7 +10,7 @@ to validate biological relevance and practical performance.
 import random
 import string
 import time
-from typing import Dict, List, Tuple
+from typing import Any
 
 import numpy as np
 import torch
@@ -241,10 +241,10 @@ class GenomicDatasetTest:
         ]
 
         results = []
-        for i, seq in enumerate(promoter_seqs):
+        for _i, seq in enumerate(promoter_seqs):
             # Tokenize
             tokens = self.tokenizer.tokenize(seq)
-            input_tensor = torch.tensor([tokens], dtype=torch.long).to(self.device)
+            torch.tensor([tokens], dtype=torch.long).to(self.device)
 
             # Process with BLT position manager
             start_time = time.time()
@@ -302,7 +302,7 @@ class GenomicDatasetTest:
 
             for seq in coding_seqs:
                 tokens = self.tokenizer.tokenize(seq)
-                input_tensor = torch.tensor([tokens], dtype=torch.long).to(self.device)
+                torch.tensor([tokens], dtype=torch.long).to(self.device)
 
                 start_time = time.time()
                 with torch.no_grad():
@@ -353,7 +353,7 @@ class GenomicDatasetTest:
 
         # Process reference
         ref_tokens = self.tokenizer.tokenize(reference_seq)
-        ref_tensor = torch.tensor([ref_tokens], dtype=torch.long).to(self.device)
+        torch.tensor([ref_tokens], dtype=torch.long).to(self.device)
 
         with torch.no_grad():
             ref_embeddings = torch.randn(
@@ -370,7 +370,7 @@ class GenomicDatasetTest:
         variant_results = []
         for variant_seq, variant_type, position in variants:
             var_tokens = self.tokenizer.tokenize(variant_seq)
-            var_tensor = torch.tensor([var_tokens], dtype=torch.long).to(self.device)
+            torch.tensor([var_tokens], dtype=torch.long).to(self.device)
 
             with torch.no_grad():
                 var_embeddings = torch.randn(
@@ -472,7 +472,7 @@ class GenomicDatasetTest:
             max_tokens = min(len(tokens), self.config.max_position_embeddings - 10)
             tokens = tokens[:max_tokens]
 
-            input_tensor = torch.tensor([tokens], dtype=torch.long).to(self.device)
+            torch.tensor([tokens], dtype=torch.long).to(self.device)
 
             start_time = time.time()
             try:
@@ -482,7 +482,7 @@ class GenomicDatasetTest:
                     ).to(self.device)
 
                     # Test position encoding
-                    pos_embeddings = self.position_manager.encode_positions(
+                    self.position_manager.encode_positions(
                         embeddings,
                         original_positions=torch.arange(len(tokens))
                         .unsqueeze(0)
@@ -490,9 +490,7 @@ class GenomicDatasetTest:
                     )
 
                     # Test patching for long sequences
-                    patches = self.position_manager.create_patch_representations(
-                        embeddings
-                    )
+                    self.position_manager.create_patch_representations(embeddings)
 
                 processing_time = time.time() - start_time
                 success = True
@@ -540,7 +538,7 @@ class GenomicDatasetTest:
 
         for seq_type, sequence in sequences.items():
             tokens = self.tokenizer.tokenize(sequence)
-            input_tensor = torch.tensor([tokens], dtype=torch.long).to(self.device)
+            torch.tensor([tokens], dtype=torch.long).to(self.device)
 
             with torch.no_grad():
                 embeddings = torch.randn(1, len(tokens), self.config.hidden_size).to(
@@ -623,7 +621,7 @@ class GenomicDatasetTest:
         print("GENOMIC DATA TESTING SUMMARY")
         print("=" * 60)
 
-        total_tests = len([k for k in self.results.keys()])
+        total_tests = len(list(self.results.keys()))
         print(f"✅ Completed {total_tests} test categories")
 
         # Long sequence analysis

@@ -6,6 +6,7 @@ from typing import Any
 
 import numpy as np
 import torch
+from torch.utils.data import Subset
 
 
 @dataclass
@@ -41,7 +42,7 @@ class SequenceLengthDifficulty(DifficultyMeasure):
             length = len(example.input_ids)
         elif hasattr(example, "sequence"):
             length = len(example.sequence)
-        elif isinstance(example, (list, tuple)):
+        elif isinstance(example, list | tuple):
             length = len(example)
         else:
             return 0.5  # Default difficulty
@@ -54,7 +55,7 @@ class SequenceLengthDifficulty(DifficultyMeasure):
 class GenomicComplexityDifficulty(DifficultyMeasure):
     """Difficulty based on genomic sequence complexity."""
 
-    def __init__(self, measures: list[str] = None):
+    def __init__(self, measures: list[str] | None = None):
         self.measures = measures or ["gc_content", "entropy", "repetitiveness"]
 
     def compute_difficulty(self, example: Any) -> float:
@@ -77,14 +78,14 @@ class GenomicComplexityDifficulty(DifficultyMeasure):
         if "rare_kmers" in self.measures:
             scores.append(self._rare_kmers_score(sequence))
 
-        return np.mean(scores) if scores else 0.5
+        return float(np.mean(scores)) if scores else 0.5
 
     def _extract_sequence(self, example: Any) -> str:
         """Extract sequence string from example."""
         if hasattr(example, "sequence"):
-            return example.sequence
+            return str(example.sequence)  # type: ignore[no-any-return]
         elif hasattr(example, "input_ids") and hasattr(example, "tokenizer"):
-            return example.tokenizer.decode(example.input_ids)
+            return str(example.tokenizer.decode(example.input_ids))  # type: ignore[no-any-return]
         elif isinstance(example, str):
             return example
         return ""
@@ -102,7 +103,7 @@ class GenomicComplexityDifficulty(DifficultyMeasure):
             return 0.0
 
         # Count nucleotides
-        counts = {}
+        counts: dict[str, int] = {}
         for nucleotide in sequence:
             counts[nucleotide] = counts.get(nucleotide, 0) + 1
 
@@ -124,14 +125,14 @@ class GenomicComplexityDifficulty(DifficultyMeasure):
             return 0.0
 
         # Count 3-mer repetitions
-        kmers = {}
+        kmers: dict[str, int] = {}
         for i in range(len(sequence) - 2):
             kmer = sequence[i : i + 3]
             kmers[kmer] = kmers.get(kmer, 0) + 1
 
         # Compute repetitiveness as fraction of non-unique 3-mers
         total_kmers = len(sequence) - 2
-        unique_kmers = len(kmers)
+        len(kmers)
         repetitive_kmers = sum(count - 1 for count in kmers.values() if count > 1)
 
         return repetitive_kmers / total_kmers if total_kmers > 0 else 0.0
@@ -176,11 +177,11 @@ class TaskSpecificDifficulty(DifficultyMeasure):
         """Difficulty for classification tasks."""
         # Base difficulty on label frequency (rare labels are harder)
         if hasattr(example, "label_frequency"):
-            return 1.0 - example.label_frequency
+            return 1.0 - float(example.label_frequency)  # type: ignore[no-any-return]
         elif hasattr(example, "label") and hasattr(example, "label_counts"):
             total_samples = sum(example.label_counts.values())
             label_count = example.label_counts.get(example.label, 1)
-            return 1.0 - (label_count / total_samples)
+            return 1.0 - float(label_count / total_samples)  # type: ignore[no-any-return]
         return 0.5
 
     def _generation_difficulty(self, example: Any) -> float:
@@ -310,14 +311,14 @@ class AdaptiveCurriculum(CurriculumLearning):
         difficulty_measures: list[DifficultyMeasure],
         target_accuracy: float = 0.8,
         adjustment_rate: float = 0.01,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         super().__init__(difficulty_measures, **kwargs)
         self.target_accuracy = target_accuracy
         self.adjustment_rate = adjustment_rate
-        self.performance_history = []
+        self.performance_history: list[float] = []
 
-    def update_with_performance(self, accuracy: float, step: int):
+    def update_with_performance(self, accuracy: float, step: int) -> None:
         """Update curriculum based on model performance."""
         self.performance_history.append(accuracy)
 
@@ -350,8 +351,6 @@ class AdaptiveCurriculum(CurriculumLearning):
         self.current_difficulty_threshold = min(
             self.current_difficulty_threshold, base_threshold
         )
-
-        return self.current_difficulty_threshold
 
 
 class CurriculumDataLoader:
@@ -388,7 +387,7 @@ class CurriculumDataLoader:
                 filtered_indices.append(i)
 
         # Create subset dataset
-        filtered_dataset = torch.utils.data.Subset(self.dataset, filtered_indices)
+        filtered_dataset: Subset[Any] = torch.utils.data.Subset(self.dataset, filtered_indices)  # type: ignore[arg-type]
 
         # Create dataloader
         return torch.utils.data.DataLoader(

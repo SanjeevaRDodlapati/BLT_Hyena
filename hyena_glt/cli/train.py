@@ -16,8 +16,6 @@ from typing import Any
 
 # Import core training modules
 try:
-    from ..config.model_config import ModelConfig
-    from ..data.data_loader import GenomicDataLoader
     from ..training.trainer import HyenaGLTTrainer
     from ..utils.logging_utils import setup_logging
 except ImportError as e:
@@ -35,13 +33,13 @@ def create_parser() -> argparse.ArgumentParser:
 Examples:
   # Train with config file
   hyena-glt-train --config configs/tiny_model.json
-  
+
   # Quick training with minimal parameters
   hyena-glt-train --model tiny --data data/genome_seqs.fa --epochs 10
-  
+
   # Resume from checkpoint
   hyena-glt-train --config configs/model.json --resume checkpoints/latest.pt
-  
+
   # Training with custom parameters
   hyena-glt-train --model small --data data/ --batch-size 32 --lr 1e-4
         """,
@@ -127,10 +125,10 @@ def load_config(config_path: str) -> dict[str, Any]:
         with open(config_path) as f:
             config = json.load(f)
         return config
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Configuration file not found: {config_path}")
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"Configuration file not found: {config_path}") from e
     except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON in configuration file: {e}")
+        raise ValueError(f"Invalid JSON in configuration file: {e}") from e
 
 
 def validate_arguments(args: argparse.Namespace) -> None:

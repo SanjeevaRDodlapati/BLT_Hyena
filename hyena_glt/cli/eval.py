@@ -21,7 +21,6 @@ try:
     from ..evaluation.evaluator import HyenaGLTEvaluator
     from ..model.model import HyenaGLT
     from ..utils.logging_utils import setup_logging
-    from ..utils.metrics import compute_genomic_metrics
 except ImportError as e:
     print(f"Error importing Hyena-GLT modules: {e}")
     print("Please ensure the package is properly installed.")
@@ -37,13 +36,13 @@ def create_parser() -> argparse.ArgumentParser:
 Examples:
   # Basic model evaluation
   hyena-glt-eval --model models/hyena_glt.pt --data test_data.fa
-  
+
   # Task-specific evaluation
   hyena-glt-eval --checkpoint model.pt --task variant_effect --data variants.vcf
-  
+
   # Comprehensive evaluation with metrics
   hyena-glt-eval --model model.pt --data test/ --metrics accuracy,f1,auc
-  
+
   # Evaluation with custom config
   hyena-glt-eval --config eval_config.json --output results/
         """,
@@ -151,7 +150,7 @@ def load_model(model_path: str, device: str = "auto") -> HyenaGLT:
 
         return model
     except Exception as e:
-        raise RuntimeError(f"Failed to load model: {e}")
+        raise RuntimeError(f"Failed to load model: {e}") from e
 
 
 def detect_task_type(data_path: str) -> str:

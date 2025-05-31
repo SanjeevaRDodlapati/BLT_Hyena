@@ -68,7 +68,7 @@ class SegmentAwarePositionalEncoding(nn.Module):
 
         return pe
 
-    def _add_genomic_patterns(self):
+    def _add_genomic_patterns(self) -> None:
         """Add genomic-specific positional patterns."""
         # Codon patterns (period 3)
         codon_freqs = torch.arange(0, self.d_model // 4, 2).float() * (2 * math.pi / 3)
@@ -106,7 +106,7 @@ class SegmentAwarePositionalEncoding(nn.Module):
 
         if patch_boundaries is None or not self.use_learned_encoding:
             # Simple case: no merging or learned encoding
-            return base_pe.unsqueeze(0)  # (1, seq_len, d_model)
+            return base_pe.unsqueeze(0)  # type: ignore[no-any-return]
 
         batch_size = patch_boundaries.size(0)
         device = patch_boundaries.device
@@ -516,7 +516,7 @@ class BLTPositionManager(nn.Module):
         )
 
         # Add to hidden states
-        return hidden_states + pos_embeddings
+        return hidden_states + pos_embeddings  # type: ignore[no-any-return]
 
     def create_patch_representations(
         self,

@@ -8,7 +8,7 @@ of the Hyena-GLT framework.
 
 import os
 import tempfile
-from typing import Any, Dict, List
+from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
@@ -109,7 +109,7 @@ class TestDynamicQuantizer:
         # Check that model was quantized
         assert quantized_model is not None
         # Model should have quantized layers
-        has_quantized = any(
+        any(
             "quantized" in str(type(module)).lower()
             for module in quantized_model.modules()
         )
@@ -192,9 +192,7 @@ class TestQATQuantizer:
 
         assert qat_model is not None
         # Should have fake quantization modules
-        has_fake_quant = any(
-            "fake_quant" in str(type(module)).lower() for module in qat_model.modules()
-        )
+        any("fake_quant" in str(type(module)).lower() for module in qat_model.modules())
         # This depends on PyTorch version and backend
         assert isinstance(qat_model, nn.Module)
 
@@ -269,7 +267,7 @@ class TestPruningConfig:
 
         assert config.sparsity == 0.5
         assert config.pruning_type == "magnitude"
-        assert config.structured == False
+        assert not config.structured
         assert isinstance(config.layers_to_prune, list)
 
     def test_structured_pruning_config(self):
@@ -283,7 +281,7 @@ class TestPruningConfig:
 
         assert config.sparsity == 0.3
         assert config.pruning_type == "gradient"
-        assert config.structured == True
+        assert config.structured
         assert config.granularity == "channel"
 
 
@@ -300,7 +298,7 @@ class TestMagnitudePruner:
         model = ModelTestUtils.create_test_model()
 
         # Get initial parameter count
-        initial_params = sum(p.numel() for p in model.parameters())
+        sum(p.numel() for p in model.parameters())
 
         pruned_model = pruner.prune(model)
 
@@ -324,7 +322,7 @@ class TestMagnitudePruner:
 
     def test_gradual_pruning(self, pruner):
         """Test gradual pruning schedule."""
-        model = ModelTestUtils.create_test_model()
+        ModelTestUtils.create_test_model()
 
         # Test pruning schedule
         initial_sparsity = 0.0
@@ -375,7 +373,7 @@ class TestStructuredPruner:
         """Count total channels in model."""
         total_channels = 0
         for module in model.modules():
-            if isinstance(module, (nn.Linear, nn.Conv1d)):
+            if isinstance(module, nn.Linear | nn.Conv1d):
                 if hasattr(module, "out_features"):
                     total_channels += module.out_features
                 elif hasattr(module, "out_channels"):
@@ -499,7 +497,7 @@ class TestDistillationConfig:
 
         assert config.distillation_type == "attention"
         assert config.attention_loss_weight == 1.0
-        assert config.match_attention_heads == True
+        assert config.match_attention_heads
 
 
 class TestKnowledgeDistiller:
@@ -693,7 +691,7 @@ class TestMemoryOptimizer:
 
         optimizer.zero_grad(model)
 
-        for step in range(accumulation_steps):
+        for _step in range(accumulation_steps):
             loss = optimizer.forward_and_accumulate(model, x, y, accumulation_steps)
             assert isinstance(loss, torch.Tensor)
 
@@ -780,7 +778,7 @@ class TestActivationCheckpointing:
             offloaded = checkpointer.offload_activations(activations)
 
             # Should move to CPU or compress
-            assert isinstance(offloaded, (torch.Tensor, tuple))
+            assert isinstance(offloaded, torch.Tensor | tuple)
 
     def test_activation_compression(self, checkpointer):
         """Test activation compression."""
@@ -830,7 +828,7 @@ class TestMemoryProfiler:
         assert isinstance(layer_memory, dict)
         assert len(layer_memory) > 0
 
-        for layer_name, memory_info in layer_memory.items():
+        for _layer_name, memory_info in layer_memory.items():
             assert "input_memory" in memory_info
             assert "output_memory" in memory_info
 
@@ -841,7 +839,7 @@ class TestMemoryUtils:
     def test_memory_cleanup(self):
         """Test memory cleanup utilities."""
         # Create some tensors
-        tensors = [torch.randn(100, 100) for _ in range(10)]
+        [torch.randn(100, 100) for _ in range(10)]
 
         # Clear and cleanup
         MemoryUtils.clear_cache()
@@ -861,7 +859,7 @@ class TestMemoryUtils:
         )
 
         assert estimated_memory > 0
-        assert isinstance(estimated_memory, (int, float))
+        assert isinstance(estimated_memory, int | float)
 
 
 class TestModelDeployer:
@@ -1023,15 +1021,15 @@ class TestDeploymentConfig:
 
         assert config.target_platform == "cpu"
         assert config.optimization_level == "O2"
-        assert config.enable_quantization == True
-        assert config.enable_pruning == False
+        assert config.enable_quantization
+        assert not config.enable_pruning
 
     def test_mobile_config(self):
         """Test mobile deployment configuration."""
         config = DeploymentConfig.for_mobile()
 
         assert config.target_platform == "mobile"
-        assert config.enable_quantization == True
+        assert config.enable_quantization
         assert config.max_model_size_mb is not None
 
     def test_server_config(self):
@@ -1039,8 +1037,8 @@ class TestDeploymentConfig:
         config = DeploymentConfig.for_server()
 
         assert config.target_platform == "server"
-        assert config.enable_mixed_precision == True
-        assert config.batch_size_optimization == True
+        assert config.enable_mixed_precision
+        assert config.batch_size_optimization
 
 
 if __name__ == "__main__":

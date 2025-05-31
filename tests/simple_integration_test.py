@@ -30,7 +30,7 @@ def test_basic_integration():
     labels = [0, 1, 0, 1]
 
     # Config
-    config = HyenaGLTConfig(
+    HyenaGLTConfig(
         vocab_size=6,  # A, T, C, G, UNK, PAD
         hidden_size=32,
         max_position_embeddings=64,
@@ -214,7 +214,7 @@ def test_tensor_operations():
     # Test sample types
     sample = dataset[0]
     assert sample["input_ids"].dtype == torch.long
-    assert isinstance(sample["labels"], (int, torch.Tensor))  # Updated to use 'labels'
+    assert isinstance(sample["labels"], int | torch.Tensor)  # Updated to use 'labels'
     print("  ✅ Data types correct")
 
     # Test batch operations

@@ -4,7 +4,7 @@ Performance benchmark tests for Hyena-GLT models.
 
 import gc
 import time
-from typing import Dict, List, Tuple
+from typing import Any
 
 import psutil
 import pytest
@@ -60,7 +60,7 @@ class TestInferenceBenchmarks:
 
                 with torch.no_grad():
                     for _ in range(10):
-                        outputs = model(encoded)
+                        model(encoded)
 
                 torch.cuda.synchronize() if torch.cuda.is_available() else None
                 end_time = time.time()
@@ -123,7 +123,7 @@ class TestInferenceBenchmarks:
 
             model.eval()
             with torch.no_grad():
-                outputs = model(input_ids)
+                model(input_ids)
 
             if torch.cuda.is_available():
                 peak_memory_mb = torch.cuda.max_memory_allocated() / 1024**2
@@ -199,7 +199,7 @@ class TestInferenceBenchmarks:
 
             with torch.no_grad():
                 for _ in range(20):
-                    outputs = model(encoded)
+                    model(encoded)
 
             torch.cuda.synchronize()
             end_time = time.time()
@@ -383,7 +383,7 @@ class TestScalabilityBenchmarks:
 
             with torch.no_grad():
                 for _ in range(5):
-                    outputs = model(encoded)
+                    model(encoded)
 
             end_time = time.time()
 
@@ -440,7 +440,7 @@ class TestScalabilityBenchmarks:
 
             with torch.no_grad():
                 for _ in range(10):
-                    outputs = model(encoded)
+                    model(encoded)
 
             end_time = time.time()
 
@@ -500,7 +500,7 @@ class TestMemoryBenchmarks:
             # Forward pass
             model.eval()
             with torch.no_grad():
-                outputs = model(input_ids)
+                model(input_ids)
 
             if torch.cuda.is_available():
                 memory_mb = torch.cuda.max_memory_allocated() / 1024**2

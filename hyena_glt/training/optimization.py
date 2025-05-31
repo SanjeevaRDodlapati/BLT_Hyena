@@ -14,9 +14,9 @@ class AdamWWithScheduler(torch.optim.AdamW):
 
     def __init__(
         self,
-        params,
+        params: Any,
         lr: float = 1e-3,
-        betas: tuple = (0.9, 0.999),
+        betas: tuple[float, float] = (0.9, 0.999),
         eps: float = 1e-8,
         weight_decay: float = 0.01,
         warmup_steps: int = 1000,
@@ -30,13 +30,13 @@ class AdamWWithScheduler(torch.optim.AdamW):
         self.current_step = 0
         self.base_lr = lr
 
-    def step(self, closure=None):
+    def step(self, closure: Any = None) -> Any:
         """Perform optimization step with learning rate scheduling."""
         self.current_step += 1
         self._update_lr()
         return super().step(closure)
 
-    def _update_lr(self):
+    def _update_lr(self) -> None:
         """Update learning rate based on schedule."""
         if self.current_step <= self.warmup_steps:
             # Linear warmup
@@ -68,7 +68,7 @@ class LayerWiseDecayOptimizer:
         model: torch.nn.Module,
         base_lr: float = 1e-3,
         layer_decay: float = 0.9,
-        **optimizer_kwargs,
+        **optimizer_kwargs: Any,
     ):
         self.model = model
         self.base_lr = base_lr
@@ -89,7 +89,7 @@ class LayerWiseDecayOptimizer:
         max_depth = max(layer_depths.values()) if layer_depths else 0
 
         # Group parameters by layer depth
-        depth_params = {}
+        depth_params: dict[int, list[torch.nn.Parameter]] = {}
         for name, param in self.model.named_parameters():
             if param.requires_grad:
                 depth = layer_depths.get(name, max_depth)
@@ -148,7 +148,7 @@ class LinearWarmupCosineDecayScheduler(_LRScheduler):
         self.min_lr_ratio = min_lr_ratio
         super().__init__(optimizer, last_epoch)
 
-    def get_lr(self):
+    def get_lr(self) -> list[float]:  # type: ignore[override]
         if self.last_epoch < self.warmup_steps:
             # Linear warmup
             return [
@@ -174,7 +174,7 @@ def create_optimizer(
     learning_rate: float = 1e-3,
     weight_decay: float = 0.01,
     layer_wise_decay: float | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> Optimizer:
     """Create optimizer for model training."""
 
@@ -214,7 +214,7 @@ def create_scheduler(
     scheduler_type: str = "cosine",
     warmup_steps: int = 1000,
     total_steps: int = 10000,
-    **kwargs,
+    **kwargs: Any,
 ) -> _LRScheduler | None:
     """Create learning rate scheduler."""
 
@@ -225,17 +225,21 @@ def create_scheduler(
     elif scheduler_type.lower() == "linear":
         from torch.optim.lr_scheduler import LinearLR
 
-        return LinearLR(
+        # Type cast to ensure compatibility with _LRScheduler
+        linear_scheduler = LinearLR(
             optimizer,
             start_factor=1.0,
             end_factor=kwargs.get("end_factor", 0.1),
             total_iters=total_steps,
             **{k: v for k, v in kwargs.items() if k != "end_factor"},
         )
+        return linear_scheduler  # type: ignore[return-value]
     elif scheduler_type.lower() == "constant":
         return None
     else:
-        warnings.warn(f"Unknown scheduler type: {scheduler_type}, using constant LR")
+        warnings.warn(
+            f"Unknown scheduler type: {scheduler_type}, using constant LR", stacklevel=2
+        )
         return None
 
 

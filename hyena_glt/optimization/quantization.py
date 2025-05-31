@@ -225,7 +225,7 @@ class ModelQuantizer:
         # Load config
         config_path = load_path / "quantization_config.json"
         with open(config_path) as f:
-            config_dict = json.load(f)
+            json.load(f)
 
         # Create model (this would need to be adapted based on actual architecture)
         # For now, returning a placeholder

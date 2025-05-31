@@ -45,7 +45,6 @@ def demo_entropy_based_patching():
     model.eval()
 
     # Create synthetic genomic sequences with varying complexity
-    batch_size = 2
     seq_len = 256
 
     # Sequence 1: Low entropy (repetitive)
@@ -223,7 +222,7 @@ def demo_genomic_position_patterns():
 
     for pattern_name, length in genomic_patterns.items():
         # Create position encoding for this pattern
-        pos_encoding = pos_encoder(seq_len=length)
+        pos_encoder(seq_len=length)
 
         # Add original positions to trigger genomic patterns
         original_positions = torch.arange(length, dtype=torch.long).unsqueeze(0)

@@ -7,17 +7,17 @@ for predicting protein functions from amino acid sequences.
 """
 
 import argparse
-import logging
-from pathlib import Path
 import json
+import logging
 
 # Add the project root to Python path
 import sys
+from pathlib import Path
+
 sys.path.append(str(Path(__file__).parent.parent))
 
-from hyena_glt.training.task_specific import ProteinFunctionFineTuner
 from hyena_glt.training.pretrained import PretrainedModelManager
-from hyena_glt.data.tokenizer import ProteinTokenizer
+from hyena_glt.training.task_specific import ProteinFunctionFineTuner
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def main():
     parser = argparse.ArgumentParser(description="Fine-tune Hyena-GLT for protein function prediction")
-    
+
     parser.add_argument("--pretrained_model", type=str, default="hyena-glt-protein",
                        help="Pre-trained model name or path")
     parser.add_argument("--train_data", type=str, required=True,
@@ -37,7 +37,7 @@ def main():
     parser.add_argument("--function_type", type=str, default="go",
                        choices=["go", "ec"],
                        help="Type of function prediction (GO terms or EC numbers)")
-    
+
     # Training parameters
     parser.add_argument("--learning_rate", type=float, default=1e-5,
                        help="Learning rate")
@@ -47,12 +47,12 @@ def main():
                        help="Number of training epochs")
     parser.add_argument("--max_length", type=int, default=2048,
                        help="Maximum sequence length")
-    
+
     args = parser.parse_args()
-    
+
     # Create output directory
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
-    
+
     # Check if pretrained model is available
     if not Path(args.pretrained_model).exists():
         logger.info(f"Downloading pre-trained model: {args.pretrained_model}")
@@ -60,21 +60,21 @@ def main():
         pretrained_path = str(manager.download_model(args.pretrained_model))
     else:
         pretrained_path = args.pretrained_model
-    
+
     # Create fine-tuner
     logger.info(f"Setting up protein function prediction fine-tuner for {args.function_type}...")
     finetuner = ProteinFunctionFineTuner(pretrained_path, args.output_dir, args.function_type)
-    
+
     # Override default parameters
     finetuner.config.learning_rate = args.learning_rate
     finetuner.config.batch_size = args.batch_size
     finetuner.config.num_epochs = args.num_epochs
     finetuner.config.max_length = args.max_length
-    
+
     # Start fine-tuning
     logger.info("Starting fine-tuning...")
     trainer = finetuner.fine_tune(args.train_data, args.eval_data)
-    
+
     # Save configuration
     config_path = Path(args.output_dir) / "training_config.json"
     with open(config_path, 'w') as f:
@@ -89,20 +89,20 @@ def main():
             "max_length": args.max_length,
             "labels": finetuner.labels
         }, f, indent=2)
-    
+
     logger.info(f"Fine-tuning completed! Model saved to {args.output_dir}")
-    
+
     # Run final evaluation if eval data provided
     if args.eval_data:
         logger.info("Running final evaluation...")
         eval_dataset = finetuner.create_dataset(args.eval_data)
         eval_results = trainer.evaluate(eval_dataset)
-        
+
         # Save evaluation results
         results_path = Path(args.output_dir) / "eval_results.json"
         with open(results_path, 'w') as f:
             json.dump(eval_results, f, indent=2)
-        
+
         logger.info("Evaluation results:")
         for metric, value in eval_results.items():
             logger.info(f"  {metric}: {value:.4f}")

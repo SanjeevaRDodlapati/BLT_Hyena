@@ -52,7 +52,7 @@ class EvaluationVisualizer:
         x = np.arange(n_tasks)
         width = 0.8 / n_metrics
 
-        colors = plt.cm.Set3(np.linspace(0, 1, n_metrics))
+        colors = plt.cm.get_cmap("tab10")(np.linspace(0, 1, n_metrics))
 
         for i, metric in enumerate(metrics):
             values = [results_dict[task].get(metric, 0) for task in tasks]
@@ -70,13 +70,13 @@ class EvaluationVisualizer:
 
         # 2. Heatmap
         ax2 = axes[0, 1]
-        heatmap_data = []
+        heatmap_data: list[list[float]] = []
         for task in tasks:
             row = [results_dict[task].get(metric, 0) for metric in metrics]
             heatmap_data.append(row)
 
-        heatmap_data = np.array(heatmap_data)
-        im = ax2.imshow(heatmap_data, cmap="RdYlBu_r", aspect="auto")
+        heatmap_array = np.array(heatmap_data)
+        im = ax2.imshow(heatmap_array, cmap="RdYlBu_r", aspect="auto")
 
         ax2.set_xticks(np.arange(n_metrics))
         ax2.set_yticks(np.arange(n_tasks))
@@ -87,10 +87,10 @@ class EvaluationVisualizer:
         # Add text annotations
         for i in range(n_tasks):
             for j in range(n_metrics):
-                text = ax2.text(
+                ax2.text(
                     j,
                     i,
-                    f"{heatmap_data[i, j]:.3f}",
+                    f"{heatmap_array[i, j]:.3f}",
                     ha="center",
                     va="center",
                     color="black",
@@ -105,7 +105,7 @@ class EvaluationVisualizer:
             angles = np.linspace(0, 2 * np.pi, n_metrics, endpoint=False).tolist()
             angles += angles[:1]  # Complete the circle
 
-            for i, task in enumerate(tasks[:3]):  # Show max 3 tasks
+            for _i, task in enumerate(tasks[:3]):  # Show max 3 tasks
                 values = [results_dict[task].get(metric, 0) for metric in metrics]
                 values += values[:1]  # Complete the circle
 
@@ -217,7 +217,7 @@ class EvaluationVisualizer:
 
                 # Combined legend
                 lines = line1 + line2
-                labels = [l.get_label() for l in lines]
+                labels = [line.get_label() for line in lines]
                 ax1.legend(lines, labels, loc="upper left")
 
         # 2. Sequence length scaling
@@ -263,7 +263,7 @@ class EvaluationVisualizer:
 
                 # Combined legend
                 lines = line1 + line2
-                labels = [l.get_label() for l in lines]
+                labels = [line.get_label() for line in lines]
                 ax2.legend(lines, labels, loc="upper left")
 
         # 3. Throughput analysis
@@ -471,7 +471,7 @@ class EvaluationVisualizer:
             cm_normalized = cm.astype("float") / cm.sum(axis=1)[:, np.newaxis]
 
             # Create heatmap
-            im = ax.imshow(cm_normalized, interpolation="nearest", cmap=plt.cm.Blues)
+            im = ax.imshow(cm_normalized, interpolation="nearest", cmap="Blues")
 
             # Add colorbar
             plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)

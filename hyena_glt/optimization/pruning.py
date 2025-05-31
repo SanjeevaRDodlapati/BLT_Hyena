@@ -121,7 +121,7 @@ class ModelPruner:
             # Global magnitude pruning
             parameters_to_prune = []
             for name, module in model_copy.named_modules():
-                if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d)):
+                if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
                     if name not in self.config.skip_layers:
                         parameters_to_prune.append((module, "weight"))
 
@@ -133,7 +133,7 @@ class ModelPruner:
         else:
             # Layer-wise magnitude pruning
             for name, module in model_copy.named_modules():
-                if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d)):
+                if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
                     if name not in self.config.skip_layers:
                         sparsity = self.config.layer_sparsities.get(
                             name, self.config.sparsity
@@ -167,7 +167,7 @@ class ModelPruner:
             param_mapping = []
 
             for name, module in model_copy.named_modules():
-                if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d)):
+                if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
                     if (
                         name not in self.config.skip_layers
                         and name in importance_scores
@@ -185,7 +185,7 @@ class ModelPruner:
 
             # Apply masks
             for name, module in model_copy.named_modules():
-                if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d)):
+                if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
                     if (
                         name not in self.config.skip_layers
                         and name in importance_scores
@@ -207,7 +207,7 @@ class ModelPruner:
         structured_pruner = StructuredPruner(self.config)
 
         for name, module in model_copy.named_modules():
-            if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d)):
+            if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
                 if name not in self.config.skip_layers:
                     structured_pruner.prune_module(module, name)
 
@@ -221,7 +221,7 @@ class ModelPruner:
         model_copy = copy.deepcopy(model)
 
         for name, module in model_copy.named_modules():
-            if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d)):
+            if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
                 if name not in self.config.skip_layers:
                     prune.random_unstructured(
                         module, name="weight", amount=self.config.sparsity
@@ -247,7 +247,7 @@ class ModelPruner:
         for epoch in range(self.config.finetune_epochs):
             epoch_loss = 0.0
 
-            for batch_idx, (data, target) in enumerate(train_loader):
+            for _batch_idx, (data, target) in enumerate(train_loader):
                 optimizer.zero_grad()
 
                 # Forward pass
@@ -288,7 +288,7 @@ class ModelPruner:
         pruned_params = 0
 
         for name, module in model.named_modules():
-            if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d)):
+            if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
                 weight = module.weight
                 layer_total = weight.numel()
                 layer_pruned = (weight == 0).sum().item()
@@ -348,7 +348,7 @@ class StructuredPruner:
         """Apply structured pruning to a module."""
         if isinstance(module, nn.Linear):
             self._prune_linear(module)
-        elif isinstance(module, (nn.Conv1d, nn.Conv2d)):
+        elif isinstance(module, nn.Conv1d | nn.Conv2d):
             self._prune_conv(module)
 
     def _prune_linear(self, module: nn.Linear):
@@ -464,7 +464,7 @@ class UnstructuredPruner:
         parameters_to_prune = []
 
         for name, module in model.named_modules():
-            if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d)):
+            if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
                 if name not in self.config.skip_layers:
                     parameters_to_prune.append((module, "weight"))
 
@@ -479,7 +479,7 @@ class UnstructuredPruner:
     def _layerwise_unstructured_prune(self, model: nn.Module) -> nn.Module:
         """Apply layer-wise unstructured pruning."""
         for name, module in model.named_modules():
-            if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d)):
+            if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
                 if name not in self.config.skip_layers:
                     sparsity = self.config.layer_sparsities.get(
                         name, self.config.sparsity
@@ -500,7 +500,7 @@ class MagnitudePruner:
         importance_scores = {}
 
         for name, module in model.named_modules():
-            if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d)):
+            if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
                 importance_scores[name] = torch.abs(module.weight)
 
         return importance_scores
@@ -520,7 +520,7 @@ class GradientPruner:
 
         # Initialize accumulator
         for name, module in model.named_modules():
-            if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d)):
+            if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
                 importance_scores[name] = torch.zeros_like(module.weight)
 
         model.train()
@@ -539,7 +539,7 @@ class GradientPruner:
 
             # Accumulate gradient magnitudes
             for name, module in model.named_modules():
-                if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d)):
+                if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
                     if module.weight.grad is not None:
                         importance_scores[name] += torch.abs(module.weight.grad)
 

@@ -2,11 +2,13 @@
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.data import Dataset
 
 
 @dataclass
@@ -16,7 +18,7 @@ class TaskConfig:
     name: str
     weight: float = 1.0
     loss_fn: Callable | None = None
-    metric_names: list[str] = None
+    metric_names: list[str] | None = None
     curriculum_schedule: dict | None = None
 
 
@@ -70,7 +72,7 @@ class MultiTaskLoss(nn.Module):
         task_names = list(self.tasks.keys())
 
         # Compute individual task losses
-        for i, (task_name, task_config) in enumerate(self.tasks.items()):
+        for _i, (task_name, task_config) in enumerate(self.tasks.items()):
             if task_name in predictions and task_name in targets:
                 if task_config.loss_fn is not None:
                     loss = task_config.loss_fn(
@@ -129,7 +131,7 @@ class MultiTaskLoss(nn.Module):
         if self.weighting_strategy == "fixed":
             # Use predefined fixed weights
             task_indices = [list(self.tasks.keys()).index(name) for name in task_names]
-            return self.task_weights[task_indices]
+            return self.task_weights[task_indices]  # type: ignore[no-any-return]
 
         elif self.weighting_strategy == "uncertainty":
             # Uncertainty weighting (Multi-Task Learning Using Uncertainty to Weigh Losses)
@@ -179,12 +181,12 @@ class MultiTaskLoss(nn.Module):
         target_weights = r_i**self.alpha
         target_weights = target_weights / target_weights.sum()
 
-        return target_weights
+        return target_weights  # type: ignore[no-any-return]
 
     def _dwa_weights(self, losses: torch.Tensor, task_names: list[str]) -> torch.Tensor:
         """Dynamic Weight Average weighting."""
         if self.history_idx < 2:
-            return torch.ones(len(losses)) / len(losses)
+            return torch.ones(len(losses), dtype=torch.float32) / len(losses)
 
         # Get previous losses
         prev_idx = (self.history_idx - 1) % 10
@@ -196,7 +198,7 @@ class MultiTaskLoss(nn.Module):
         # Apply temperature scaling and softmax
         weights = F.softmax(loss_ratios / self.temperature, dim=0)
 
-        return weights * len(weights)  # Rescale to maintain magnitude
+        return weights * len(weights)  # type: ignore[no-any-return] # Rescale to maintain magnitude
 
     def _adaptive_weights(
         self, losses: torch.Tensor, task_names: list[str]
@@ -207,7 +209,7 @@ class MultiTaskLoss(nn.Module):
         weights = loss_magnitudes / (loss_magnitudes.sum() + 1e-8)
         return weights
 
-    def update_task_performance(self, metrics: dict[str, float]):
+    def update_task_performance(self, metrics: dict[str, float]) -> None:
         """Update task performance tracking."""
         for i, (task_name, _) in enumerate(self.tasks.items()):
             if task_name in metrics:
@@ -269,42 +271,42 @@ class TaskWeightScheduler:
 
     def _linear_schedule(self, schedule: dict, step: int, base_weight: float) -> float:
         """Linear weight scheduling."""
-        start_weight = schedule.get("start_weight", base_weight)
-        end_weight = schedule.get("end_weight", base_weight)
-        start_step = schedule.get("start_step", 0)
-        end_step = schedule.get("end_step", self.total_steps)
+        start_weight: float = schedule.get("start_weight", base_weight)  # type: ignore[assignment]
+        end_weight: float = schedule.get("end_weight", base_weight)  # type: ignore[assignment]
+        start_step: int = schedule.get("start_step", 0)  # type: ignore[assignment]
+        end_step: int = schedule.get("end_step", self.total_steps)  # type: ignore[assignment]
 
         if step <= start_step:
-            return start_weight
+            return start_weight  # type: ignore[no-any-return]
         elif step >= end_step:
-            return end_weight
+            return end_weight  # type: ignore[no-any-return]
         else:
             progress = (step - start_step) / (end_step - start_step)
-            return start_weight + progress * (end_weight - start_weight)
+            return start_weight + progress * (end_weight - start_weight)  # type: ignore[no-any-return]
 
     def _cosine_schedule(self, schedule: dict, step: int, base_weight: float) -> float:
         """Cosine weight scheduling."""
-        start_weight = schedule.get("start_weight", base_weight)
-        end_weight = schedule.get("end_weight", base_weight)
-        start_step = schedule.get("start_step", 0)
-        end_step = schedule.get("end_step", self.total_steps)
+        start_weight: float = schedule.get("start_weight", base_weight)  # type: ignore[assignment]
+        end_weight: float = schedule.get("end_weight", base_weight)  # type: ignore[assignment]
+        start_step: int = schedule.get("start_step", 0)  # type: ignore[assignment]
+        end_step: int = schedule.get("end_step", self.total_steps)  # type: ignore[assignment]
 
         if step <= start_step:
-            return start_weight
+            return start_weight  # type: ignore[no-any-return]
         elif step >= end_step:
-            return end_weight
+            return end_weight  # type: ignore[no-any-return]
         else:
             progress = (step - start_step) / (end_step - start_step)
             cosine_factor = 0.5 * (1 + np.cos(np.pi * progress))
-            return end_weight + (start_weight - end_weight) * cosine_factor
+            return end_weight + (start_weight - end_weight) * cosine_factor  # type: ignore[no-any-return]
 
     def _step_schedule(self, schedule: dict, step: int, base_weight: float) -> float:
         """Step-wise weight scheduling."""
-        milestones = schedule.get("milestones", [])
-        weights = schedule.get("weights", [base_weight])
+        milestones: list = schedule.get("milestones", [])  # type: ignore[assignment]
+        weights: list = schedule.get("weights", [base_weight])  # type: ignore[assignment]
 
         if not milestones:
-            return base_weight
+            return base_weight  # type: ignore[no-any-return]
 
         # Find current weight based on milestones
         current_weight = weights[0] if weights else base_weight
@@ -312,7 +314,7 @@ class TaskWeightScheduler:
             if step >= milestone and i + 1 < len(weights):
                 current_weight = weights[i + 1]
 
-        return current_weight
+        return current_weight  # type: ignore[no-any-return]
 
 
 class BalancedSampler:
@@ -320,7 +322,7 @@ class BalancedSampler:
 
     def __init__(
         self,
-        task_datasets: dict[str, torch.utils.data.Dataset],
+        task_datasets: dict[str, Dataset[Any]],
         sampling_strategy: str = "proportional",
         temperature: float = 1.0,
     ):
@@ -330,7 +332,7 @@ class BalancedSampler:
 
         # Compute dataset sizes
         self.dataset_sizes = {
-            name: len(dataset) for name, dataset in task_datasets.items()
+            name: len(dataset) for name, dataset in task_datasets.items()  # type: ignore[arg-type]
         }
         self.total_size = sum(self.dataset_sizes.values())
 
@@ -385,9 +387,9 @@ class BalancedSampler:
         """Sample a task based on the sampling strategy."""
         tasks = list(self.task_datasets.keys())
         probabilities = [self.task_probs[task] for task in tasks]
-        return np.random.choice(tasks, p=probabilities)
+        return str(np.random.choice(tasks, p=probabilities))  # type: ignore[no-any-return]
 
-    def get_batch_iterator(self, batch_size: int, num_batches: int):
+    def get_batch_iterator(self, batch_size: int, num_batches: int) -> Any:
         """Get iterator for balanced multi-task batches."""
         for _ in range(num_batches):
             # Sample task for this batch
@@ -395,7 +397,7 @@ class BalancedSampler:
             dataset = self.task_datasets[task_name]
 
             # Sample batch from selected task
-            indices = torch.randint(0, len(dataset), (batch_size,))
+            indices = torch.randint(0, len(dataset), (batch_size,))  # type: ignore[arg-type]
             batch = [dataset[idx] for idx in indices]
 
             yield task_name, batch

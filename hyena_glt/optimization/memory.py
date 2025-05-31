@@ -118,7 +118,7 @@ class MemoryOptimizer:
         num_to_checkpoint = int(len(layers) * self.config.checkpoint_ratio)
 
         # Apply checkpointing to selected layers
-        for i, (name, layer) in enumerate(layers[:num_to_checkpoint]):
+        for _i, (name, layer) in enumerate(layers[:num_to_checkpoint]):
             # Wrap layer with checkpointing
             checkpointed_layer = GradientCheckpointing.apply_to_layer(layer)
 
@@ -154,7 +154,7 @@ class MemoryOptimizer:
         logger.info("Applying memory-efficient attention...")
 
         # Replace attention modules with memory-efficient versions
-        for name, module in model.named_modules():
+        for name, _module in model.named_modules():
             if "attention" in name.lower() or "attn" in name.lower():
                 # Replace with memory-efficient attention
                 # This would depend on the specific attention implementation
@@ -277,8 +277,8 @@ class GradientCheckpointing:
                     end_idx = self.segment_boundaries[i + 1]
 
                     # Create a function for this segment
-                    def segment_forward(input_tensor):
-                        for j in range(start_idx, end_idx):
+                    def segment_forward(input_tensor, start=start_idx, end=end_idx):
+                        for j in range(start, end):
                             input_tensor = self.layers[j](input_tensor)
                         return input_tensor
 
@@ -313,7 +313,7 @@ class ActivationCheckpointing:
                         # Store activations on CPU to save GPU memory
                         if isinstance(output, torch.Tensor):
                             self.checkpointed_activations[id(module)] = output.cpu()
-                        elif isinstance(output, (tuple, list)):
+                        elif isinstance(output, tuple | list):
                             self.checkpointed_activations[id(module)] = [
                                 o.cpu() if isinstance(o, torch.Tensor) else o
                                 for o in output
@@ -525,7 +525,7 @@ class AdaptiveBatchSizer:
         max_batch_size = self.config.max_batch_size
         optimal_batch_size = min_batch_size
 
-        for iteration in range(max_iterations):
+        for _iteration in range(max_iterations):
             test_batch_size = (min_batch_size + max_batch_size) // 2
 
             try:
@@ -629,7 +629,7 @@ class MemoryBenchmark:
         optimizer = torch.optim.Adam(model.parameters())
         criterion = nn.CrossEntropyLoss()
 
-        for i in range(num_iterations):
+        for _i in range(num_iterations):
             # Clear memory before each iteration
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()

@@ -2,8 +2,6 @@
 Unit tests for Hyena-GLT data processing components.
 """
 
-from typing import List
-
 import numpy as np
 import pytest
 import torch
@@ -363,7 +361,7 @@ class TestDataLoading:
         # Check individual items
         for item in batch_items:
             assert isinstance(item["input_ids"], torch.Tensor)
-            assert isinstance(item["labels"], (int, torch.Tensor))
+            assert isinstance(item["labels"], int | torch.Tensor)
 
 
 class TestDataValidation:

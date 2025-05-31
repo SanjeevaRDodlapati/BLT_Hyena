@@ -1,11 +1,12 @@
 """Setup configuration for Hyena-GLT package."""
 
-from setuptools import setup, find_packages
 import os
 import platform
 
+from setuptools import find_packages, setup
+
 # Read README for long description
-with open("README.md", "r", encoding="utf-8") as fh:
+with open("README.md", encoding="utf-8") as fh:
     long_description = fh.read()
 
 # Read version
@@ -42,14 +43,14 @@ def get_install_requires():
         "psutil>=5.8.0",
         "pynvml>=11.0.0",
     ]
-    
+
     # Add platform-specific requirements
     if platform.system() != "Darwin":  # Not macOS
         base_requirements.extend([
             "triton>=2.0.0",
             "flash-attn>=2.0.0",
         ])
-    
+
     return base_requirements
 
 setup(

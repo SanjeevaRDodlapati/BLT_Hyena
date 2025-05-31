@@ -34,9 +34,9 @@ class CheckpointManager:
         self.save_scheduler = save_scheduler
 
         # Track checkpoints
-        self.checkpoint_history = []
+        self.checkpoint_history: list[dict[str, Any]] = []
         self.best_metric = float("inf") if minimize_metric else float("-inf")
-        self.best_checkpoint_path = None
+        self.best_checkpoint_path: str | None = None
 
         # Setup logging
         self.logger = logging.getLogger(__name__)
@@ -125,19 +125,21 @@ class CheckpointManager:
         """Load a checkpoint."""
 
         if load_best:
-            checkpoint_path = self.checkpoint_dir / "best_checkpoint.pt"
+            checkpoint_path_obj = self.checkpoint_dir / "best_checkpoint.pt"
         elif checkpoint_path is None:
             # Load latest checkpoint
-            checkpoint_path = self.get_latest_checkpoint()
-            if checkpoint_path is None:
+            latest_path = self.get_latest_checkpoint()
+            if latest_path is None:
                 raise FileNotFoundError("No checkpoints found")
+            checkpoint_path_obj = Path(latest_path)
+        else:
+            checkpoint_path_obj = Path(checkpoint_path)
 
-        checkpoint_path = Path(checkpoint_path)
-        if not checkpoint_path.exists():
-            raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
+        if not checkpoint_path_obj.exists():
+            raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path_obj}")
 
-        self.logger.info(f"Loading checkpoint: {checkpoint_path}")
-        checkpoint_data = torch.load(checkpoint_path, map_location="cpu")
+        self.logger.info(f"Loading checkpoint: {checkpoint_path_obj}")
+        checkpoint_data: dict[str, Any] = torch.load(checkpoint_path_obj, map_location="cpu")  # type: ignore[assignment]
 
         return checkpoint_data
 
@@ -203,7 +205,7 @@ class CheckpointManager:
         # Find first existing checkpoint
         for checkpoint_info in sorted_checkpoints:
             if Path(checkpoint_info["path"]).exists():
-                return checkpoint_info["path"]
+                return checkpoint_info["path"]  # type: ignore[no-any-return]
 
         return None
 
@@ -223,22 +225,22 @@ class CheckpointManager:
 
         return sorted(available_checkpoints, key=lambda x: x["step"], reverse=True)
 
-    def delete_checkpoint(self, checkpoint_path: str):
+    def delete_checkpoint(self, checkpoint_path: str) -> None:
         """Delete a specific checkpoint."""
-        checkpoint_path = Path(checkpoint_path)
-        if checkpoint_path.exists():
-            checkpoint_path.unlink()
-            self.logger.info(f"Deleted checkpoint: {checkpoint_path}")
+        checkpoint_path_obj = Path(checkpoint_path)
+        if checkpoint_path_obj.exists():
+            checkpoint_path_obj.unlink()
+            self.logger.info(f"Deleted checkpoint: {checkpoint_path_obj}")
 
             # Remove from history
             self.checkpoint_history = [
                 info
                 for info in self.checkpoint_history
-                if info["path"] != str(checkpoint_path)
+                if info["path"] != str(checkpoint_path_obj)
             ]
             self._save_checkpoint_history()
 
-    def _cleanup_checkpoints(self):
+    def _cleanup_checkpoints(self) -> None:
         """Remove old checkpoints based on max_checkpoints setting."""
         if self.max_checkpoints <= 0:
             return
@@ -271,7 +273,7 @@ class CheckpointManager:
             info for info in self.checkpoint_history if Path(info["path"]).exists()
         ]
 
-    def _save_checkpoint_history(self):
+    def _save_checkpoint_history(self) -> None:
         """Save checkpoint history to disk."""
         history_path = self.checkpoint_dir / "checkpoint_history.json"
         history_data = {
@@ -285,7 +287,7 @@ class CheckpointManager:
         with open(history_path, "w") as f:
             json.dump(history_data, f, indent=2)
 
-    def _load_checkpoint_history(self):
+    def _load_checkpoint_history(self) -> None:
         """Load checkpoint history from disk."""
         history_path = self.checkpoint_dir / "checkpoint_history.json"
 
@@ -323,22 +325,22 @@ class CheckpointManager:
         checkpoint_path: str | None = None,
         load_best: bool = False,
         export_format: str = "torch",
-    ):
+    ) -> None:
         """Export model for deployment."""
 
         # Load checkpoint if specified
         if checkpoint_path or load_best:
             self.load_model_from_checkpoint(model, checkpoint_path, load_best)
 
-        export_path = Path(export_path)
-        export_path.parent.mkdir(parents=True, exist_ok=True)
+        export_path_obj = Path(export_path)
+        export_path_obj.parent.mkdir(parents=True, exist_ok=True)
 
         if export_format == "torch":
             # Save complete model
-            torch.save(model, export_path)
+            torch.save(model, export_path_obj)
         elif export_format == "state_dict":
             # Save only state dict
-            torch.save(model.state_dict(), export_path)
+            torch.save(model.state_dict(), export_path_obj)
         elif export_format == "onnx":
             try:
                 # Export to ONNX (requires example input)
@@ -354,30 +356,30 @@ class CheckpointManager:
                 # Export to TorchScript
                 model.eval()
                 scripted_model = torch.jit.script(model)
-                scripted_model.save(str(export_path))
+                scripted_model.save(str(export_path_obj))
             except Exception as e:
                 self.logger.error(f"TorchScript export failed: {e}")
         else:
             raise ValueError(f"Unsupported export format: {export_format}")
 
-        self.logger.info(f"Exported model to: {export_path}")
+        self.logger.info(f"Exported model to: {export_path_obj}")
 
     def get_checkpoint_info(self, checkpoint_path: str) -> dict[str, Any]:
         """Get information about a checkpoint without loading the full model."""
-        checkpoint_path = Path(checkpoint_path)
+        checkpoint_path_obj = Path(checkpoint_path)
 
-        if not checkpoint_path.exists():
-            raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
+        if not checkpoint_path_obj.exists():
+            raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path_obj}")
 
         # Load only metadata
-        checkpoint_data = torch.load(checkpoint_path, map_location="cpu")
+        checkpoint_data = torch.load(checkpoint_path_obj, map_location="cpu")
 
         info = {
             "step": checkpoint_data.get("step"),
             "epoch": checkpoint_data.get("epoch"),
             "metrics": checkpoint_data.get("metrics", {}),
             "timestamp": checkpoint_data.get("timestamp"),
-            "file_size": checkpoint_path.stat().st_size,
+            "file_size": checkpoint_path_obj.stat().st_size,
             "has_optimizer": "optimizer_state_dict" in checkpoint_data,
             "has_scheduler": "scheduler_state_dict" in checkpoint_data,
         }

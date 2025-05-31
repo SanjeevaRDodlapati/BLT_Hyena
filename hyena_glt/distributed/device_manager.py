@@ -5,7 +5,7 @@ Based on patterns from BLT, Savanna, and Vortex repositories.
 
 import logging
 import os
-from typing import Any
+from typing import Any, Optional
 
 import torch
 import torch.distributed as dist
@@ -28,13 +28,13 @@ class DeviceManager:
         self.world_size = world_size or int(os.environ.get("WORLD_SIZE", 1))
         self.rank = int(os.environ.get("RANK", 0))
 
-        self._device = None
+        self._device: Optional[torch.device] = None
         self._is_distributed = self.world_size > 1
         self._device_count = 0
 
         self._setup_device()
 
-    def _setup_device(self):
+    def _setup_device(self) -> None:
         """Setup CUDA device for current process."""
         if torch.cuda.is_available():
             self._device_count = torch.cuda.device_count()
@@ -58,6 +58,8 @@ class DeviceManager:
     @property
     def device(self) -> torch.device:
         """Get current device."""
+        if self._device is None:
+            return torch.device("cpu")
         return self._device
 
     @property
@@ -75,7 +77,7 @@ class DeviceManager:
         """Get number of available CUDA devices."""
         return self._device_count
 
-    def setup_distributed(self, backend: str = "nccl"):
+    def setup_distributed(self, backend: str = "nccl") -> None:
         """
         Initialize distributed training.
 
@@ -88,7 +90,7 @@ class DeviceManager:
 
         if not dist.is_initialized():
             # Use NCCL for GPU, fallback to gloo for CPU
-            if self._device.type == "cuda" and backend == "nccl":
+            if self._device is not None and self._device.type == "cuda" and backend == "nccl":
                 backend = "nccl"
             else:
                 backend = "gloo"
@@ -102,7 +104,7 @@ class DeviceManager:
                 f"world_size={self.world_size}, backend={backend}"
             )
 
-    def cleanup_distributed(self):
+    def cleanup_distributed(self) -> None:
         """Cleanup distributed training."""
         if dist.is_initialized():
             dist.destroy_process_group()
@@ -116,7 +118,7 @@ class DeviceManager:
 
     def get_memory_info(self) -> dict[str, Any]:
         """Get GPU memory information."""
-        if self._device.type != "cuda":
+        if self._device is None or self._device.type != "cuda":
             return {"device": "cpu", "memory": "N/A"}
 
         allocated = torch.cuda.memory_allocated(self._device)
@@ -130,18 +132,18 @@ class DeviceManager:
             "max_allocated_gb": max_allocated / 1e9,
         }
 
-    def clear_memory(self):
+    def clear_memory(self) -> None:
         """Clear GPU memory cache."""
-        if self._device.type == "cuda":
+        if self._device is not None and self._device.type == "cuda":
             torch.cuda.empty_cache()
             if self.is_main_process:
                 logger.info("Cleared CUDA memory cache")
 
-    def synchronize(self):
+    def synchronize(self) -> None:
         """Synchronize all processes."""
         if self._is_distributed and dist.is_initialized():
             dist.barrier()
-        elif self._device.type == "cuda":
+        elif self._device is not None and self._device.type == "cuda":
             torch.cuda.synchronize()
 
 
@@ -151,12 +153,12 @@ class GPUClusterConfig:
     def __init__(
         self,
         nodes: int = 1,
-        gpus_per_node: int = None,
+        gpus_per_node: Optional[int] = None,
         backend: str = "nccl",
         mixed_precision: bool = True,
         gradient_checkpointing: bool = False,
         find_unused_parameters: bool = False,
-    ):
+    ) -> None:
         """
         Initialize cluster configuration.
 

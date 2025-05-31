@@ -115,7 +115,7 @@ class TestTrainingWorkflow:
 
         # Generate protein sequences
         sequences = []
-        for i in range(16):
+        for _i in range(16):
             seq_length = torch.randint(30, 80, (1,)).item()
             seq = DataGenerator.generate_protein_sequence(seq_length, vocab_size=20)
             # Convert to amino acid string
@@ -185,7 +185,7 @@ class TestTrainingWorkflow:
         sequences = []
         token_labels = []
 
-        for i in range(16):
+        for _i in range(16):
             seq_length = 60
             seq = DataGenerator.generate_dna_sequence(seq_length)
             seq_str = "".join(["ATCG"[x] for x in seq])

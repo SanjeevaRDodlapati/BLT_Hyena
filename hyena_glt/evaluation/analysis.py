@@ -16,7 +16,6 @@ from scipy import stats
 from .metrics import EvaluationResult
 
 try:
-    import plotly.express as px
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
 
@@ -25,7 +24,7 @@ except ImportError:
     HAS_PLOTLY = False
 
 try:
-    from captum.attr import IntegratedGradients, LayerConductance, NeuronConductance
+    from captum.attr import IntegratedGradients, LayerConductance
 
     HAS_CAPTUM = True
 except ImportError:
@@ -54,7 +53,9 @@ class ModelAnalyzer:
             Dictionary containing attention weights for each layer
         """
         if not hasattr(self.model, "get_attention_weights"):
-            warnings.warn("Model doesn't support attention weight extraction")
+            warnings.warn(
+                "Model doesn't support attention weight extraction", stacklevel=2
+            )
             return {}
 
         self.model.eval()
@@ -142,7 +143,9 @@ class ModelAnalyzer:
             Feature importance scores
         """
         if not HAS_CAPTUM:
-            warnings.warn("Captum not available for feature importance analysis")
+            warnings.warn(
+                "Captum not available for feature importance analysis", stacklevel=2
+            )
             return np.array([])
 
         self.model.eval()
@@ -171,7 +174,9 @@ class ModelAnalyzer:
             Dictionary mapping layer names to importance scores
         """
         if not HAS_CAPTUM:
-            warnings.warn("Captum not available for layer importance analysis")
+            warnings.warn(
+                "Captum not available for layer importance analysis", stacklevel=2
+            )
             return {}
 
         self.model.eval()
@@ -179,14 +184,14 @@ class ModelAnalyzer:
 
         # Analyze each layer
         for name, module in self.model.named_modules():
-            if isinstance(module, (torch.nn.Linear, torch.nn.Conv1d)):
+            if isinstance(module, torch.nn.Linear | torch.nn.Conv1d):
                 try:
                     lc = LayerConductance(self.model, module)
                     conductance = lc.attribute(input_ids)
                     importance = conductance.abs().sum().item()
                     layer_importance[name] = importance
                 except Exception as e:
-                    warnings.warn(f"Could not analyze layer {name}: {e}")
+                    warnings.warn(f"Could not analyze layer {name}: {e}", stacklevel=2)
 
         return layer_importance
 
@@ -485,7 +490,9 @@ class VisualizationUtils:
             save_path: Path to save HTML file
         """
         if not HAS_PLOTLY:
-            warnings.warn("Plotly not available for interactive visualizations")
+            warnings.warn(
+                "Plotly not available for interactive visualizations", stacklevel=2
+            )
             return
 
         # Prepare data
@@ -540,7 +547,7 @@ class VisualizationUtils:
                     mode="markers+text",
                     text=df["Task"],
                     textposition="top center",
-                    marker=dict(size=10, color="red"),
+                    marker={"size": 10, "color": "red"},
                     name="Precision vs Recall",
                 ),
                 row=2,

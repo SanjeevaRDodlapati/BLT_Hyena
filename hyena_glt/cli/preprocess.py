@@ -18,7 +18,6 @@ from typing import Any
 # Import preprocessing modules
 try:
     from ..data.preprocessing import GenomicPreprocessor
-    from ..data.tokenization import GenomicTokenizer
     from ..utils.file_utils import detect_file_format, validate_genomic_file
     from ..utils.logging_utils import setup_logging
 except ImportError as e:
@@ -36,13 +35,13 @@ def create_parser() -> argparse.ArgumentParser:
 Examples:
   # Basic sequence preprocessing
   hyena-glt-preprocess --input genome.fa --output processed_data/
-  
+
   # Variant effect preprocessing
   hyena-glt-preprocess --input variants.vcf --reference hg38.fa --output variant_data/
-  
+
   # Custom preprocessing with specific parameters
   hyena-glt-preprocess --input data/ --task sequence_classification --max-length 2048
-  
+
   # Preprocessing with tokenization
   hyena-glt-preprocess --input genome.fa --tokenizer custom_tokenizer.json --output tokens/
         """,
@@ -187,10 +186,10 @@ Examples:
 
 def detect_task_type(input_path: str) -> str:
     """Auto-detect preprocessing task based on input format."""
-    input_path = Path(input_path)
+    input_path_obj = Path(input_path)
 
-    if input_path.is_file():
-        file_format = detect_file_format(str(input_path))
+    if input_path_obj.is_file():
+        file_format = detect_file_format(str(input_path_obj))
         if file_format == "vcf":
             return "variant_effect"
         elif file_format in ["fasta", "fa"]:
@@ -201,7 +200,7 @@ def detect_task_type(input_path: str) -> str:
             return "sequence_classification"
     else:
         # Check directory contents
-        files = list(input_path.glob("*"))
+        files = list(input_path_obj.glob("*"))
         if any(detect_file_format(str(f)) == "vcf" for f in files):
             return "variant_effect"
         elif any(detect_file_format(str(f)) in ["fasta", "fa"] for f in files):
@@ -243,7 +242,7 @@ def setup_preprocessing_config(args: argparse.Namespace) -> dict[str, Any]:
     # Load base config if provided
     if args.config:
         with open(args.config) as f:
-            config = json.load(f)
+            config: dict[str, Any] = json.load(f)
     else:
         config = {
             "preprocessing": {},
@@ -322,22 +321,47 @@ def run_preprocessing(config: dict[str, Any]) -> dict[str, Any]:
     """Run preprocessing pipeline and return statistics."""
     logger = logging.getLogger(__name__)
 
-    # Initialize preprocessor
-    preprocessor = GenomicPreprocessor(config)
+    # Extract preprocessing parameters from config
+    preprocessing_config = config.get("preprocessing", {})
 
-    logger.info(f"Starting {config['preprocessing']['task']} preprocessing...")
-    logger.info(f"Input: {config['preprocessing']['input_path']}")
-    logger.info(f"Output: {config['output']['output_dir']}")
+    # Initialize preprocessor with proper parameters
+    preprocessor = GenomicPreprocessor(
+        sequence_type=preprocessing_config.get("sequence_type", "dna"),
+        min_length=preprocessing_config.get("min_length", 50),
+        max_length=preprocessing_config.get("max_length", 10000),
+        quality_threshold=preprocessing_config.get("quality_threshold", 20.0),
+        max_n_ratio=preprocessing_config.get("max_n_ratio", 0.1),
+        remove_duplicates=preprocessing_config.get("remove_duplicates", True),
+        normalize_case=preprocessing_config.get("normalize_case", True),
+        filter_non_standard=preprocessing_config.get("filter_non_standard", True),
+    )
+
+    logger.info(
+        f"Starting {preprocessing_config.get('task', 'unknown')} preprocessing..."
+    )
+    logger.info(f"Input: {preprocessing_config.get('input_path', 'unknown')}")
+    logger.info(f"Output: {config.get('output', {}).get('output_dir', 'unknown')}")
 
     # Run preprocessing pipeline
-    stats = preprocessor.process()
+    input_path = preprocessing_config.get("input_path")
+    output_dir = config.get("output", {}).get("output_dir")
+
+    if not input_path:
+        raise ValueError("Input path not specified in config")
+
+    output_path = Path(output_dir) / "processed_sequences.fasta" if output_dir else None
+
+    stats: dict[str, Any] = preprocessor.preprocess_file(
+        input_path=input_path, output_path=output_path, file_format="auto"
+    )
 
     # Save processing statistics
-    stats_file = Path(config["output"]["output_dir"]) / "preprocessing_stats.json"
-    with open(stats_file, "w") as f:
-        json.dump(stats, f, indent=2)
+    if output_dir:
+        stats_file = Path(output_dir) / "preprocessing_stats.json"
+        with open(stats_file, "w") as f:
+            json.dump(stats, f, indent=2)
 
-    logger.info(f"Preprocessing completed. Statistics saved to: {stats_file}")
+        logger.info(f"Preprocessing completed. Statistics saved to: {stats_file}")
 
     return stats
 
@@ -367,7 +391,7 @@ def print_summary(stats: dict[str, Any]) -> None:
         print(f"\nProcessing Time: {stats['processing_time']:.2f} seconds")
 
 
-def main():
+def main() -> None:
     """Main preprocessing function."""
     parser = create_parser()
     args = parser.parse_args()

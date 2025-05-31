@@ -40,7 +40,7 @@ def create_sample_genomic_datasets(num_samples_per_task: int = 1000) -> dict[str
     logger.info("Creating sample genomic datasets...")
 
     # Initialize tokenizer
-    tokenizer = GenomicTokenizer(sequence_type="dna", k=1)
+    GenomicTokenizer(sequence_type="dna", k=1)
 
     datasets = {}
 
@@ -49,7 +49,7 @@ def create_sample_genomic_datasets(num_samples_per_task: int = 1000) -> dict[str
     promoter_sequences = []
     promoter_labels = []
 
-    for i in range(num_samples_per_task):
+    for _i in range(num_samples_per_task):
         # Generate random DNA sequence
         length = np.random.randint(200, 1000)
         nucleotides = ["A", "C", "G", "T"]
@@ -76,7 +76,7 @@ def create_sample_genomic_datasets(num_samples_per_task: int = 1000) -> dict[str
     gc_sequences = []
     gc_labels = []
 
-    for i in range(num_samples_per_task):
+    for _i in range(num_samples_per_task):
         length = np.random.randint(500, 2000)
         # Create sequences with varying GC content
         gc_content = np.random.uniform(0.2, 0.8)
@@ -106,7 +106,9 @@ def create_sample_genomic_datasets(num_samples_per_task: int = 1000) -> dict[str
     splice_sequences = []
     splice_labels = []
 
-    for i in range(num_samples_per_task // 2):  # Fewer samples for token classification
+    for _i in range(
+        num_samples_per_task // 2
+    ):  # Fewer samples for token classification
         length = np.random.randint(1000, 4000)
         nucleotides = ["A", "C", "G", "T"]
         sequence = "".join(np.random.choice(nucleotides, length))
@@ -134,7 +136,7 @@ def create_sample_genomic_datasets(num_samples_per_task: int = 1000) -> dict[str
     logger.info("Creating sequence generation dataset...")
     generation_sequences = []
 
-    for i in range(num_samples_per_task):
+    for _i in range(num_samples_per_task):
         length = np.random.randint(100, 500)
         nucleotides = ["A", "C", "G", "T"]
         sequence = "".join(np.random.choice(nucleotides, length))
@@ -263,17 +265,17 @@ def run_comprehensive_benchmark(
         model_results = {}
 
         # Model factory function
-        def model_factory(config_dict):
+        def model_factory(config_dict, base_config=model_config):
             # Determine model type based on task
             if "num_labels" in config_dict:
                 if config_dict.get("task_type") == "token_classification":
-                    return HyenaGLTForTokenClassification(model_config)
+                    return HyenaGLTForTokenClassification(base_config)
                 elif config_dict.get("task_type") == "generation":
-                    return HyenaGLTForSequenceGeneration(model_config)
+                    return HyenaGLTForSequenceGeneration(base_config)
                 else:
-                    return HyenaGLTForSequenceClassification(model_config)
+                    return HyenaGLTForSequenceClassification(base_config)
             else:
-                return HyenaGLTForSequenceClassification(model_config)
+                return HyenaGLTForSequenceClassification(base_config)
 
         # Run each benchmark configuration
         for benchmark_config in benchmark_configs:
@@ -401,7 +403,7 @@ def generate_benchmark_summary(results: dict[str, Any], output_dir: str) -> str:
 
             # Extract parameter info if available
             param_info = None
-            for benchmark_name, benchmark_result in model_results.items():
+            for _benchmark_name, benchmark_result in model_results.items():
                 if (
                     hasattr(benchmark_result, "results")
                     and "parameter_analysis" in benchmark_result.results
@@ -425,7 +427,7 @@ def generate_benchmark_summary(results: dict[str, Any], output_dir: str) -> str:
         # Collect task performance across models
         task_performance = {}
         for model_name, model_results in results.items():
-            for benchmark_name, benchmark_result in model_results.items():
+            for _benchmark_name, benchmark_result in model_results.items():
                 if hasattr(benchmark_result, "results"):
                     for key, value in benchmark_result.results.items():
                         if key.startswith("dataset_"):
@@ -448,7 +450,7 @@ def generate_benchmark_summary(results: dict[str, Any], output_dir: str) -> str:
 
                 # Create table
                 metrics = set()
-                for model_name, task_metrics in model_metrics.items():
+                for _model_name, task_metrics in model_metrics.items():
                     if isinstance(task_metrics, dict):
                         metrics.update(task_metrics.keys())
 
@@ -471,7 +473,7 @@ def generate_benchmark_summary(results: dict[str, Any], output_dir: str) -> str:
 
         efficiency_data = {}
         for model_name, model_results in results.items():
-            for benchmark_name, benchmark_result in model_results.items():
+            for _benchmark_name, benchmark_result in model_results.items():
                 if (
                     hasattr(benchmark_result, "results")
                     and "computational_metrics" in benchmark_result.results
@@ -582,7 +584,7 @@ def main():
 
     # Run benchmark
     try:
-        results = run_comprehensive_benchmark(
+        run_comprehensive_benchmark(
             config_path=args.config,
             output_dir=args.output_dir,
             quick_mode=args.quick_benchmark,

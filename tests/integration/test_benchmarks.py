@@ -9,7 +9,7 @@ import gc
 import os
 import tempfile
 import time
-from typing import Any, Dict, List, Tuple
+from typing import Any
 from unittest.mock import Mock, patch
 
 import matplotlib.pyplot as plt
@@ -66,7 +66,7 @@ class TestSpeedBenchmarks:
                 with torch.no_grad():
                     for _ in range(10):
                         start_time = time.perf_counter()
-                        output = benchmark_model(x)
+                        benchmark_model(x)
                         end_time = time.perf_counter()
                         times.append(end_time - start_time)
 
@@ -109,7 +109,7 @@ class TestSpeedBenchmarks:
         with torch.no_grad():
             for _ in range(20):
                 start_time = time.perf_counter()
-                output = benchmark_model(x)
+                benchmark_model(x)
                 end_time = time.perf_counter()
                 times.append(end_time - start_time)
 
@@ -143,7 +143,7 @@ class TestSpeedBenchmarks:
             with torch.no_grad():
                 for _ in range(10):
                     start_time = time.perf_counter()
-                    output = benchmark_model(x)
+                    benchmark_model(x)
                     end_time = time.perf_counter()
                     times.append(end_time - start_time)
 
@@ -183,7 +183,7 @@ class TestSpeedBenchmarks:
             with torch.no_grad():
                 for _ in range(10):
                     start_time = time.perf_counter()
-                    output = benchmark_model(x)
+                    benchmark_model(x)
                     end_time = time.perf_counter()
                     times.append(end_time - start_time)
 
@@ -245,7 +245,7 @@ class TestMemoryBenchmarks:
 
         # Clear cache
         torch.cuda.empty_cache()
-        initial_memory = torch.cuda.memory_allocated(device)
+        torch.cuda.memory_allocated(device)
 
         batch_sizes = [1, 2, 4, 8]
         seq_len = 200
@@ -258,7 +258,7 @@ class TestMemoryBenchmarks:
 
             # Forward pass
             with torch.no_grad():
-                output = memory_model(x)
+                memory_model(x)
 
             peak_memory = torch.cuda.max_memory_allocated(device)
             current_memory = torch.cuda.memory_allocated(device)
@@ -311,7 +311,7 @@ class TestMemoryBenchmarks:
                 initial_memory = torch.cuda.memory_allocated(device)
 
             with torch.no_grad():
-                output = memory_model(x)
+                memory_model(x)
 
             if torch.cuda.is_available():
                 peak_memory = torch.cuda.max_memory_allocated(device)
@@ -407,7 +407,7 @@ class TestScalabilityBenchmarks:
                 with torch.no_grad():
                     for _ in range(10):
                         start_time = time.perf_counter()
-                        output = model(x)
+                        model(x)
                         end_time = time.perf_counter()
                         times.append(end_time - start_time)
 
@@ -467,7 +467,7 @@ class TestScalabilityBenchmarks:
             with torch.no_grad():
                 for _ in range(5):
                     start_time = time.perf_counter()
-                    output = hyena_model(x)
+                    hyena_model(x)
                     end_time = time.perf_counter()
                     times.append(end_time - start_time)
 
@@ -509,7 +509,7 @@ class TestScalabilityBenchmarks:
         with torch.no_grad():
             for _ in range(10):
                 start_time = time.perf_counter()
-                output = model_single(x)
+                model_single(x)
                 torch.cuda.synchronize()
                 end_time = time.perf_counter()
                 single_times.append(end_time - start_time)
@@ -519,7 +519,7 @@ class TestScalabilityBenchmarks:
         with torch.no_grad():
             for _ in range(10):
                 start_time = time.perf_counter()
-                output = model_multi(x)
+                model_multi(x)
                 torch.cuda.synchronize()
                 end_time = time.perf_counter()
                 multi_times.append(end_time - start_time)
@@ -587,7 +587,7 @@ class TestComparativeBenchmarks:
             with torch.no_grad():
                 for _ in range(10):
                     start_time = time.perf_counter()
-                    output = hyena_glt(x)
+                    hyena_glt(x)
                     end_time = time.perf_counter()
                     times.append(end_time - start_time)
             results["hyena_glt"].append(np.mean(times))
@@ -597,7 +597,7 @@ class TestComparativeBenchmarks:
             with torch.no_grad():
                 for _ in range(10):
                     start_time = time.perf_counter()
-                    output = baseline_transformer(x)
+                    baseline_transformer(x)
                     end_time = time.perf_counter()
                     times.append(end_time - start_time)
             results["transformer"].append(np.mean(times))
@@ -621,7 +621,7 @@ class TestComparativeBenchmarks:
 
     def test_different_model_architectures(self):
         """Test different architectural configurations."""
-        base_config = TestConfig.get_small_config()
+        TestConfig.get_small_config()
 
         configurations = [
             {"name": "small", "hidden_size": 128, "num_layers": 2},
@@ -649,7 +649,7 @@ class TestComparativeBenchmarks:
             with torch.no_grad():
                 for _ in range(10):
                     start_time = time.perf_counter()
-                    output = model(x)
+                    model(x)
                     end_time = time.perf_counter()
                     times.append(end_time - start_time)
 
@@ -700,7 +700,7 @@ class TestPerformanceRegression:
         with torch.no_grad():
             for _ in range(20):
                 start_time = time.perf_counter()
-                output = model(x)
+                model(x)
                 end_time = time.perf_counter()
                 times.append(end_time - start_time)
 

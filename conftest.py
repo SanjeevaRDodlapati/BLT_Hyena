@@ -5,24 +5,24 @@ This module provides common fixtures, test utilities, and configuration
 that can be used across all test modules.
 """
 
-import pytest
-import torch
-import tempfile
 import os
-import shutil
-from pathlib import Path
-from typing import Dict, Any, Optional, Generator
+import tempfile
 from unittest.mock import MagicMock
 
+import pytest
+import torch
+
 from hyena_glt.config import HyenaGLTConfig
-from hyena_glt.model.hyena_glt import (
-    HyenaGLT, HyenaGLTForSequenceClassification,
-    HyenaGLTForTokenClassification, HyenaGLTForSequenceGeneration
-)
-from hyena_glt.data.tokenizer import DNATokenizer, ProteinTokenizer, RNATokenizer
 from hyena_glt.data.dataset import GenomicDataset
+from hyena_glt.data.tokenizer import DNATokenizer, ProteinTokenizer, RNATokenizer
+from hyena_glt.model.hyena_glt import (
+    HyenaGLT,
+    HyenaGLTForSequenceClassification,
+    HyenaGLTForSequenceGeneration,
+    HyenaGLTForTokenClassification,
+)
 from hyena_glt.training.config import TrainingConfig
-from tests.utils import TestConfig, DataGenerator
+from tests.utils import DataGenerator, TestConfig
 
 
 # Configure test environment
@@ -32,7 +32,7 @@ def pytest_configure(config):
     torch.manual_seed(42)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    
+
     # Set environment variables for testing
     os.environ['TOKENIZERS_PARALLELISM'] = 'false'
     os.environ['TRANSFORMERS_NO_ADVISORY_WARNINGS'] = 'true'
@@ -44,11 +44,11 @@ def pytest_collection_modifyitems(config, items):
         # Add slow marker to tests with 'slow' in name or taking long time
         if 'slow' in item.name.lower() or 'benchmark' in item.name.lower():
             item.add_marker(pytest.mark.slow)
-        
+
         # Add gpu marker to tests with 'gpu' or 'cuda' in name
         if 'gpu' in item.name.lower() or 'cuda' in item.name.lower():
             item.add_marker(pytest.mark.gpu)
-        
+
         # Add memory intensive marker
         if 'memory' in item.name.lower() or 'large' in item.name.lower():
             item.add_marker(pytest.mark.memory_intensive)
@@ -159,7 +159,7 @@ def rna_tokenizer():
 def sample_dna_sequences():
     """Provide sample DNA sequences for testing."""
     sequences = []
-    for i in range(10):
+    for _i in range(10):
         length = torch.randint(50, 200, (1,)).item()
         seq = DataGenerator.generate_dna_sequence(length)
         seq_str = ''.join(['ATCG'[x] for x in seq])
@@ -172,7 +172,7 @@ def sample_protein_sequences():
     """Provide sample protein sequences for testing."""
     sequences = []
     aa_chars = "ACDEFGHIKLMNPQRSTVWY"
-    for i in range(10):
+    for _i in range(10):
         length = torch.randint(30, 100, (1,)).item()
         seq = DataGenerator.generate_protein_sequence(length, vocab_size=20)
         seq_str = ''.join([aa_chars[x] for x in seq])
@@ -190,7 +190,7 @@ def sample_labels():
 def sample_token_labels():
     """Provide sample token-level labels."""
     labels = []
-    for i in range(10):
+    for _i in range(10):
         length = torch.randint(50, 200, (1,)).item()
         token_labels = torch.randint(0, 5, (length,)).tolist()
         labels.append(token_labels)
@@ -271,19 +271,18 @@ def temp_model_dir():
 def mock_wandb():
     """Mock wandb for testing without actual logging."""
     import sys
-    from unittest.mock import MagicMock
-    
+
     # Create mock wandb module
     mock_wandb_module = MagicMock()
     sys.modules['wandb'] = mock_wandb_module
-    
+
     # Mock key functions
     mock_wandb_module.init.return_value = MagicMock()
     mock_wandb_module.log = MagicMock()
     mock_wandb_module.finish = MagicMock()
-    
+
     yield mock_wandb_module
-    
+
     # Clean up
     if 'wandb' in sys.modules:
         del sys.modules['wandb']
@@ -293,14 +292,13 @@ def mock_wandb():
 def mock_tensorboard():
     """Mock tensorboard for testing without actual logging."""
     import sys
-    from unittest.mock import MagicMock
-    
+
     # Create mock tensorboard module
     mock_tb = MagicMock()
     sys.modules['torch.utils.tensorboard'] = mock_tb
-    
+
     yield mock_tb
-    
+
     # Clean up
     if 'torch.utils.tensorboard' in sys.modules:
         del sys.modules['torch.utils.tensorboard']
@@ -313,30 +311,30 @@ def benchmark_runner():
     class BenchmarkRunner:
         def __init__(self):
             self.results = {}
-        
+
         def run_benchmark(self, name: str, func, *args, **kwargs):
             """Run a benchmark and record results."""
             import time
-            
+
             # Warmup
             for _ in range(3):
                 func(*args, **kwargs)
-            
+
             # Actual benchmark
             start_time = time.time()
             result = func(*args, **kwargs)
             end_time = time.time()
-            
+
             self.results[name] = {
                 'time': end_time - start_time,
                 'result': result
             }
-            
+
             return result
-        
+
         def get_results(self):
             return self.results
-    
+
     return BenchmarkRunner()
 
 
@@ -385,7 +383,7 @@ def skip_if_no_internet():
     try:
         urllib.request.urlopen('http://google.com', timeout=1)
         return False
-    except:
+    except Exception:
         return pytest.mark.skip(reason="Internet not available")
 
 
@@ -435,7 +433,7 @@ def assert_model_output_shape(output, expected_batch_size, expected_seq_len=None
         logits = output.logits
     else:
         logits = output
-    
+
     assert logits.shape[0] == expected_batch_size
     if expected_seq_len is not None:
         assert logits.shape[1] == expected_seq_len

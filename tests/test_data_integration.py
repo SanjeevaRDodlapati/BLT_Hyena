@@ -55,7 +55,7 @@ class TestDataIntegration:
     def test_tokenizer_dataset_integration(self):
         """Test tokenizer integration with dataset."""
         sequences, labels = self.get_sample_dna_sequences()
-        config = self.get_config()
+        self.get_config()
 
         # Initialize tokenizer
         tokenizer = DNATokenizer(vocab_size=6, sequence_length=32)
@@ -103,7 +103,7 @@ class TestDataIntegration:
     def test_collator_integration(self):
         """Test collator integration with dataset."""
         sequences, labels = self.get_sample_dna_sequences()
-        config = self.get_config()
+        self.get_config()
 
         # Setup components
         tokenizer = DNATokenizer(vocab_size=6, sequence_length=32)
@@ -135,7 +135,7 @@ class TestDataIntegration:
 
         # Simulate multi-modal samples
         samples = []
-        for i, (seq, label) in enumerate(zip(sequences[:2], labels[:2], strict=False)):
+        for _i, (seq, label) in enumerate(zip(sequences[:2], labels[:2], strict=False)):
             # Tokenize DNA sequence
             dna_tokens = dna_tokenizer.encode(seq, max_length=32)
 
@@ -165,7 +165,7 @@ class TestDataIntegration:
     def test_dataloader_integration(self):
         """Test data loader integration."""
         sequences, labels = self.get_sample_dna_sequences()
-        config = self.get_config()
+        self.get_config()
 
         # Setup components
         tokenizer = DNATokenizer(vocab_size=6, sequence_length=32)
@@ -317,7 +317,7 @@ class TestDataIntegration:
         sequences, labels = sample_dna_sequences
 
         # 1. Preprocessing
-        preprocessor = GenomicPreprocessor(sequence_type="dna", quality_threshold=0.8)
+        GenomicPreprocessor(sequence_type="dna", quality_threshold=0.8)
 
         # 2. Tokenization
         tokenizer = DNATokenizer(vocab_size=6, sequence_length=32)

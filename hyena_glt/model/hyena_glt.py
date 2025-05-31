@@ -236,7 +236,7 @@ class HyenaGLT(HyenaGLTPretrainedModel):
         # Main Hyena-GLT layers
         all_hidden_states = [] if output_hidden_states else None
 
-        for i, layer in enumerate(self.layers):
+        for _i, layer in enumerate(self.layers):
             if output_hidden_states:
                 all_hidden_states.append(hidden_states)
 

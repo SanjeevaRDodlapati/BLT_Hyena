@@ -316,9 +316,7 @@ def main():
     np.random.seed(args.seed)
 
     # Run demo
-    results = run_complete_demo(
-        seq_length=args.sequence_length, batch_size=args.batch_size
-    )
+    run_complete_demo(seq_length=args.sequence_length, batch_size=args.batch_size)
 
     print("\n📊 Demo completed successfully!")
     print("All framework components verified and operational.")

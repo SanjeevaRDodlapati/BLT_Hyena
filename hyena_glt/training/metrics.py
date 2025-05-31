@@ -1,6 +1,7 @@
 """Comprehensive metrics for genomic sequence modeling."""
 
 import warnings
+from typing import Any
 
 import numpy as np
 import torch
@@ -20,12 +21,12 @@ class GenomicMetrics:
         self.task_type = task_type
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset all metrics."""
-        self.predictions = []
-        self.targets = []
-        self.sequences = []
-        self.metadata = []
+        self.predictions: list[torch.Tensor] = []
+        self.targets: list[torch.Tensor] = []
+        self.sequences: list[str] = []
+        self.metadata: list[dict] = []
 
     def update(
         self,
@@ -33,7 +34,7 @@ class GenomicMetrics:
         targets: torch.Tensor,
         sequences: list[str] | None = None,
         metadata: dict | None = None,
-    ):
+    ) -> None:
         """Update metrics with new predictions and targets."""
         # Convert to CPU and numpy
         if isinstance(predictions, torch.Tensor):
@@ -107,7 +108,7 @@ class GenomicMetrics:
             metrics["recall_macro"] = recall_macro
             metrics["f1_macro"] = f1_macro
         except Exception as e:
-            warnings.warn(f"Error computing precision/recall/F1: {e}")
+            warnings.warn(f"Error computing precision/recall/F1: {e}", stacklevel=2)
 
         # Matthews Correlation Coefficient
         try:
@@ -129,7 +130,7 @@ class GenomicMetrics:
                         targets, probabilities.numpy(), multi_class="ovr"
                     )
         except Exception as e:
-            warnings.warn(f"Error computing AUC-ROC: {e}")
+            warnings.warn(f"Error computing AUC-ROC: {e}", stacklevel=2)
 
         # Per-class metrics
         try:
@@ -284,7 +285,7 @@ class GenomicMetrics:
 
             return np.mean(bleu_scores) if bleu_scores else 0.0
         except ImportError:
-            warnings.warn("NLTK not available for BLEU score computation")
+            warnings.warn("NLTK not available for BLEU score computation", stacklevel=2)
             return 0.0
 
     def _compute_sequence_similarity(
@@ -309,10 +310,10 @@ class GenomicMetrics:
                 edit_distances.append(edit_dist)
 
             if edit_distances:
-                avg_edit_distance = np.mean(edit_distances)
+                avg_edit_distance = float(np.mean(edit_distances))
                 max_len = max(len(predictions[0]), len(targets[0]))
                 normalized_edit_distance = (
-                    avg_edit_distance / max_len if max_len > 0 else 0
+                    avg_edit_distance / max_len if max_len > 0 else 0.0
                 )
 
                 metrics["edit_distance"] = avg_edit_distance
@@ -403,8 +404,12 @@ class MultiTaskMetrics:
         self.task_metrics = {name: GenomicMetrics() for name in task_names}
 
     def update(
-        self, task_name: str, predictions: torch.Tensor, targets: torch.Tensor, **kwargs
-    ):
+        self,
+        task_name: str,
+        predictions: torch.Tensor,
+        targets: torch.Tensor,
+        **kwargs: Any,
+    ) -> None:
         """Update metrics for a specific task."""
         if task_name in self.task_metrics:
             self.task_metrics[task_name].update(predictions, targets, **kwargs)
@@ -422,7 +427,7 @@ class MultiTaskMetrics:
         aggregated = {}
 
         # Collect all metric names
-        all_metric_names = set()
+        all_metric_names: set[str] = set()
         for task_metrics in all_metrics.values():
             all_metric_names.update(task_metrics.keys())
 
@@ -434,14 +439,14 @@ class MultiTaskMetrics:
                     values.append(all_metrics[task_name][metric_name])
 
             if values:
-                aggregated[f"avg_{metric_name}"] = np.mean(values)
-                aggregated[f"std_{metric_name}"] = np.std(values)
-                aggregated[f"min_{metric_name}"] = np.min(values)
-                aggregated[f"max_{metric_name}"] = np.max(values)
+                aggregated[f"avg_{metric_name}"] = float(np.mean(values))
+                aggregated[f"std_{metric_name}"] = float(np.std(values))
+                aggregated[f"min_{metric_name}"] = float(np.min(values))
+                aggregated[f"max_{metric_name}"] = float(np.max(values))
 
         return aggregated
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset all task metrics."""
         for task_metric in self.task_metrics.values():
             task_metric.reset()

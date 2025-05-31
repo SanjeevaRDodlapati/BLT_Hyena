@@ -11,7 +11,7 @@ Version: 1.1.0
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -127,7 +127,7 @@ class AttentionAnalyzer:
             sparsity = (attention < 0.1).float().mean().item()
 
             # Diagonal dominance (how much attention focuses on nearby positions)
-            seq_len = attention.shape[-1]
+            attention.shape[-1]
             diagonal_weights = torch.diagonal(attention, dim1=-2, dim2=-1).mean().item()
 
             # Maximum attention value
@@ -579,7 +579,6 @@ class ModelInterpreter:
 def example_interpretability_analysis():
     """Example usage of interpretability tools."""
     from hyena_glt.config import HyenaGLTConfig
-    from hyena_glt.data import DNATokenizer
     from hyena_glt.model import HyenaGLTForSequenceClassification
 
     # Setup

@@ -21,12 +21,24 @@ from sklearn.metrics import (
 )
 
 try:
-    from Bio.Seq import Seq
-    from Bio.SeqUtils import GC, molecular_weight
+    from Bio.SeqUtils import molecular_weight
 
     HAS_BIOPYTHON = True
+
+    def calculate_gc_content(sequence: str) -> float:
+        """Calculate GC content of a DNA sequence."""
+        sequence = sequence.upper()
+        gc_count = sequence.count("G") + sequence.count("C")
+        return gc_count / len(sequence) if len(sequence) > 0 else 0.0
+
 except ImportError:
     HAS_BIOPYTHON = False
+
+    def calculate_gc_content(sequence: str) -> float:
+        """Fallback GC content calculation."""
+        sequence = sequence.upper()
+        gc_count = sequence.count("G") + sequence.count("C")
+        return gc_count / len(sequence) if len(sequence) > 0 else 0.0
 
 
 @dataclass
@@ -47,11 +59,13 @@ class BaseMetric:
         self.name = name
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset metric state."""
         pass
 
-    def update(self, predictions: torch.Tensor, targets: torch.Tensor, **kwargs):
+    def update(
+        self, predictions: torch.Tensor, targets: torch.Tensor, **kwargs: Any
+    ) -> None:
         """Update metric with new predictions and targets."""
         raise NotImplementedError
 
@@ -67,11 +81,11 @@ class ClassificationMetrics(BaseMetric):
         super().__init__("classification")
         self.num_classes = num_classes
         self.average = average
-        self.predictions = []
-        self.targets = []
-        self.probabilities = []
+        self.predictions: list[int] = []
+        self.targets: list[int] = []
+        self.probabilities: list[np.ndarray] = []
 
-    def reset(self):
+    def reset(self) -> None:
         self.predictions = []
         self.targets = []
         self.probabilities = []
@@ -80,8 +94,8 @@ class ClassificationMetrics(BaseMetric):
         self,
         predictions: torch.Tensor,
         targets: torch.Tensor,
-        probabilities: torch.Tensor | None = None,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """
         Update with batch predictions.
 
@@ -90,6 +104,8 @@ class ClassificationMetrics(BaseMetric):
             targets: True class indices [batch_size] or [batch_size, seq_len]
             probabilities: Class probabilities [batch_size, num_classes] or [batch_size, seq_len, num_classes]
         """
+        probabilities = kwargs.get("probabilities")
+
         # Handle sequence-level predictions
         if predictions.dim() > 1:
             predictions = predictions.flatten()
@@ -144,7 +160,7 @@ class ClassificationMetrics(BaseMetric):
                         targets, probabilities, multi_class="ovr", average=self.average
                     )
             except ValueError as e:
-                warnings.warn(f"Could not compute AUC metrics: {e}")
+                warnings.warn(f"Could not compute AUC metrics: {e}", stacklevel=2)
 
         return metrics
 
@@ -152,16 +168,18 @@ class ClassificationMetrics(BaseMetric):
 class RegressionMetrics(BaseMetric):
     """Regression evaluation metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("regression")
+        self.predictions: list[float] = []
+        self.targets: list[float] = []
+
+    def reset(self) -> None:
         self.predictions = []
         self.targets = []
 
-    def reset(self):
-        self.predictions = []
-        self.targets = []
-
-    def update(self, predictions: torch.Tensor, targets: torch.Tensor):
+    def update(
+        self, predictions: torch.Tensor, targets: torch.Tensor, **kwargs: Any
+    ) -> None:
         self.predictions.extend(predictions.flatten().cpu().numpy())
         self.targets.extend(targets.flatten().cpu().numpy())
 
@@ -200,26 +218,30 @@ class RegressionMetrics(BaseMetric):
 class PerplexityMetric(BaseMetric):
     """Perplexity metric for language modeling."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("perplexity")
         self.total_loss = 0.0
         self.total_tokens = 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.total_loss = 0.0
         self.total_tokens = 0
 
     def update(
-        self, logits: torch.Tensor, targets: torch.Tensor, ignore_index: int = -100
-    ):
+        self, predictions: torch.Tensor, targets: torch.Tensor, **kwargs: Any
+    ) -> None:
         """
         Update perplexity with batch.
 
         Args:
-            logits: Model logits [batch_size, seq_len, vocab_size]
+            predictions: Model logits [batch_size, seq_len, vocab_size] (or use 'logits' in kwargs)
             targets: Target tokens [batch_size, seq_len]
-            ignore_index: Index to ignore in loss computation
+            **kwargs: Additional arguments including 'logits' and 'ignore_index'
         """
+        # Accept both 'predictions' and 'logits' for flexibility
+        logits = kwargs.get("logits", predictions)
+        ignore_index = kwargs.get("ignore_index", -100)
+
         # Flatten tensors
         logits = logits.view(-1, logits.size(-1))
         targets = targets.view(-1)
@@ -251,21 +273,26 @@ class GenomicSequenceMetrics(BaseMetric):
     def __init__(self, sequence_type: str = "dna"):
         super().__init__("genomic_sequence")
         self.sequence_type = sequence_type.lower()
+        self.generated_sequences: list[str] = []
+        self.reference_sequences: list[str] = []
+
+    def reset(self) -> None:
         self.generated_sequences = []
         self.reference_sequences = []
 
-    def reset(self):
-        self.generated_sequences = []
-        self.reference_sequences = []
-
-    def update(self, generated: list[str], reference: list[str]):
+    def update(
+        self, predictions: torch.Tensor, targets: torch.Tensor, **kwargs: Any
+    ) -> None:
         """
         Update with generated and reference sequences.
 
         Args:
-            generated: List of generated sequences
-            reference: List of reference sequences
+            predictions: Not used directly (sequences expected in kwargs)
+            targets: Not used directly (sequences expected in kwargs)
+            **kwargs: Should contain 'generated' and 'reference' lists of sequences
         """
+        generated = kwargs.get("generated", [])
+        reference = kwargs.get("reference", [])
         self.generated_sequences.extend(generated)
         self.reference_sequences.extend(reference)
 
@@ -281,9 +308,9 @@ class GenomicSequenceMetrics(BaseMetric):
 
         metrics.update(
             {
-                "avg_length_generated": np.mean(gen_lengths),
-                "avg_length_reference": np.mean(ref_lengths),
-                "length_correlation": (
+                "avg_length_generated": float(np.mean(gen_lengths)),
+                "avg_length_reference": float(np.mean(ref_lengths)),
+                "length_correlation": float(
                     pearsonr(gen_lengths, ref_lengths)[0]
                     if len(gen_lengths) == len(ref_lengths)
                     else 0
@@ -293,15 +320,19 @@ class GenomicSequenceMetrics(BaseMetric):
 
         # DNA/RNA specific metrics
         if self.sequence_type in ["dna", "rna"]:
-            gen_gc = [GC(seq) for seq in self.generated_sequences if seq]
-            ref_gc = [GC(seq) for seq in self.reference_sequences if seq]
+            gen_gc = [
+                calculate_gc_content(seq) for seq in self.generated_sequences if seq
+            ]
+            ref_gc = [
+                calculate_gc_content(seq) for seq in self.reference_sequences if seq
+            ]
 
             if gen_gc and ref_gc:
                 metrics.update(
                     {
-                        "avg_gc_generated": np.mean(gen_gc),
-                        "avg_gc_reference": np.mean(ref_gc),
-                        "gc_correlation": (
+                        "avg_gc_generated": float(np.mean(gen_gc)),
+                        "avg_gc_reference": float(np.mean(ref_gc)),
+                        "gc_correlation": float(
                             pearsonr(gen_gc, ref_gc)[0]
                             if len(gen_gc) == len(ref_gc)
                             else 0
@@ -317,21 +348,21 @@ class GenomicSequenceMetrics(BaseMetric):
             for seq in self.generated_sequences:
                 try:
                     gen_mw.append(molecular_weight(seq, seq_type="protein"))
-                except:
+                except Exception:
                     pass
 
             for seq in self.reference_sequences:
                 try:
                     ref_mw.append(molecular_weight(seq, seq_type="protein"))
-                except:
+                except Exception:
                     pass
 
             if gen_mw and ref_mw:
                 metrics.update(
                     {
-                        "avg_mw_generated": np.mean(gen_mw),
-                        "avg_mw_reference": np.mean(ref_mw),
-                        "mw_correlation": (
+                        "avg_mw_generated": float(np.mean(gen_mw)),
+                        "avg_mw_reference": float(np.mean(ref_mw)),
+                        "mw_correlation": float(
                             pearsonr(gen_mw, ref_mw)[0]
                             if len(gen_mw) == len(ref_mw)
                             else 0
@@ -347,18 +378,20 @@ class GenomicSequenceMetrics(BaseMetric):
             ):
                 edit_distances.append(self._edit_distance(gen, ref))
 
-            metrics["avg_edit_distance"] = np.mean(edit_distances)
-            metrics["normalized_edit_distance"] = np.mean(
-                [
-                    dist / max(len(gen), len(ref))
-                    for dist, gen, ref in zip(
-                        edit_distances,
-                        self.generated_sequences,
-                        self.reference_sequences,
-                        strict=False,
-                    )
-                    if max(len(gen), len(ref)) > 0
-                ]
+            metrics["avg_edit_distance"] = float(np.mean(edit_distances))
+            metrics["normalized_edit_distance"] = float(
+                np.mean(
+                    [
+                        dist / max(len(gen), len(ref))
+                        for dist, gen, ref in zip(
+                            edit_distances,
+                            self.generated_sequences,
+                            self.reference_sequences,
+                            strict=False,
+                        )
+                        if max(len(gen), len(ref)) > 0
+                    ]
+                )
             )
 
         return metrics
@@ -387,32 +420,34 @@ class GenomicSequenceMetrics(BaseMetric):
 class ComputationalMetrics(BaseMetric):
     """Computational efficiency metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("computational")
-        self.inference_times = []
-        self.memory_usage = []
-        self.flops_count = []
+        self.inference_times: list[float] = []
+        self.memory_usage: list[float] = []
+        self.flops_count: list[int] = []
 
-    def reset(self):
+    def reset(self) -> None:
         self.inference_times = []
         self.memory_usage = []
         self.flops_count = []
 
     def update(
-        self,
-        inference_time: float,
-        memory_mb: float | None = None,
-        flops: int | None = None,
-    ):
+        self, predictions: torch.Tensor, targets: torch.Tensor, **kwargs: Any
+    ) -> None:
         """
         Update computational metrics.
 
         Args:
-            inference_time: Inference time in seconds
-            memory_mb: Memory usage in MB
-            flops: Number of floating point operations
+            predictions: Not used directly
+            targets: Not used directly
+            **kwargs: Should contain 'inference_time', 'memory_mb', and/or 'flops'
         """
-        self.inference_times.append(inference_time)
+        inference_time = kwargs.get("inference_time")
+        memory_mb = kwargs.get("memory_mb")
+        flops = kwargs.get("flops")
+
+        if inference_time is not None:
+            self.inference_times.append(inference_time)
         if memory_mb is not None:
             self.memory_usage.append(memory_mb)
         if flops is not None:
@@ -424,26 +459,28 @@ class ComputationalMetrics(BaseMetric):
         if self.inference_times:
             metrics.update(
                 {
-                    "avg_inference_time": np.mean(self.inference_times),
-                    "std_inference_time": np.std(self.inference_times),
-                    "median_inference_time": np.median(self.inference_times),
-                    "throughput_samples_per_sec": 1.0 / np.mean(self.inference_times),
+                    "avg_inference_time": float(np.mean(self.inference_times)),
+                    "std_inference_time": float(np.std(self.inference_times)),
+                    "median_inference_time": float(np.median(self.inference_times)),
+                    "throughput_samples_per_sec": float(
+                        1.0 / np.mean(self.inference_times)
+                    ),
                 }
             )
 
         if self.memory_usage:
             metrics.update(
                 {
-                    "avg_memory_mb": np.mean(self.memory_usage),
-                    "peak_memory_mb": np.max(self.memory_usage),
+                    "avg_memory_mb": float(np.mean(self.memory_usage)),
+                    "peak_memory_mb": float(np.max(self.memory_usage)),
                 }
             )
 
         if self.flops_count:
             metrics.update(
                 {
-                    "avg_flops": np.mean(self.flops_count),
-                    "total_flops": np.sum(self.flops_count),
+                    "avg_flops": float(np.mean(self.flops_count)),
+                    "total_flops": float(np.sum(self.flops_count)),
                 }
             )
 
@@ -461,7 +498,7 @@ class MultiTaskEvaluator:
             task_configs: Dictionary mapping task names to their configurations
         """
         self.task_configs = task_configs
-        self.task_metrics = {}
+        self.task_metrics: dict[str, BaseMetric] = {}
 
         for task_name, config in task_configs.items():
             task_type = config.get("type", "classification")
@@ -480,12 +517,12 @@ class MultiTaskEvaluator:
                     sequence_type=config.get("sequence_type", "dna")
                 )
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset all task metrics."""
         for metric in self.task_metrics.values():
             metric.reset()
 
-    def update(self, task_name: str, **kwargs):
+    def update(self, task_name: str, **kwargs: Any) -> None:
         """Update metrics for a specific task."""
         if task_name in self.task_metrics:
             self.task_metrics[task_name].update(**kwargs)
@@ -508,7 +545,7 @@ class MultiTaskEvaluator:
         summary = {}
 
         # Aggregate metrics across tasks
-        metric_names = set()
+        metric_names: set[str] = set()
         for result in all_results.values():
             metric_names.update(result.metrics.keys())
 
@@ -519,8 +556,8 @@ class MultiTaskEvaluator:
                     values.append(result.metrics[metric_name])
 
             if values:
-                summary[f"avg_{metric_name}"] = np.mean(values)
-                summary[f"std_{metric_name}"] = np.std(values)
+                summary[f"avg_{metric_name}"] = float(np.mean(values))
+                summary[f"std_{metric_name}"] = float(np.std(values))
 
         return summary
 
@@ -538,7 +575,7 @@ class BenchmarkEvaluator:
             self.evaluators[task_name] = MultiTaskEvaluator({task_name: task_config})
 
     def evaluate_model(
-        self, model, data_loader, device: str = "cuda"
+        self, model: Any, data_loader: Any, device: str = "cuda"
     ) -> dict[str, Any]:
         """
         Comprehensive model evaluation.
@@ -552,7 +589,7 @@ class BenchmarkEvaluator:
             Dictionary containing all evaluation results
         """
         model.eval()
-        results = {
+        results: dict[str, Any] = {
             "task_results": {},
             "computational_metrics": {},
             "summary_metrics": {},
@@ -564,7 +601,7 @@ class BenchmarkEvaluator:
         self.computational_metrics.reset()
 
         with torch.no_grad():
-            for batch_idx, batch in enumerate(data_loader):
+            for _batch_idx, batch in enumerate(data_loader):
                 start_time = torch.cuda.Event(enable_timing=True)
                 end_time = torch.cuda.Event(enable_timing=True)
 
@@ -590,9 +627,21 @@ class BenchmarkEvaluator:
                 # Memory usage
                 if torch.cuda.is_available():
                     memory_mb = torch.cuda.max_memory_allocated(device) / 1024 / 1024
-                    self.computational_metrics.update(inference_time, memory_mb)
+                    # Create dummy tensors for interface compatibility
+                    dummy_predictions = torch.tensor(0.0)
+                    dummy_targets = torch.tensor(0.0)
+                    self.computational_metrics.update(
+                        dummy_predictions,
+                        dummy_targets,
+                        inference_time=inference_time,
+                        memory_mb=memory_mb,
+                    )
                 else:
-                    self.computational_metrics.update(inference_time)
+                    dummy_predictions = torch.tensor(0.0)
+                    dummy_targets = torch.tensor(0.0)
+                    self.computational_metrics.update(
+                        dummy_predictions, dummy_targets, inference_time=inference_time
+                    )
 
                 # Update task-specific metrics
                 for task_name, evaluator in self.evaluators.items():
@@ -621,7 +670,7 @@ class BenchmarkEvaluator:
 
     def _update_task_metrics(
         self, task_name: str, evaluator: MultiTaskEvaluator, outputs: dict, batch: dict
-    ):
+    ) -> None:
         """Update metrics for a specific task."""
         task_config = self.config["tasks"][task_name]
         task_type = task_config.get("type", "classification")
