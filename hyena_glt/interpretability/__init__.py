@@ -14,7 +14,7 @@ import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from typing import Dict, List, Optional, Any, Tuple, Union
+from typing import Dict, List, Optional, Any, Tuple, Union, Union
 from pathlib import Path
 import logging
 from dataclasses import dataclass
@@ -359,24 +359,37 @@ class ModelInterpreter:
     
     def analyze_sequence(
         self,
-        sequence: str,
+        sequence: Union[str, torch.Tensor],
         target_class: Optional[int] = None,
         detailed: bool = True
     ) -> Dict[str, Any]:
         """Comprehensive analysis of a single sequence."""
-        self.logger.info(f"Analyzing sequence of length {len(sequence)}")
         
-        # Tokenize sequence
-        if self.tokenizer:
-            tokens = self.tokenizer.encode(sequence, padding=True, truncation=True)
-            input_ids = torch.tensor([tokens['input_ids']])
-            attention_mask = torch.tensor([tokens['attention_mask']])
-        else:
-            # Fallback: assume sequence is already tokenized
-            input_ids = torch.tensor([[ord(c) for c in sequence[:512]]])
+        # Handle both string and tensor inputs
+        if isinstance(sequence, torch.Tensor):
+            # If input is already a tensor, use it directly
+            if sequence.dim() == 1:
+                input_ids = sequence.unsqueeze(0)  # Add batch dimension
+            else:
+                input_ids = sequence
             attention_mask = torch.ones_like(input_ids)
+            seq_length = input_ids.size(-1)
+            sequence_str = f"<tensor_sequence_length_{seq_length}>"
+        else:
+            # String input - tokenize it
+            self.logger.info(f"Analyzing sequence of length {len(sequence)}")
+            if self.tokenizer:
+                tokens = self.tokenizer.encode(sequence, padding=True, truncation=True)
+                input_ids = torch.tensor([tokens['input_ids']])
+                attention_mask = torch.tensor([tokens['attention_mask']])
+            else:
+                # Fallback: assume sequence is character-level
+                input_ids = torch.tensor([[ord(c) for c in sequence[:512]]])
+                attention_mask = torch.ones_like(input_ids)
+            seq_length = len(sequence)
+            sequence_str = sequence
         
-        results = {'sequence': sequence, 'length': len(sequence)}
+        results = {'sequence': sequence_str, 'length': seq_length}
         
         # Attention analysis
         if self.config.analyze_attention:
