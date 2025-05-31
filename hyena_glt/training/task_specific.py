@@ -10,6 +10,9 @@ import json
 import logging
 import sys
 from pathlib import Path
+from typing import Any
+
+import torch
 
 from ..data.dataset import (
     SequenceClassificationDataset,
@@ -23,9 +26,150 @@ from .finetuning import (
     finetune_for_sequence_classification,
     finetune_for_token_classification,
 )
+from .mixed_precision import MixedPrecisionConfig, PrecisionMode, create_mixed_precision_manager
 from .pretrained import PretrainedModelManager
 
 logger = logging.getLogger(__name__)
+
+
+def get_optimal_precision_config(task_type: str, model_size: str = "medium", hardware_info: dict = None) -> MixedPrecisionConfig:
+    """
+    Get optimal mixed precision configuration for specific genomic tasks.
+    
+    Args:
+        task_type: Type of genomic task (genome_annotation, variant_effect, etc.)
+        model_size: Size of the model (small, medium, large)
+        hardware_info: Dict containing GPU info (compute_capability, memory_gb, etc.)
+    
+    Returns:
+        Optimized MixedPrecisionConfig for the task
+    """
+    if hardware_info is None:
+        hardware_info = {}
+        if torch.cuda.is_available():
+            hardware_info['compute_capability'] = torch.cuda.get_device_capability()[0]
+            hardware_info['memory_gb'] = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+    
+    # Base configuration
+    base_config = {
+        'dynamic_loss_scale': True,
+        'monitor_overflow': True,
+        'log_precision_stats': True,
+        'precision_check_interval': 100,
+    }
+    
+    if task_type == "genome_annotation":
+        # Long sequences need careful precision management
+        if hardware_info.get('compute_capability', 0) >= 8.0:
+            # Use FP8 on H100/A100 for maximum efficiency
+            config = MixedPrecisionConfig(
+                mode=PrecisionMode.FP8,
+                gradient_clipping=1.0,
+                gradient_checkpointing=True,
+                fp8_format="E4M3",
+                **base_config
+            )
+        else:
+            # Adaptive precision for older hardware
+            config = MixedPrecisionConfig(
+                mode=PrecisionMode.ADAPTIVE,
+                gradient_clipping=1.0,
+                gradient_checkpointing=True,
+                **base_config
+            )
+    
+    elif task_type == "variant_effect":
+        # Stability is crucial for variant effect prediction
+        config = MixedPrecisionConfig(
+            mode=PrecisionMode.BF16,
+            gradient_clipping=0.5,
+            growth_interval=1000,  # Conservative scaling
+            **base_config
+        )
+    
+    elif task_type == "protein_function":
+        # Protein sequences can be very long
+        if hardware_info.get('memory_gb', 0) > 32 and hardware_info.get('compute_capability', 0) >= 8.0:
+            config = MixedPrecisionConfig(
+                mode=PrecisionMode.FP8,
+                gradient_checkpointing=True,
+                cpu_offload=model_size == "large",
+                fp8_format="E4M3",
+                **base_config
+            )
+        else:
+            config = MixedPrecisionConfig(
+                mode=PrecisionMode.BF16,
+                gradient_checkpointing=True,
+                cpu_offload=model_size == "large",
+                **base_config
+            )
+    
+    elif task_type == "generation":
+        # Memory optimization is key for generation
+        config = MixedPrecisionConfig(
+            mode=PrecisionMode.FP16,
+            gradient_checkpointing=True,
+            gradient_clipping=2.0,  # Higher threshold for generation
+            cpu_offload=True,
+            growth_interval=500,  # Frequent scaling updates
+            **base_config
+        )
+    
+    else:
+        # Default configuration
+        config = MixedPrecisionConfig(
+            mode=PrecisionMode.FP16,
+            **base_config
+        )
+    
+    return config
+
+
+def apply_task_specific_optimizations(config: Any, task_type: str, mixed_precision_config: MixedPrecisionConfig) -> Any:
+    """Apply task-specific optimizations to training configuration."""
+    
+    # Set mixed precision flags based on the precision mode
+    config.fp16 = mixed_precision_config.mode in [PrecisionMode.FP16, PrecisionMode.MIXED_FP16, PrecisionMode.ADAPTIVE]
+    config.bf16 = mixed_precision_config.mode in [PrecisionMode.BF16, PrecisionMode.MIXED_BF16]
+    config.fp8 = mixed_precision_config.mode == PrecisionMode.FP8
+    
+    # Set other precision-related flags
+    config.dynamic_loss_scaling = mixed_precision_config.dynamic_loss_scale
+    config.gradient_clipping = mixed_precision_config.gradient_clipping
+    config.gradient_checkpointing = mixed_precision_config.gradient_checkpointing
+    config.precision_monitoring = mixed_precision_config.monitor_overflow
+    
+    # Task-specific optimizations
+    if task_type == "genome_annotation":
+        # Optimize for long sequence processing
+        config.dataloader_num_workers = min(8, config.batch_size)
+        config.save_strategy = "steps"
+        config.save_steps = 500
+        config.eval_steps = 500
+        config.logging_steps = 50
+        
+    elif task_type == "variant_effect":
+        # Conservative settings for stability
+        config.max_grad_norm = 0.5
+        config.lr_scheduler_type = "cosine_with_restarts"
+        config.eval_strategy = "steps"
+        config.eval_steps = 200
+        
+    elif task_type == "protein_function":
+        # Memory-efficient settings for long proteins
+        config.dataloader_pin_memory = False  # Save GPU memory
+        config.remove_unused_columns = True
+        config.prediction_loss_only = False
+        
+    elif task_type == "generation":
+        # Generation-specific optimizations
+        config.prediction_loss_only = True
+        config.include_inputs_for_metrics = False
+        config.metric_for_best_model = "perplexity"
+        config.greater_is_better = False
+    
+    return config
 
 
 class GenomeAnnotationFineTuner:
@@ -64,6 +208,19 @@ class GenomeAnnotationFineTuner:
             layer_wise_lr_decay=0.9,
         )
 
+        # Get optimal mixed precision configuration
+        self.mixed_precision_config = get_optimal_precision_config("genome_annotation")
+        self.config = apply_task_specific_optimizations(self.config, "genome_annotation", self.mixed_precision_config)
+        
+        # Create mixed precision manager
+        self.precision_manager = create_mixed_precision_manager(
+            mode=self.mixed_precision_config.mode,
+            gradient_clipping=self.mixed_precision_config.gradient_clipping,
+            dynamic_loss_scale=self.mixed_precision_config.dynamic_loss_scale,
+            monitor_overflow=self.mixed_precision_config.monitor_overflow,
+            gradient_checkpointing=self.mixed_precision_config.gradient_checkpointing,
+        )
+
     def create_dataset(
         self, data_path: str, tokenizer_type: str = "dna"
     ) -> TokenClassificationDataset:
@@ -74,13 +231,13 @@ class GenomeAnnotationFineTuner:
             raise ValueError(f"Unsupported tokenizer type: {tokenizer_type}")
 
         return TokenClassificationDataset(
-            data_path=data_path,
+            data=data_path,
             tokenizer=tokenizer,
             max_length=self.config.max_length,
             label_names=self.labels,
         )
 
-    def fine_tune(self, train_data_path: str, eval_data_path: str | None = None):
+    def fine_tune(self, train_data_path: str, eval_data_path: str | None = None) -> Any:
         """Fine-tune model for genome annotation."""
         train_dataset = self.create_dataset(train_data_path)
         eval_dataset = self.create_dataset(eval_data_path) if eval_data_path else None
@@ -92,6 +249,25 @@ class GenomeAnnotationFineTuner:
             output_dir=self.output_dir,
             num_labels=len(self.labels),
         )
+
+    def get_precision_stats(self) -> dict:
+        """Get mixed precision training statistics."""
+        return self.precision_manager.get_precision_stats()
+    
+    def optimize_model_for_task(self, model: torch.nn.Module) -> torch.nn.Module:
+        """Optimize model for genome annotation task with mixed precision."""
+        # Apply mixed precision optimizations
+        model = self.precision_manager.optimize_model_for_precision(model)
+        
+        # Task-specific model optimizations
+        if hasattr(model, 'config'):
+            # Enable attention optimizations for long sequences
+            if hasattr(model.config, 'use_flash_attn'):
+                model.config.use_flash_attn = True
+            if hasattr(model.config, 'attention_dropout'):
+                model.config.attention_dropout = 0.0  # Disable for better precision
+        
+        return model
 
 
 class VariantEffectFineTuner:
@@ -124,6 +300,18 @@ class VariantEffectFineTuner:
             early_stopping_patience=3,
         )
 
+        # Get optimal mixed precision configuration
+        self.mixed_precision_config = get_optimal_precision_config("variant_effect")
+        self.config = apply_task_specific_optimizations(self.config, "variant_effect", self.mixed_precision_config)
+        
+        # Create mixed precision manager
+        self.precision_manager = create_mixed_precision_manager(
+            mode=self.mixed_precision_config.mode,
+            gradient_clipping=self.mixed_precision_config.gradient_clipping,
+            dynamic_loss_scale=self.mixed_precision_config.dynamic_loss_scale,
+            monitor_overflow=self.mixed_precision_config.monitor_overflow,
+        )
+
     def create_dataset(
         self, data_path: str, tokenizer_type: str = "dna"
     ) -> SequenceClassificationDataset:
@@ -134,13 +322,13 @@ class VariantEffectFineTuner:
             raise ValueError(f"Unsupported tokenizer type: {tokenizer_type}")
 
         return SequenceClassificationDataset(
-            data_path=data_path,
+            data=data_path,
             tokenizer=tokenizer,
             max_length=self.config.max_length,
             label_names=self.labels,
         )
 
-    def fine_tune(self, train_data_path: str, eval_data_path: str | None = None):
+    def fine_tune(self, train_data_path: str, eval_data_path: str | None = None) -> Any:
         """Fine-tune model for variant effect prediction."""
         train_dataset = self.create_dataset(train_data_path)
         eval_dataset = self.create_dataset(eval_data_path) if eval_data_path else None
@@ -152,6 +340,25 @@ class VariantEffectFineTuner:
             output_dir=self.output_dir,
             num_labels=len(self.labels),
         )
+
+    def get_precision_stats(self) -> dict:
+        """Get mixed precision training statistics."""
+        return self.precision_manager.get_precision_stats()
+    
+    def optimize_model_for_task(self, model: torch.nn.Module) -> torch.nn.Module:
+        """Optimize model for variant effect prediction with mixed precision."""
+        # Apply mixed precision optimizations
+        model = self.precision_manager.optimize_model_for_precision(model)
+        
+        # Task-specific model optimizations for variant effect prediction
+        if hasattr(model, 'config'):
+            # Conservative settings for numerical stability
+            if hasattr(model.config, 'hidden_dropout_prob'):
+                model.config.hidden_dropout_prob = 0.1  # Moderate dropout for stability
+            if hasattr(model.config, 'attention_probs_dropout_prob'):
+                model.config.attention_probs_dropout_prob = 0.1
+        
+        return model
 
 
 class ProteinFunctionFineTuner:
@@ -202,18 +409,37 @@ class ProteinFunctionFineTuner:
             layer_wise_lr_decay=0.95,
         )
 
+        # Get optimal mixed precision configuration based on hardware
+        hardware_info = {}
+        if torch.cuda.is_available():
+            hardware_info['compute_capability'] = torch.cuda.get_device_capability()[0]
+            hardware_info['memory_gb'] = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+        
+        self.mixed_precision_config = get_optimal_precision_config("protein_function", "medium", hardware_info)
+        self.config = apply_task_specific_optimizations(self.config, "protein_function", self.mixed_precision_config)
+        
+        # Create mixed precision manager
+        self.precision_manager = create_mixed_precision_manager(
+            mode=self.mixed_precision_config.mode,
+            gradient_clipping=self.mixed_precision_config.gradient_clipping,
+            dynamic_loss_scale=self.mixed_precision_config.dynamic_loss_scale,
+            monitor_overflow=self.mixed_precision_config.monitor_overflow,
+            gradient_checkpointing=self.mixed_precision_config.gradient_checkpointing,
+            fp8_format=getattr(self.mixed_precision_config, 'fp8_format', 'E4M3'),
+        )
+
     def create_dataset(self, data_path: str) -> SequenceClassificationDataset:
         """Create dataset for protein function prediction."""
         tokenizer = ProteinTokenizer()
 
         return SequenceClassificationDataset(
-            data_path=data_path,
+            data=data_path,
             tokenizer=tokenizer,
             max_length=self.config.max_length,
             label_names=self.labels,
         )
 
-    def fine_tune(self, train_data_path: str, eval_data_path: str | None = None):
+    def fine_tune(self, train_data_path: str, eval_data_path: str | None = None) -> Any:
         """Fine-tune model for protein function prediction."""
         train_dataset = self.create_dataset(train_data_path)
         eval_dataset = self.create_dataset(eval_data_path) if eval_data_path else None
@@ -225,6 +451,31 @@ class ProteinFunctionFineTuner:
             output_dir=self.output_dir,
             num_labels=len(self.labels),
         )
+
+    def get_precision_stats(self) -> dict:
+        """Get mixed precision training statistics."""
+        return self.precision_manager.get_precision_stats()
+    
+    def optimize_model_for_task(self, model: torch.nn.Module) -> torch.nn.Module:
+        """Optimize model for protein function prediction with mixed precision."""
+        # Apply mixed precision optimizations
+        model = self.precision_manager.optimize_model_for_precision(model)
+        
+        # Task-specific model optimizations for protein function prediction
+        if hasattr(model, 'config'):
+            # Optimize for long protein sequences
+            if hasattr(model.config, 'use_flash_attn'):
+                model.config.use_flash_attn = True
+            if hasattr(model.config, 'max_position_embeddings'):
+                # Ensure we can handle long protein sequences
+                model.config.max_position_embeddings = max(
+                    model.config.max_position_embeddings, 2048
+                )
+            # Memory efficient settings for protein sequences
+            if hasattr(model.config, 'gradient_checkpointing'):
+                model.config.gradient_checkpointing = True
+        
+        return model
 
 
 class GenomeGenerationFineTuner:
@@ -252,6 +503,20 @@ class GenomeGenerationFineTuner:
             weight_decay=0.01,
         )
 
+        # Get optimal mixed precision configuration for generation
+        self.mixed_precision_config = get_optimal_precision_config("generation")
+        self.config = apply_task_specific_optimizations(self.config, "generation", self.mixed_precision_config)
+        
+        # Create mixed precision manager  
+        self.precision_manager = create_mixed_precision_manager(
+            mode=self.mixed_precision_config.mode,
+            gradient_clipping=self.mixed_precision_config.gradient_clipping,
+            dynamic_loss_scale=self.mixed_precision_config.dynamic_loss_scale,
+            monitor_overflow=self.mixed_precision_config.monitor_overflow,
+            gradient_checkpointing=self.mixed_precision_config.gradient_checkpointing,
+            cpu_offload=self.mixed_precision_config.cpu_offload,
+        )
+
     def create_dataset(
         self, data_path: str, tokenizer_type: str = "dna"
     ) -> SequenceGenerationDataset:
@@ -262,13 +527,13 @@ class GenomeGenerationFineTuner:
             raise ValueError(f"Unsupported tokenizer type: {tokenizer_type}")
 
         return SequenceGenerationDataset(
-            data_path=data_path,
+            data=data_path,
             tokenizer=tokenizer,
             max_length=self.config.max_length,
             mask_probability=0.15,
         )
 
-    def fine_tune(self, train_data_path: str, eval_data_path: str | None = None):
+    def fine_tune(self, train_data_path: str, eval_data_path: str | None = None) -> Any:
         """Fine-tune model for sequence generation."""
         train_dataset = self.create_dataset(train_data_path)
         eval_dataset = self.create_dataset(eval_data_path) if eval_data_path else None
@@ -279,6 +544,28 @@ class GenomeGenerationFineTuner:
             eval_dataset=eval_dataset,
             output_dir=self.output_dir,
         )
+
+    def get_precision_stats(self) -> dict:
+        """Get mixed precision training statistics."""
+        return self.precision_manager.get_precision_stats()
+    
+    def optimize_model_for_task(self, model: torch.nn.Module) -> torch.nn.Module:
+        """Optimize model for genome generation task with mixed precision."""
+        # Apply mixed precision optimizations
+        model = self.precision_manager.optimize_model_for_precision(model)
+        
+        # Task-specific model optimizations for generation
+        if hasattr(model, 'config'):
+            # Enable memory efficient attention for long generation sequences
+            if hasattr(model.config, 'use_cache'):
+                model.config.use_cache = True  # Enable KV caching for generation
+            if hasattr(model.config, 'use_flash_attn'):
+                model.config.use_flash_attn = True
+            # Optimize for generation tasks
+            if hasattr(model.config, 'pad_token_id') and model.config.pad_token_id is None:
+                model.config.pad_token_id = model.config.eos_token_id
+        
+        return model
 
 
 class DomainAdaptationFineTuner:
@@ -308,17 +595,59 @@ class DomainAdaptationFineTuner:
             use_layer_wise_decay=True,
             layer_wise_lr_decay=0.98,
         )
+        
+        # Adaptive mixed precision for domain adaptation
+        self.mixed_precision_config = MixedPrecisionConfig(
+            mode=PrecisionMode.ADAPTIVE,
+            gradient_clipping=0.8,
+            dynamic_loss_scale=True,
+            monitor_overflow=True,
+            gradient_checkpointing=False,  # Keep gradients for adaptation analysis
+            growth_interval=1500,  # Conservative for domain shifts
+        )
+        
+        self.config = apply_task_specific_optimizations(self.config, "domain_adaptation", self.mixed_precision_config)
+        
+        # Create mixed precision manager
+        self.precision_manager = create_mixed_precision_manager(
+            mode=self.mixed_precision_config.mode,
+            gradient_clipping=self.mixed_precision_config.gradient_clipping,
+            dynamic_loss_scale=self.mixed_precision_config.dynamic_loss_scale,
+            monitor_overflow=self.mixed_precision_config.monitor_overflow,
+        )
 
     def fine_tune_gradual(
         self, target_data_path: str, eval_data_path: str | None = None
-    ):
+    ) -> None:
         """Perform gradual domain adaptation."""
         # This would implement gradual unfreezing and learning rate scheduling
         # for domain adaptation
         pass
 
+    def get_precision_stats(self) -> dict:
+        """Get mixed precision training statistics."""
+        return self.precision_manager.get_precision_stats()
+    
+    def optimize_model_for_task(self, model: torch.nn.Module) -> torch.nn.Module:
+        """Optimize model for domain adaptation with mixed precision."""
+        # Apply mixed precision optimizations
+        model = self.precision_manager.optimize_model_for_precision(model)
+        
+        # Task-specific model optimizations for domain adaptation
+        if hasattr(model, 'config'):
+            # Conservative settings for domain adaptation stability
+            if hasattr(model.config, 'hidden_dropout_prob'):
+                model.config.hidden_dropout_prob = 0.2  # Higher dropout for domain adaptation
+            if hasattr(model.config, 'attention_probs_dropout_prob'):
+                model.config.attention_probs_dropout_prob = 0.1
+            # Disable aggressive optimizations that might hurt adaptation
+            if hasattr(model.config, 'use_flash_attn'):
+                model.config.use_flash_attn = False  # More stable for domain shifts
+        
+        return model
 
-def main():
+
+def main() -> None:
     """Main function for command-line fine-tuning."""
     parser = argparse.ArgumentParser(
         description="Fine-tune Hyena-GLT models for genomic tasks"
@@ -434,6 +763,7 @@ def main():
             pretrained_model_path = str(manager.download_model(args.pretrained_model))
 
         # Create appropriate fine-tuner based on task
+        finetuner: Any
         if args.task == "genome_annotation":
             finetuner = GenomeAnnotationFineTuner(
                 pretrained_model_path, args.output_dir

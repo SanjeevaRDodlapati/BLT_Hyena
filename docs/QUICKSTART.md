@@ -398,7 +398,7 @@ model = HyenaGLTForSequenceClassification.from_pretrained(
 - Reduce sequence length: `config.sequence_length = 1024`
 
 ### 2. Slow Training
-- Use mixed precision: `config.fp16 = True`
+- Use task-optimized mixed precision: `from hyena_glt.training.task_specific import get_optimal_precision_config`
 - Increase batch size if you have memory
 - Use multiple GPUs: `config.num_gpus = 2`
 

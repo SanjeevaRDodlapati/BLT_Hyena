@@ -77,6 +77,13 @@ from .curriculum import CurriculumLearning
 from .metrics import GenomicMetrics, MultiTaskMetrics
 from .multitask import MultiTaskLoss, TaskConfig, TaskWeightScheduler
 from .optimization import configure_weight_decay, create_optimizer, create_scheduler
+from .mixed_precision import (
+    MixedPrecisionConfig,
+    MixedPrecisionManager,
+    MixedPrecisionTrainingStep,
+    PrecisionMode,
+    create_mixed_precision_manager,
+)
 
 
 @dataclass
@@ -121,6 +128,13 @@ class TrainingConfig:
     # Mixed precision and efficiency
     fp16: bool = False
     bf16: bool = False
+    fp8: bool = False
+    mixed_precision_mode: str = "fp16"  # "fp16", "bf16", "fp8", "adaptive"
+    dynamic_loss_scaling: bool = True
+    loss_scale: float | None = None
+    gradient_clipping: float = 1.0
+    kernel_precision: str = "ieee"  # "ieee", "tf32", "tf32x3"
+    precision_monitoring: bool = True
     gradient_checkpointing: bool = False
     dataloader_num_workers: int = 0
 
@@ -179,9 +193,29 @@ class HyenaGLTTrainer:
                 self.model, device_ids=[config.local_rank]
             )
 
-        # Setup mixed precision
+        # Setup mixed precision - Enhanced version
+        self.precision_manager = None
+        if config.fp16 or config.bf16 or config.fp8:
+            precision_mode = self._determine_precision_mode()
+            
+            mixed_precision_config = MixedPrecisionConfig(
+                mode=precision_mode,
+                dynamic_loss_scaling=config.dynamic_loss_scaling,
+                loss_scale=config.loss_scale,
+                gradient_clipping=config.gradient_clipping,
+                kernel_precision=config.kernel_precision,
+                monitor_overflow=config.precision_monitoring,
+                gradient_checkpointing=config.gradient_checkpointing,
+            )
+            
+            self.precision_manager = MixedPrecisionManager(mixed_precision_config)
+            
+            # Optimize model for precision mode
+            self.model = self.precision_manager.optimize_model_for_precision(self.model)
+            
+        # Legacy scaler for backward compatibility
         self.scaler = None
-        if config.fp16:
+        if config.fp16 and self.precision_manager is None:
             self.scaler = torch.cuda.amp.GradScaler()
 
         # Setup optimization
@@ -752,3 +786,21 @@ class HyenaGLTTrainer:
             eval_dataloader=eval_dataloader,
             **kwargs,
         )
+
+    def _determine_precision_mode(self) -> PrecisionMode:
+        """Determine the appropriate precision mode based on config."""
+        if self.config.fp8:
+            return PrecisionMode.FP8
+        elif self.config.bf16:
+            return PrecisionMode.BF16
+        elif self.config.fp16:
+            return PrecisionMode.FP16
+        elif self.config.mixed_precision_mode == "adaptive":
+            return PrecisionMode.ADAPTIVE
+        else:
+            # Parse from string
+            try:
+                return PrecisionMode(self.config.mixed_precision_mode.lower())
+            except ValueError:
+                logger.warning(f"Unknown precision mode: {self.config.mixed_precision_mode}, defaulting to FP16")
+                return PrecisionMode.FP16

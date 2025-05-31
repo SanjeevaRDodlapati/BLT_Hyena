@@ -390,7 +390,7 @@ class FineTuner:
         self.setup_model_for_finetuning()
 
         # Create optimizer
-        optimizer = self.create_optimizer()
+        self.create_optimizer()
 
         # Create training config
         training_config = self.create_training_config(train_dataset, eval_dataset)

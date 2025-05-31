@@ -16,9 +16,9 @@ from typing import Any
 
 # Import core training modules
 try:
-    from ..training.trainer import HyenaGLTTrainer, TrainingConfig
     from ..config import HyenaGLTConfig
     from ..model import HyenaGLT
+    from ..training.trainer import HyenaGLTTrainer, TrainingConfig
 except ImportError as e:
     print(f"Error importing Hyena-GLT modules: {e}")
     print("Please ensure the package is properly installed.")
@@ -231,10 +231,10 @@ def main() -> None:
 
         # Create model config
         model_config = HyenaGLTConfig()
-        
+
         # Create model
         model = HyenaGLT(model_config)
-        
+
         # Create training config
         training_config = TrainingConfig(
             num_epochs=config_dict['training'].get('epochs', 10),

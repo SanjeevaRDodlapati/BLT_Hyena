@@ -420,11 +420,19 @@ training_config = TrainingConfig(
 #### Mixed Precision Training
 
 ```python
-# Faster training with lower memory usage
+# Enhanced mixed precision with task-specific optimization
+from hyena_glt.training.task_specific import get_optimal_precision_config
+
+# Get optimal precision for your task
+precision_config = get_optimal_precision_config('genome_annotation')
+
 training_config = TrainingConfig(
-    fp16=True,                 # Enable mixed precision
-    dataloader_num_workers=4   # Parallel data loading
+    precision_config=precision_config,  # Task-optimized mixed precision
+    dataloader_num_workers=4           # Parallel data loading
 )
+
+# Available tasks: 'genome_annotation', 'variant_effect', 'protein_function',
+#                  'genome_generation', 'domain_adaptation'
 ```
 
 ### Monitoring Training

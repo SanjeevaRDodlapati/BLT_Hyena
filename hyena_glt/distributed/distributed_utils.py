@@ -114,26 +114,61 @@ def wrap_model_for_distributed(
 
 def setup_mixed_precision(
     device_manager: DeviceManager, config: GPUClusterConfig
-) -> torch.cuda.amp.GradScaler | None:
+) -> tuple[torch.cuda.amp.GradScaler | None, Any]:
     """
-    Setup mixed precision training.
+    Setup advanced mixed precision training with multiple precision modes.
 
     Args:
         device_manager: Device manager instance
         config: Cluster configuration
 
     Returns:
-        GradScaler if using mixed precision, None otherwise
+        Tuple of (GradScaler if using mixed precision, MixedPrecisionManager if available)
     """
     if not config.mixed_precision or device_manager.device.type != "cuda":
-        return None
+        return None, None
 
-    scaler = torch.cuda.amp.GradScaler()
-
-    if device_manager.is_main_process:
-        logger.info("Mixed precision training enabled")
-
-    return scaler
+    # Try to use advanced mixed precision if available
+    try:
+        from ..training.mixed_precision import (
+            MixedPrecisionConfig,
+            MixedPrecisionManager,
+            PrecisionMode
+        )
+        
+        # Determine precision mode from config
+        precision_mode = PrecisionMode.FP16  # Default
+        if hasattr(config, 'precision_mode'):
+            try:
+                precision_mode = PrecisionMode(config.precision_mode.lower())
+            except (ValueError, AttributeError):
+                pass
+        
+        # Create advanced mixed precision config
+        mp_config = MixedPrecisionConfig(
+            mode=precision_mode,
+            dynamic_loss_scaling=getattr(config, 'dynamic_loss_scaling', True),
+            gradient_clipping=getattr(config, 'gradient_clipping', 1.0),
+            kernel_precision=getattr(config, 'kernel_precision', 'ieee'),
+            monitor_overflow=getattr(config, 'precision_monitoring', True),
+        )
+        
+        precision_manager = MixedPrecisionManager(mp_config)
+        
+        if device_manager.is_main_process:
+            logger.info(f"Advanced mixed precision training enabled: {precision_mode.value}")
+            
+        # Return both for backward compatibility
+        return precision_manager.scaler, precision_manager
+        
+    except ImportError:
+        # Fallback to basic mixed precision
+        scaler = torch.cuda.amp.GradScaler()
+        
+        if device_manager.is_main_process:
+            logger.info("Basic mixed precision training enabled")
+            
+        return scaler, None
 
 
 def all_reduce_tensor(
@@ -215,10 +250,11 @@ def save_checkpoint_distributed(
     filepath: str,
     device_manager: DeviceManager,
     scaler: torch.cuda.amp.GradScaler | None = None,
+    precision_manager: Any | None = None,
     metadata: dict[str, Any] | None = None,
 ) -> None:
     """
-    Save checkpoint in distributed training.
+    Save checkpoint in distributed training with mixed precision support.
 
     Args:
         model: Model to save
@@ -228,6 +264,7 @@ def save_checkpoint_distributed(
         filepath: Path to save checkpoint
         device_manager: Device manager instance
         scaler: Gradient scaler for mixed precision
+        precision_manager: Advanced precision manager if available
         metadata: Additional metadata
     """
     if not device_manager.is_main_process:
@@ -247,8 +284,14 @@ def save_checkpoint_distributed(
         "world_size": device_manager.world_size,
     }
 
+    # Save scaler state if available
     if scaler:
         checkpoint["scaler_state_dict"] = scaler.state_dict()
+
+    # Save advanced precision manager state if available
+    if precision_manager:
+        checkpoint["precision_config"] = precision_manager.config.__dict__
+        checkpoint["precision_stats"] = precision_manager.get_precision_stats()
 
     if metadata:
         checkpoint["metadata"] = metadata
@@ -263,10 +306,11 @@ def load_checkpoint_distributed(
     filepath: str,
     device_manager: DeviceManager,
     scaler: torch.cuda.amp.GradScaler | None = None,
+    precision_manager: Any | None = None,
     strict: bool = True,
 ) -> dict[str, Any]:
     """
-    Load checkpoint in distributed training.
+    Load checkpoint in distributed training with mixed precision support.
 
     Args:
         model: Model to load into
@@ -274,6 +318,7 @@ def load_checkpoint_distributed(
         filepath: Path to checkpoint
         device_manager: Device manager instance
         scaler: Gradient scaler for mixed precision
+        precision_manager: Advanced precision manager if available
         strict: Whether to strictly enforce state dict keys
 
     Returns:
@@ -290,14 +335,27 @@ def load_checkpoint_distributed(
 
     optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
 
+    # Load scaler state if available
     if scaler and "scaler_state_dict" in checkpoint:
         scaler.load_state_dict(checkpoint["scaler_state_dict"])
 
+    # Load precision manager state if available
+    if precision_manager and "precision_config" in checkpoint:
+        # Note: precision_manager state loading would need custom implementation
+        # depending on the specific precision manager design
+        pass
+
     if device_manager.is_main_process:
         logger.info(f"Checkpoint loaded from {filepath}")
+        
+        # Log precision information if available
+        if "precision_stats" in checkpoint:
+            stats = checkpoint["precision_stats"]
+            logger.info(f"Loaded precision stats - Mode: {stats.get('mode', 'unknown')}")
 
     return {
         "epoch": checkpoint.get("epoch", 0),
         "loss": checkpoint.get("loss", float("inf")),
         "metadata": checkpoint.get("metadata", {}),
+        "precision_stats": checkpoint.get("precision_stats", {}),
     }

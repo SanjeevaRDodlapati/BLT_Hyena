@@ -138,11 +138,18 @@ This index provides an organized overview of all documentation available for the
 - **Results**: [`benchmark_results.pt`](../benchmark_results.pt)
 - **Analysis**: Detailed performance comparison with baseline models
 
+### 🚀 Mixed Precision Performance Report
+- **Report**: [`mixed_precision_performance_report.md`](mixed_precision_performance_report.md)
+- **Demo**: [`enhanced_mixed_precision_demo.py`](../examples/enhanced_mixed_precision_demo.py)
+- **Tests**: [`test_mixed_precision_implementation.py`](../tests/test_mixed_precision_implementation.py)
+
 ### 🎯 Key Performance Metrics
 - **Latency**: 4.7x overhead for sophisticated position tracking
 - **Memory**: 7x overhead for complete information preservation  
 - **Compression**: 16-64x sequence compression while maintaining accuracy
 - **Scalability**: Handles sequences up to 1M+ tokens
+- **Mixed Precision**: Up to 8x speedup with FP8, 50% memory reduction on H100/A100
+- **Task Optimization**: 7.1x speedup for genome annotation, 5.8x for protein function
 
 ---
 

@@ -594,6 +594,7 @@ class ModelInterpreter:
 def example_interpretability_analysis() -> tuple[dict[str, Any], dict[str, Any]]:
     """Example usage of interpretability tools."""
     from typing import cast
+
     from hyena_glt.config import HyenaGLTConfig
     from hyena_glt.model import HyenaGLTForSequenceClassification
 

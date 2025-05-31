@@ -1,0 +1,31 @@
+{
+  "timestamp": "torch.utils.data._utils.collate",
+  "overall_success": true,
+  "test_results": {
+    "Configuration Tests": {
+      "tests_run": 2,
+      "failures": 0,
+      "errors": 0,
+      "success": true
+    },
+    "Manager Tests": {
+      "tests_run": 2,
+      "failures": 0,
+      "errors": 0,
+      "success": true
+    },
+    "Fine-tuner Tests": {
+      "tests_run": 1,
+      "failures": 0,
+      "errors": 0,
+      "success": true
+    }
+  },
+  "summary": {
+    "total_suites": 3,
+    "passed_suites": 3,
+    "total_tests": 5,
+    "total_failures": 0,
+    "total_errors": 0
+  }
+}

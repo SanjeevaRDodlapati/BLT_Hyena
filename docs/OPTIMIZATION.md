@@ -568,7 +568,7 @@ from hyena_glt.optimization import TensorRTOptimizer
 
 # TensorRT configuration
 trt_config = DeploymentConfig(
-    precision="fp16",           # Mixed precision
+        precision="fp8",            # Enhanced mixed precision (FP8/FP16/BF16)
     max_workspace_size=2**30,   # 1GB workspace
     max_batch_size=64,
     optimization_profiles=[
