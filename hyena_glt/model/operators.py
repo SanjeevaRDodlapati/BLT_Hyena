@@ -1,7 +1,7 @@
 """Hyena operators adapted for genomic sequences with dynamic token merging."""
 
 import math
-from typing import Optional, Tuple, Union
+from typing import Optional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -55,7 +55,7 @@ class DynamicConvolution(nn.Module):
         
         # Detect segment boundaries if not provided
         if segment_boundaries is None:
-            boundary_scores = torch.sigmoid(self.boundary_detector(x))  # (batch, seq_len, 1)
+            boundary_scores = F.sigmoid(self.boundary_detector(x))  # (batch, seq_len, 1)
             segment_boundaries = (boundary_scores.squeeze(-1) > self.boundary_threshold).float()
         
         # Apply convolution
@@ -77,7 +77,7 @@ class DynamicConvolution(nn.Module):
     
     def _create_segment_mask(self, boundaries: torch.Tensor, kernel_size: int) -> torch.Tensor:
         """Create mask that prevents convolution across segment boundaries."""
-        batch_size, seq_len = boundaries.shape
+        _, seq_len = boundaries.shape
         mask = torch.ones_like(boundaries)
         
         # For each boundary, mask the kernel_size positions around it
@@ -239,7 +239,7 @@ class HyenaOperator(nn.Module):
     ) -> torch.Tensor:
         """Apply convolution while respecting segment boundaries."""
         
-        batch_size, seq_len, d_model = x.shape
+        _, seq_len, d_model = x.shape
         
         # Reshape for convolution
         x_conv = rearrange(x, 'b l d -> b d l')
