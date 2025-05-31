@@ -7,11 +7,11 @@ This module provides utility functions and helper classes for the Hyena-GLT fram
 # Import only what exists
 from .performance import (
     ProfilerContext,
-    memory_usage,
-    gpu_memory_usage,
     benchmark_model,
+    gpu_memory_usage,
     measure_throughput,
-    monitor_resources
+    memory_usage,
+    monitor_resources,
 )
 
 __version__ = "1.0.1"
@@ -21,8 +21,8 @@ __all__ = [
     # Performance monitoring
     "ProfilerContext",
     "memory_usage",
-    "gpu_memory_usage", 
+    "gpu_memory_usage",
     "benchmark_model",
     "measure_throughput",
-    "monitor_resources"
+    "monitor_resources",
 ]

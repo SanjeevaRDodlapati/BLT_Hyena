@@ -1,16 +1,16 @@
 """Genomic tokenizers for DNA, RNA, and protein sequences."""
 
-from typing import Dict, List, Optional, Union, Tuple
+import json
 import re
 from collections import defaultdict
-import json
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union
 
 import torch
-from tokenizers import Tokenizer, models, trainers, pre_tokenizers, processors
+from tokenizers import Tokenizer, models, pre_tokenizers, processors, trainers
 from transformers import PreTrainedTokenizer
 
-from .utils import reverse_complement, generate_kmers
+from .utils import generate_kmers, reverse_complement
 
 
 class GenomicTokenizer(PreTrainedTokenizer):

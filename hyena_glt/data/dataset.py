@@ -1,17 +1,17 @@
 """Dataset classes for genomic sequence data."""
 
-from typing import Dict, List, Optional, Union, Tuple, Any
 import json
 import random
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-import torch
-from torch.utils.data import Dataset
 import pandas as pd
+import torch
 from datasets import Dataset as HFDataset
+from torch.utils.data import Dataset
 
 from .tokenizer import GenomicTokenizer
-from .utils import reverse_complement, mask_sequence, sliding_window
+from .utils import mask_sequence, reverse_complement, sliding_window
 
 
 class GenomicDataset(Dataset):

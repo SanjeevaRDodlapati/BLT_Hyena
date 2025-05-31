@@ -8,14 +8,14 @@ for efficient genomic sequence modeling.
 __version__ = "1.0.1"
 __author__ = "Hyena-GLT Team"
 
-from .model import HyenaGLT
 from .config import HyenaGLTConfig
-from .data import GenomicTokenizer, GenomicDataset
+from .data import GenomicDataset, GenomicTokenizer
+from .model import HyenaGLT
 from .training import HyenaGLTTrainer
 
 __all__ = [
     "HyenaGLT",
-    "HyenaGLTConfig", 
+    "HyenaGLTConfig",
     "GenomicTokenizer",
     "GenomicDataset",
     "HyenaGLTTrainer",

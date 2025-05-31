@@ -18,14 +18,14 @@ Usage:
 
 from .device_manager import DeviceManager, GPUClusterConfig
 from .distributed_utils import (
-    init_distributed_training,
-    wrap_model_for_distributed,
-    setup_mixed_precision,
     all_reduce_tensor,
-    gather_tensor,
     broadcast_object,
-    save_checkpoint_distributed,
+    gather_tensor,
+    init_distributed_training,
     load_checkpoint_distributed,
+    save_checkpoint_distributed,
+    setup_mixed_precision,
+    wrap_model_for_distributed,
 )
 from .parallel_model import (
     DistributedHyenaGLT,
@@ -38,7 +38,6 @@ __all__ = [
     # Core components
     "DeviceManager",
     "GPUClusterConfig",
-    
     # Distributed utilities
     "init_distributed_training",
     "wrap_model_for_distributed",
@@ -48,9 +47,8 @@ __all__ = [
     "broadcast_object",
     "save_checkpoint_distributed",
     "load_checkpoint_distributed",
-    
     # Model parallelization
     "DistributedHyenaGLT",
-    "ModelParallelHyenaGLT", 
+    "ModelParallelHyenaGLT",
     "create_distributed_model",
 ]

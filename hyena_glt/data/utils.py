@@ -1,8 +1,8 @@
 """Utility functions for genomic data processing."""
 
-from typing import List, Dict, Tuple, Union
 import re
 from itertools import product
+from typing import Dict, List, Tuple, Union
 
 
 def reverse_complement(sequence: str) -> str:
