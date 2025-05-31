@@ -5,7 +5,7 @@ import os
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Union, cast
 
 import torch
 import torch.nn as nn
@@ -18,7 +18,7 @@ try:
     HAS_WANDB = True
 except ImportError:
     HAS_WANDB = False
-    wandb = None
+    wandb = None  # type: ignore[assignment]
 
 try:
     from tqdm.auto import tqdm
@@ -28,37 +28,50 @@ except ImportError:
     HAS_TQDM = False
 
     # Fallback progress bar
-    class tqdm:
-        def __init__(self, iterable=None, total=None, desc=None, **kwargs):
+    class _tqdm:
+        def __init__(self, iterable: Any = None, total: int | None = None, desc: str | None = None, **kwargs: Any) -> None:
             self.iterable = iterable or range(total or 0)
             self.desc = desc or ""
 
-        def __iter__(self):
+        def __iter__(self) -> Any:
             return iter(self.iterable)
 
-        def __enter__(self):
+        def __enter__(self) -> Any:
             return self
 
-        def __exit__(self, *args):
+        def __exit__(self, *args: Any) -> None:
             pass
 
-        def update(self, n=1):
+        def update(self, n: int = 1) -> None:
             pass
 
-        def set_postfix(self, **kwargs):
+        def set_postfix(self, **kwargs: Any) -> None:
             pass
 
-        def close(self):
+        def close(self) -> None:
             pass
+
+    tqdm = _tqdm
 
 
 from ..config import HyenaGLTConfig
 from ..model import (
     HyenaGLT,
+    HyenaGLTForMultiTask,
     HyenaGLTForSequenceClassification,
     HyenaGLTForSequenceGeneration,
     HyenaGLTForTokenClassification,
 )
+
+# Union type for all supported models
+HyenaGLTModelType = Union[
+    HyenaGLT,
+    HyenaGLTForSequenceClassification,
+    HyenaGLTForTokenClassification,
+    HyenaGLTForSequenceGeneration,
+    HyenaGLTForMultiTask,
+    nn.Module
+]
 from .checkpointing import CheckpointManager
 from .curriculum import CurriculumLearning
 from .metrics import GenomicMetrics, MultiTaskMetrics
@@ -131,13 +144,13 @@ class HyenaGLTTrainer:
 
     def __init__(
         self,
-        model: HyenaGLT | nn.Module,
+        model: HyenaGLTModelType,
         config: TrainingConfig,
-        train_dataloader: DataLoader | None = None,
-        eval_dataloader: DataLoader | None = None,
-        test_dataloader: DataLoader | None = None,
+        train_dataloader: DataLoader[Any] | None = None,
+        eval_dataloader: DataLoader[Any] | None = None,
+        test_dataloader: DataLoader[Any] | None = None,
         tokenizer: Any | None = None,
-        callbacks: list[Callable] | None = None,
+        callbacks: list[Callable[..., Any]] | None = None,
     ):
         self.model = model
         self.config = config
@@ -157,7 +170,7 @@ class HyenaGLTTrainer:
             self.device = torch.device(f"cuda:{config.local_rank}")
 
         # Move model to device
-        self.model = self.model.to(self.device)
+        self.model = self.model.to(self.device)  # type: ignore[union-attr]
 
         # Setup distributed training
         self.is_distributed = config.local_rank != -1
@@ -188,7 +201,7 @@ class HyenaGLTTrainer:
             self._setup_curriculum()
 
         # Setup metrics
-        self.metrics = GenomicMetrics()
+        self.metrics: GenomicMetrics | MultiTaskMetrics = GenomicMetrics()
         if config.multi_task:
             task_names = (
                 list(config.task_weights.keys()) if config.task_weights else ["main"]
@@ -217,7 +230,7 @@ class HyenaGLTTrainer:
             f"Model parameters: {sum(p.numel() for p in self.model.parameters()):,}"
         )
 
-    def _setup_logging(self):
+    def _setup_logging(self) -> None:
         """Setup logging configuration."""
         logging.basicConfig(
             level=getattr(logging, self.config.log_level.upper()),
@@ -225,17 +238,17 @@ class HyenaGLTTrainer:
         )
         self.logger = logging.getLogger(__name__)
 
-    def _setup_optimization(self):
+    def _setup_optimization(self) -> None:
         """Setup optimizer and scheduler."""
         # Configure weight decay
         if self.config.weight_decay > 0:
-            configure_weight_decay(self.model, weight_decay=self.config.weight_decay)
+            configure_weight_decay(cast(nn.Module, self.model), weight_decay=self.config.weight_decay)
         else:
-            self.model.parameters()
+            cast(nn.Module, self.model).parameters()
 
         # Create optimizer
         self.optimizer = create_optimizer(
-            self.model,
+            cast(nn.Module, self.model),
             optimizer_type=self.config.optimizer_type,
             learning_rate=self.config.learning_rate,
             weight_decay=self.config.weight_decay,
@@ -262,7 +275,7 @@ class HyenaGLTTrainer:
         self.logger.info(f"Optimizer: {type(self.optimizer).__name__}")
         self.logger.info(f"Scheduler: {type(self.scheduler).__name__}")
 
-    def _setup_multitask(self):
+    def _setup_multitask(self) -> None:
         """Setup multi-task learning components."""
         if not self.config.task_weights:
             self.logger.warning("Multi-task enabled but no task weights provided")
@@ -287,7 +300,7 @@ class HyenaGLTTrainer:
 
         self.logger.info(f"Multi-task learning enabled with {len(tasks)} tasks")
 
-    def _setup_curriculum(self):
+    def _setup_curriculum(self) -> None:
         """Setup curriculum learning."""
         from .curriculum import GenomicComplexityDifficulty, SequenceLengthDifficulty
 
@@ -306,7 +319,7 @@ class HyenaGLTTrainer:
 
         self.logger.info("Curriculum learning enabled")
 
-    def _setup_wandb(self):
+    def _setup_wandb(self) -> None:
         """Setup Weights & Biases tracking."""
         if not HAS_WANDB:
             self.logger.warning("wandb not available, disabling experiment tracking")
@@ -333,9 +346,9 @@ class HyenaGLTTrainer:
 
         # Enable gradient checkpointing if requested
         if self.config.gradient_checkpointing:
-            self.model.gradient_checkpointing_enable()
+            self.model.gradient_checkpointing_enable()  # type: ignore[union-attr]
 
-        self.model.train()
+        self.model.train()  # type: ignore[union-attr]
 
         # Training loop
         total_steps = len(self.train_dataloader) * self.config.num_epochs
@@ -361,23 +374,23 @@ class HyenaGLTTrainer:
                     # Gradient clipping
                     if self.config.max_grad_norm > 0:
                         if self.config.fp16 and self.scaler:
-                            self.scaler.unscale_(self.optimizer)
+                            self.scaler.unscale_(self.optimizer)  # type: ignore[arg-type]
 
                         torch.nn.utils.clip_grad_norm_(
-                            self.model.parameters(), self.config.max_grad_norm
+                            self.model.parameters(), self.config.max_grad_norm  # type: ignore[union-attr]
                         )
 
                     # Optimizer step
                     if self.config.fp16 and self.scaler:
-                        self.scaler.step(self.optimizer)
+                        self.scaler.step(self.optimizer)  # type: ignore[arg-type]
                         self.scaler.update()
                     else:
-                        self.optimizer.step()
+                        self.optimizer.step()  # type: ignore[union-attr]
 
                     if self.scheduler:
                         self.scheduler.step()
 
-                    self.optimizer.zero_grad()
+                    self.optimizer.zero_grad()  # type: ignore[union-attr]
                     self.global_step += 1
 
                 # Logging
@@ -396,7 +409,7 @@ class HyenaGLTTrainer:
                     if self.config.early_stopping:
                         self._check_early_stopping(eval_metrics)
 
-                    self.model.train()  # Return to training mode
+                    self.model.train()  # type: ignore[union-attr]  # Return to training mode
 
                 # Checkpointing
                 if self.global_step % self.config.save_steps == 0:
@@ -452,9 +465,9 @@ class HyenaGLTTrainer:
         # Forward pass
         if self.config.fp16:
             with torch.cuda.amp.autocast():
-                outputs = self.model(**batch)
+                outputs = self.model(**batch)  # type: ignore[operator]
         else:
-            outputs = self.model(**batch)
+            outputs = self.model(**batch)  # type: ignore[operator]
 
         # Compute loss
         if self.multi_task_loss and isinstance(outputs, dict):
@@ -492,7 +505,7 @@ class HyenaGLTTrainer:
         if not dataloader:
             return {}
 
-        self.model.eval()
+        self.model.eval()  # type: ignore[union-attr]
         self.metrics.reset()
 
         total_loss = 0.0
@@ -509,9 +522,9 @@ class HyenaGLTTrainer:
                 # Forward pass
                 if self.config.fp16:
                     with torch.cuda.amp.autocast():
-                        outputs = self.model(**batch)
+                        outputs = self.model(**batch)  # type: ignore[operator]
                 else:
-                    outputs = self.model(**batch)
+                    outputs = self.model(**batch)  # type: ignore[operator]
 
                 # Extract loss and predictions
                 if hasattr(outputs, "loss"):
@@ -534,15 +547,33 @@ class HyenaGLTTrainer:
 
                 # Update metrics
                 if predictions is not None and targets is not None:
-                    self.metrics.update(predictions, targets)
+                    if isinstance(self.metrics, MultiTaskMetrics):
+                        # For multi-task, we need to determine the task name
+                        # Default to "main" if no specific task is identified
+                        task_name = "main"
+                        self.metrics.update(task_name, predictions, targets)
+                    else:
+                        self.metrics.update(predictions, targets)
 
         # Compute metrics
-        eval_metrics = self.metrics.compute()
+        raw_metrics = self.metrics.compute()
+        if isinstance(self.metrics, MultiTaskMetrics):
+            # For multi-task metrics, flatten the nested dictionary
+            eval_metrics: dict[str, float] = {}
+            # Type narrowing: raw_metrics is dict[str, dict[str, float]] here
+            if isinstance(raw_metrics, dict):
+                for task_name, task_metrics in raw_metrics.items():
+                    if isinstance(task_metrics, dict):
+                        for metric_name, metric_value in task_metrics.items():
+                            eval_metrics[f"{task_name}_{metric_name}"] = metric_value
+        else:
+            # For single-task metrics, raw_metrics is dict[str, float]
+            eval_metrics = raw_metrics  # type: ignore[assignment]
         eval_metrics["eval_loss"] = total_loss / num_batches if num_batches > 0 else 0.0
 
         return eval_metrics
 
-    def _log_metrics(self, metrics: dict[str, float], prefix: str = ""):
+    def _log_metrics(self, metrics: dict[str, float], prefix: str = "") -> None:
         """Log metrics to console and wandb."""
         # Add prefix
         if prefix:
@@ -569,19 +600,24 @@ class HyenaGLTTrainer:
         if self.config.use_wandb:
             wandb.log(metrics, step=self.global_step)
 
-    def _save_checkpoint(self):
+    def _save_checkpoint(self) -> None:
         """Save model checkpoint."""
         # Get current metrics
-        metrics = {"step": self.global_step, "epoch": self.epoch}
+        metrics: dict[str, float] = {"step": float(self.global_step), "epoch": float(self.epoch)}
 
         if self.eval_dataloader:
             eval_metrics = self.evaluate()
             metrics.update(eval_metrics)
-            self.model.train()  # Return to training mode
+            self.model.train()  # type: ignore[union-attr]  # Return to training mode
 
-        # Save checkpoint
+        # Save checkpoint - handle DistributedDataParallel wrapper
+        if self.is_distributed and hasattr(self.model, 'module'):
+            checkpoint_model = cast(nn.Module, self.model.module)  # type: ignore[union-attr]
+        else:
+            checkpoint_model = cast(nn.Module, self.model)
+
         self.checkpoint_manager.save_checkpoint(
-            model=self.model.module if self.is_distributed else self.model,
+            model=checkpoint_model,
             step=self.global_step,
             epoch=self.epoch,
             metrics=metrics,
@@ -589,7 +625,7 @@ class HyenaGLTTrainer:
             scheduler=self.scheduler,
         )
 
-    def _check_early_stopping(self, metrics: dict[str, float]):
+    def _check_early_stopping(self, metrics: dict[str, float]) -> None:
         """Check early stopping criteria."""
         metric_value = metrics.get(self.config.early_stopping_metric)
         if metric_value is None:
@@ -609,7 +645,9 @@ class HyenaGLTTrainer:
 
     def predict(self, dataloader: DataLoader) -> dict[str, torch.Tensor]:
         """Generate predictions on a dataset."""
-        self.model.eval()
+        # Type narrowing for model eval method
+        if hasattr(self.model, 'eval'):
+            self.model.eval()
 
         all_predictions = []
         all_targets = []
@@ -622,12 +660,20 @@ class HyenaGLTTrainer:
                     for k, v in batch.items()
                 }
 
-                # Forward pass
-                outputs = self.model(**batch)
+                # Forward pass - type narrowing for callable
+                if callable(self.model):
+                    outputs = self.model(**batch)
+                else:
+                    # Fallback for non-callable models
+                    outputs = self.model.forward(**batch)  # type: ignore[attr-defined]
 
                 # Extract predictions
-                if hasattr(outputs, "logits"):
+                if isinstance(outputs, dict) and "logits" in outputs:
+                    predictions = outputs["logits"]
+                elif hasattr(outputs, "logits"):
                     predictions = outputs.logits
+                elif isinstance(outputs, dict) and "prediction_scores" in outputs:
+                    predictions = outputs["prediction_scores"]
                 elif hasattr(outputs, "prediction_scores"):
                     predictions = outputs.prediction_scores
                 else:
@@ -644,14 +690,14 @@ class HyenaGLTTrainer:
 
         return result
 
-    def save_model(self, save_directory: str):
+    def save_model(self, save_directory: str) -> None:
         """Save model and tokenizer."""
         save_path = Path(save_directory)
         save_path.mkdir(parents=True, exist_ok=True)
 
         # Save model
-        model_to_save = self.model.module if self.is_distributed else self.model
-        model_to_save.save_pretrained(save_path)
+        model_to_save = self.model.module if self.is_distributed else self.model  # type: ignore[union-attr]
+        model_to_save.save_pretrained(save_path)  # type: ignore[union-attr]
 
         # Save tokenizer if available
         if self.tokenizer:
@@ -666,10 +712,11 @@ class HyenaGLTTrainer:
 
         self.logger.info(f"Model saved to {save_path}")
 
-    def load_model(self, load_directory: str):
+    def load_model(self, load_directory: str) -> None:
         """Load model from directory."""
         self.checkpoint_manager.load_model_from_checkpoint(
-            self.model.module if self.is_distributed else self.model, load_directory
+            self.model.module if self.is_distributed else self.model,  # type: ignore[union-attr, arg-type]
+            load_directory
         )
         self.logger.info(f"Model loaded from {load_directory}")
 
@@ -680,11 +727,12 @@ class HyenaGLTTrainer:
         training_config: TrainingConfig,
         train_dataloader: DataLoader,
         eval_dataloader: DataLoader | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> "HyenaGLTTrainer":
         """Create trainer from configurations."""
 
-        # Create model based on task
+        # Create model based on task - use specific variable that can hold different types
+        model: HyenaGLTModelType
         if hasattr(model_config, "task_type"):
             if model_config.task_type == "sequence_classification":
                 model = HyenaGLTForSequenceClassification(model_config)

@@ -155,17 +155,17 @@ def load_model(model_path: str, device: str = "auto") -> HyenaGLT:
 
 def detect_task_type(data_path: str) -> str:
     """Auto-detect task type based on data format."""
-    data_path = Path(data_path)
+    data_path_obj = Path(data_path)
 
-    if data_path.suffix.lower() == ".vcf":
+    if data_path_obj.suffix.lower() == ".vcf":
         return "variant_effect"
-    elif data_path.suffix.lower() in [".fa", ".fasta"]:
+    elif data_path_obj.suffix.lower() in [".fa", ".fasta"]:
         return "sequence_classification"
-    elif data_path.suffix.lower() in [".bed", ".gtf", ".gff"]:
+    elif data_path_obj.suffix.lower() in [".bed", ".gtf", ".gff"]:
         return "regulatory_elements"
-    elif data_path.is_dir():
+    elif data_path_obj.is_dir():
         # Check for specific file patterns in directory
-        files = list(data_path.glob("*"))
+        files = list(data_path_obj.glob("*"))
         if any(f.suffix.lower() == ".vcf" for f in files):
             return "variant_effect"
         elif any(f.suffix.lower() in [".fa", ".fasta"] for f in files):
@@ -200,7 +200,7 @@ def setup_evaluation_config(args: argparse.Namespace) -> dict[str, Any]:
     # Load base config if provided
     if args.config:
         with open(args.config) as f:
-            config = json.load(f)
+            config: dict[str, Any] = json.load(f)
     else:
         config = {"evaluation": {}, "data": {}, "system": {}, "output": {}}
 
@@ -262,7 +262,7 @@ def run_evaluation(model: HyenaGLT, config: dict[str, Any]) -> dict[str, Any]:
 
     # Run evaluation
     logger.info(f"Running {config['evaluation']['task']} evaluation...")
-    results = evaluator.evaluate(eval_dataset)
+    results: dict[str, Any] = evaluator.evaluate(eval_dataset)
 
     return results
 
@@ -299,7 +299,7 @@ def save_results(
     print(f"Results saved to: {results_file}")
 
 
-def main():
+def main() -> None:
     """Main evaluation function."""
     parser = create_parser()
     args = parser.parse_args()

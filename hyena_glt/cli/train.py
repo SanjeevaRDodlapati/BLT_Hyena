@@ -16,12 +16,21 @@ from typing import Any
 
 # Import core training modules
 try:
-    from ..training.trainer import HyenaGLTTrainer
-    from ..utils.logging_utils import setup_logging
+    from ..training.trainer import HyenaGLTTrainer, TrainingConfig
+    from ..config import HyenaGLTConfig
+    from ..model import HyenaGLT
 except ImportError as e:
     print(f"Error importing Hyena-GLT modules: {e}")
     print("Please ensure the package is properly installed.")
     sys.exit(1)
+
+
+def setup_logging(level: str = "INFO") -> None:
+    """Setup basic logging configuration."""
+    logging.basicConfig(
+        level=getattr(logging, level.upper()),
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -124,7 +133,7 @@ def load_config(config_path: str) -> dict[str, Any]:
     try:
         with open(config_path) as f:
             config = json.load(f)
-        return config
+        return config  # type: ignore[no-any-return]
     except FileNotFoundError as e:
         raise FileNotFoundError(f"Configuration file not found: {config_path}") from e
     except json.JSONDecodeError as e:
@@ -200,7 +209,7 @@ def setup_training_config(args: argparse.Namespace) -> dict[str, Any]:
     return config
 
 
-def main():
+def main() -> None:
     """Main training function."""
     parser = create_parser()
     args = parser.parse_args()
@@ -215,13 +224,27 @@ def main():
         logger.info("Arguments validated successfully")
 
         # Setup configuration
-        config = setup_training_config(args)
+        config_dict = setup_training_config(args)
         logger.info(
-            f"Training configuration loaded for {config['model']['size']} model"
+            f"Training configuration loaded for {config_dict['model']['size']} model"
+        )
+
+        # Create model config
+        model_config = HyenaGLTConfig()
+        
+        # Create model
+        model = HyenaGLT(model_config)
+        
+        # Create training config
+        training_config = TrainingConfig(
+            num_epochs=config_dict['training'].get('epochs', 10),
+            batch_size=config_dict['training'].get('batch_size', 32),
+            learning_rate=config_dict['training'].get('learning_rate', 1e-4),
+            output_dir=config_dict['system'].get('output_dir', './outputs'),
         )
 
         # Initialize trainer
-        trainer = HyenaGLTTrainer(config)
+        trainer = HyenaGLTTrainer(model, training_config)
         logger.info("Trainer initialized")
 
         # Start training

@@ -13,8 +13,8 @@ from .hyena_glt import (
     HyenaGLTForSequenceGeneration,
     HyenaGLTForTokenClassification,
 )
-from .layers import AdaptiveTokenMerger, DynamicHyenaLayer, GenomicPositionalEncoding
-from .operators import DynamicConvolution, HyenaOperator
+from .layers import AdaptiveTokenMerger, DynamicHyenaLayer
+from .operators import DynamicConvolution, GenomicPositionalEncoding, HyenaOperator
 from .position_embeddings import (
     BLTPositionManager,
     CrossAttentionPositionBridge,

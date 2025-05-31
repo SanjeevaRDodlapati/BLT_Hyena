@@ -1,8 +1,25 @@
 """
 Knowledge Distillation for Hyena-GLT
 
-This module provides comprehensive knowledge distillation support for creating
-smaller, more efficient Hyena-GLT models while maintaining performance.
+This module provides comprehensive knowledge distillation supp        if hasattr(self.teacher_model, 'parameters'):
+            for param in self.teacher_model.parameters():
+                param.requires_grad = False
+
+        # Setup distillation based on type
+        if self.config.distillation_type == "response":
+            distilled_model = self._response_distillation(train_loader, val_loader)
+        elif self.config.distillation_type == "feature":
+            distilled_model = self._feature_distillation(train_loader, val_loader)
+        elif self.config.distillation_type == "attention":
+            distilled_model = self._attention_distillation(train_loader, val_loader)
+        elif self.config.distillation_type == "comprehensive":
+            distilled_model = self._comprehensive_distillation(train_loader, val_loader)
+        else:
+            raise ValueError(
+                f"Unknown distillation type: {self.config.distillation_type}"
+            )
+
+        self.distilled_model = distilled_modelmaller, more efficient Hyena-GLT models while maintaining performance.
 """
 
 import copy
@@ -15,6 +32,7 @@ from typing import Any
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.data import DataLoader
 
 from ..config import HyenaGLTConfig
 from ..model import HyenaGLT
@@ -44,11 +62,11 @@ class DistillationConfig:
     )
 
     # Feature distillation parameters
-    feature_layers: list[str] = None
+    feature_layers: list[str] | None = None
     feature_loss_weight: float = 0.1
 
     # Attention distillation parameters
-    attention_layers: list[str] = None
+    attention_layers: list[str] | None = None
     attention_loss_weight: float = 0.1
 
     # Advanced options
@@ -56,7 +74,7 @@ class DistillationConfig:
     layer_wise_lr: bool = False
     adaptive_temperature: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.feature_layers is None:
             self.feature_layers = []
         if self.attention_layers is None:
@@ -66,20 +84,20 @@ class DistillationConfig:
 class KnowledgeDistiller:
     """Main knowledge distillation interface."""
 
-    def __init__(self, config: DistillationConfig):
+    def __init__(self, config: DistillationConfig) -> None:
         self.config = config
-        self.teacher_model = None
-        self.student_model = None
-        self.distilled_model = None
+        self.teacher_model: HyenaGLT | None = None
+        self.student_model: HyenaGLT | None = None
+        self.distilled_model: HyenaGLT | None = None
 
     def distill(
         self,
         teacher_model: HyenaGLT,
         student_model: HyenaGLT,
-        train_loader: torch.utils.data.DataLoader,
-        val_loader: torch.utils.data.DataLoader | None = None,
+        train_loader: DataLoader[Any],
+        val_loader: DataLoader[Any] | None = None,
         save_path: str | None = None,
-    ) -> nn.Module:
+    ) -> HyenaGLT:
         """
         Perform knowledge distillation.
 
@@ -97,8 +115,11 @@ class KnowledgeDistiller:
         self.student_model = student_model
 
         # Freeze teacher model
-        self.teacher_model.eval()
-        for param in self.teacher_model.parameters():
+        if hasattr(self.teacher_model, 'eval'):
+            self.teacher_model.eval()
+        if hasattr(self.teacher_model, 'parameters'):
+            for param in self.teacher_model.parameters():
+                param.requires_grad = False
             param.requires_grad = False
 
         # Setup distillation based on type
@@ -115,7 +136,7 @@ class KnowledgeDistiller:
                 f"Unknown distillation type: {self.config.distillation_type}"
             )
 
-        self.distilled_model = distilled_model
+        self.distilled_model = distilled_model  # type: ignore[assignment]
 
         if save_path:
             self.save_distilled_model(save_path)
@@ -124,15 +145,20 @@ class KnowledgeDistiller:
 
     def _response_distillation(
         self,
-        train_loader: torch.utils.data.DataLoader,
-        val_loader: torch.utils.data.DataLoader | None = None,
-    ) -> nn.Module:
+        train_loader: DataLoader[Any],
+        val_loader: DataLoader[Any] | None = None,
+    ) -> HyenaGLT:
         """Perform response-based knowledge distillation."""
         logger.info("Starting response-based knowledge distillation...")
 
-        optimizer = torch.optim.Adam(
-            self.student_model.parameters(), lr=self.config.learning_rate
-        )
+        assert self.student_model is not None
+        # Handle both HyenaGLT and nn.Module types
+        if hasattr(self.student_model, 'parameters'):
+            optimizer = torch.optim.Adam(
+                self.student_model.parameters(), lr=self.config.learning_rate  # type: ignore[attr-defined]
+            )
+        else:
+            raise AttributeError("Student model does not have parameters() method")
 
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=self.config.epochs
@@ -141,7 +167,8 @@ class KnowledgeDistiller:
         criterion = nn.CrossEntropyLoss()
 
         for epoch in range(self.config.epochs):
-            self.student_model.train()
+            if hasattr(self.student_model, 'train'):
+                self.student_model.train()
             epoch_loss = 0.0
 
             for _batch_idx, (data, target) in enumerate(train_loader):
@@ -149,9 +176,15 @@ class KnowledgeDistiller:
 
                 # Get teacher and student outputs
                 with torch.no_grad():
-                    teacher_output = self.teacher_model(data)
+                    if callable(self.teacher_model):
+                        teacher_output = self.teacher_model(data)
+                    else:
+                        raise ValueError("Teacher model is not callable")
 
-                student_output = self.student_model(data)
+                if callable(self.student_model):
+                    student_output = self.student_model(data)
+                else:
+                    raise ValueError("Student model is not callable")
 
                 # Calculate losses
                 distillation_loss = self._distillation_loss(
@@ -184,65 +217,77 @@ class KnowledgeDistiller:
 
     def _feature_distillation(
         self,
-        train_loader: torch.utils.data.DataLoader,
-        val_loader: torch.utils.data.DataLoader | None = None,
-    ) -> nn.Module:
+        train_loader: DataLoader[Any],
+        val_loader: DataLoader[Any] | None = None,
+    ) -> HyenaGLT:
         """Perform feature-based knowledge distillation."""
         logger.info("Starting feature-based knowledge distillation...")
 
         # Setup feature extractors
         feature_distiller = FeatureDistiller(self.config)
 
-        optimizer = torch.optim.Adam(
-            self.student_model.parameters(), lr=self.config.learning_rate
-        )
+        assert self.student_model is not None
+        # Handle both HyenaGLT and nn.Module types
+        if hasattr(self.student_model, 'parameters'):
+            optimizer = torch.optim.Adam(
+                self.student_model.parameters(), lr=self.config.learning_rate  # type: ignore[attr-defined]
+            )
+        else:
+            raise AttributeError("Student model does not have parameters() method")
 
         criterion = nn.CrossEntropyLoss()
 
         # Define hook creation functions outside the training loop
-        def create_feature_hook(features_dict, layer_name):
-            def hook(module, input, output):
+        def create_feature_hook(features_dict: dict[str, Any], layer_name: str) -> Any:
+            def hook(module: Any, input: Any, output: Any) -> None:
                 features_dict[layer_name] = output
-
             return hook
 
         for epoch in range(self.config.epochs):
-            self.student_model.train()
+            if hasattr(self.student_model, 'train'):
+                self.student_model.train()
             epoch_loss = 0.0
 
             for _batch_idx, (data, target) in enumerate(train_loader):
                 optimizer.zero_grad()
 
                 # Get outputs and features
-                teacher_features = {}
-                student_features = {}
+                teacher_features: dict[str, Any] = {}
+                student_features: dict[str, Any] = {}
 
                 # Register hooks
                 teacher_hooks = []
                 student_hooks = []
 
-                for layer_name in self.config.feature_layers:
-                    if hasattr(self.teacher_model, layer_name):
-                        teacher_layer = getattr(self.teacher_model, layer_name)
-                        teacher_hooks.append(
-                            teacher_layer.register_forward_hook(
-                                create_feature_hook(teacher_features, layer_name)
+                if self.config.feature_layers:
+                    for layer_name in self.config.feature_layers:
+                        if hasattr(self.teacher_model, layer_name):
+                            teacher_layer = getattr(self.teacher_model, layer_name)
+                            teacher_hooks.append(
+                                teacher_layer.register_forward_hook(
+                                    create_feature_hook(teacher_features, layer_name)  # type: ignore[no-untyped-call]
+                                )
                             )
-                        )
 
-                    if hasattr(self.student_model, layer_name):
-                        student_layer = getattr(self.student_model, layer_name)
-                        student_hooks.append(
-                            student_layer.register_forward_hook(
-                                create_feature_hook(student_features, layer_name)
+                        if hasattr(self.student_model, layer_name):
+                            student_layer = getattr(self.student_model, layer_name)
+                            student_hooks.append(
+                                student_layer.register_forward_hook(
+                                    create_feature_hook(student_features, layer_name)  # type: ignore[no-untyped-call]
+                                )
                             )
-                        )
 
                 # Forward pass
                 with torch.no_grad():
-                    teacher_output = self.teacher_model(data)
+                    if callable(self.teacher_model):
+                        teacher_output = self.teacher_model(data)
+                    else:
+                        raise ValueError("Teacher model is not callable")
 
-                student_output = self.student_model(data)
+                if callable(self.student_model):
+                    student_output = self.student_model(data)
+                else:
+                    raise ValueError("Student model is not callable")
 
                 # Calculate losses
                 distillation_loss = self._distillation_loss(
@@ -278,22 +323,28 @@ class KnowledgeDistiller:
 
     def _attention_distillation(
         self,
-        train_loader: torch.utils.data.DataLoader,
-        val_loader: torch.utils.data.DataLoader | None = None,
-    ) -> nn.Module:
+        train_loader: DataLoader[Any],
+        val_loader: DataLoader[Any] | None = None,
+    ) -> HyenaGLT:
         """Perform attention-based knowledge distillation."""
         logger.info("Starting attention-based knowledge distillation...")
 
         attention_distiller = AttentionDistiller(self.config)
 
-        optimizer = torch.optim.Adam(
-            self.student_model.parameters(), lr=self.config.learning_rate
-        )
+        assert self.student_model is not None
+        # Handle both HyenaGLT and nn.Module types
+        if hasattr(self.student_model, 'parameters'):
+            optimizer = torch.optim.Adam(
+                self.student_model.parameters(), lr=self.config.learning_rate  # type: ignore[attr-defined]
+            )
+        else:
+            raise AttributeError("Student model does not have parameters() method")
 
         criterion = nn.CrossEntropyLoss()
 
         for epoch in range(self.config.epochs):
-            self.student_model.train()
+            if hasattr(self.student_model, 'train'):
+                self.student_model.train()
             epoch_loss = 0.0
 
             for _batch_idx, (data, target) in enumerate(train_loader):
@@ -301,17 +352,23 @@ class KnowledgeDistiller:
 
                 # Get attention maps
                 teacher_attentions = attention_distiller.extract_attention_maps(
-                    self.teacher_model, data
+                    self.teacher_model, data  # type: ignore[arg-type]
                 )
                 student_attentions = attention_distiller.extract_attention_maps(
-                    self.student_model, data
+                    self.student_model, data  # type: ignore[arg-type]
                 )
 
                 # Get outputs
                 with torch.no_grad():
-                    teacher_output = self.teacher_model(data)
+                    if callable(self.teacher_model):
+                        teacher_output = self.teacher_model(data)
+                    else:
+                        raise ValueError("Teacher model is not callable")
 
-                student_output = self.student_model(data)
+                if callable(self.student_model):
+                    student_output = self.student_model(data)
+                else:
+                    raise ValueError("Student model is not callable")
 
                 # Calculate losses
                 distillation_loss = self._distillation_loss(
@@ -343,9 +400,9 @@ class KnowledgeDistiller:
 
     def _comprehensive_distillation(
         self,
-        train_loader: torch.utils.data.DataLoader,
-        val_loader: torch.utils.data.DataLoader | None = None,
-    ) -> nn.Module:
+        train_loader: DataLoader[Any],
+        val_loader: DataLoader[Any] | None = None,
+    ) -> HyenaGLT:
         """Perform comprehensive knowledge distillation."""
         logger.info("Starting comprehensive knowledge distillation...")
 
@@ -353,14 +410,20 @@ class KnowledgeDistiller:
         FeatureDistiller(self.config)
         attention_distiller = AttentionDistiller(self.config)
 
-        optimizer = torch.optim.Adam(
-            self.student_model.parameters(), lr=self.config.learning_rate
-        )
+        assert self.student_model is not None
+        # Handle both HyenaGLT and nn.Module types
+        if hasattr(self.student_model, 'parameters'):
+            optimizer = torch.optim.Adam(
+                self.student_model.parameters(), lr=self.config.learning_rate  # type: ignore[attr-defined]
+            )
+        else:
+            raise AttributeError("Student model does not have parameters() method")
 
         criterion = nn.CrossEntropyLoss()
 
         for epoch in range(self.config.epochs):
-            self.student_model.train()
+            if hasattr(self.student_model, 'train'):
+                self.student_model.train()
             epoch_loss = 0.0
 
             for _batch_idx, (data, target) in enumerate(train_loader):
@@ -373,17 +436,23 @@ class KnowledgeDistiller:
 
                 # Get attention maps
                 teacher_attentions = attention_distiller.extract_attention_maps(
-                    self.teacher_model, data
+                    self.teacher_model, data  # type: ignore[arg-type]
                 )
                 student_attentions = attention_distiller.extract_attention_maps(
-                    self.student_model, data
+                    self.student_model, data  # type: ignore[arg-type]
                 )
 
                 # Get final outputs
                 with torch.no_grad():
-                    teacher_output = self.teacher_model(data)
+                    if callable(self.teacher_model):
+                        teacher_output = self.teacher_model(data)
+                    else:
+                        raise ValueError("Teacher model is not callable")
 
-                student_output = self.student_model(data)
+                if callable(self.student_model):
+                    student_output = self.student_model(data)
+                else:
+                    raise ValueError("Student model is not callable")
 
                 # Calculate all losses
                 distillation_loss = self._distillation_loss(
@@ -429,39 +498,44 @@ class KnowledgeDistiller:
             temperature**2
         )
 
-    def _validate(self, val_loader: torch.utils.data.DataLoader) -> float:
+    def _validate(self, val_loader: DataLoader[Any]) -> float:
         """Validate the student model."""
-        self.student_model.eval()
+        if self.student_model is not None and hasattr(self.student_model, 'eval'):
+            self.student_model.eval()  # type: ignore[union-attr]
         correct = 0
         total = 0
 
         with torch.no_grad():
             for data, target in val_loader:
-                output = self.student_model(data)
+                if callable(self.student_model):
+                    output = self.student_model(data)
+                else:
+                    raise ValueError("Student model is not callable")
                 pred = output.argmax(dim=1)
                 correct += pred.eq(target).sum().item()
                 total += target.size(0)
 
         return correct / total
 
-    def save_distilled_model(self, save_path: str):
+    def save_distilled_model(self, save_path: str) -> None:
         """Save the distilled model."""
         if self.distilled_model is None:
             raise ValueError("No distilled model to save")
 
-        save_path = Path(save_path)
-        save_path.mkdir(parents=True, exist_ok=True)
+        save_path_obj = Path(save_path)
+        save_path_obj.mkdir(parents=True, exist_ok=True)
 
         # Save model
-        model_path = save_path / "distilled_model.pt"
-        torch.save(self.distilled_model.state_dict(), model_path)
+        model_path = save_path_obj / "distilled_model.pt"
+        if hasattr(self.distilled_model, 'state_dict'):
+            torch.save(self.distilled_model.state_dict(), model_path)
 
         # Save config
-        config_path = save_path / "distillation_config.json"
+        config_path = save_path_obj / "distillation_config.json"
         with open(config_path, "w") as f:
             json.dump(self.config.__dict__, f, indent=2)
 
-        logger.info(f"Distilled model saved to {save_path}")
+        logger.info(f"Distilled model saved to {save_path_obj}")
 
 
 class FeatureDistiller:
@@ -476,22 +550,23 @@ class FeatureDistiller:
         student_features: dict[str, torch.Tensor],
     ) -> torch.Tensor:
         """Compute feature-based distillation loss."""
-        total_loss = 0.0
+        total_loss = torch.tensor(0.0)
 
-        for layer_name in self.config.feature_layers:
-            if layer_name in teacher_features and layer_name in student_features:
-                teacher_feat = teacher_features[layer_name]
-                student_feat = student_features[layer_name]
+        if self.config.feature_layers:
+            for layer_name in self.config.feature_layers:
+                if layer_name in teacher_features and layer_name in student_features:
+                    teacher_feat = teacher_features[layer_name]
+                    student_feat = student_features[layer_name]
 
-                # Adapt dimensions if necessary
-                if teacher_feat.shape != student_feat.shape:
-                    student_feat = self._adapt_features(
-                        student_feat, teacher_feat.shape
-                    )
+                    # Adapt dimensions if necessary
+                    if teacher_feat.shape != student_feat.shape:
+                        student_feat = self._adapt_features(
+                            student_feat, teacher_feat.shape
+                        )
 
-                # MSE loss between features
-                loss = F.mse_loss(student_feat, teacher_feat)
-                total_loss += loss
+                    # MSE loss between features
+                    loss = F.mse_loss(student_feat, teacher_feat)
+                    total_loss += loss
 
         return total_loss
 
@@ -521,8 +596,8 @@ class AttentionDistiller:
         """Extract attention maps from the model."""
         attention_maps = {}
 
-        def attention_hook(name):
-            def hook(module, input, output):
+        def attention_hook(name: str) -> Any:
+            def hook(module: Any, input: Any, output: Any) -> None:
                 # Assuming attention output includes attention weights
                 if isinstance(output, tuple) and len(output) > 1:
                     attention_maps[name] = output[1]  # Attention weights
@@ -534,10 +609,11 @@ class AttentionDistiller:
         hooks = []
 
         # Register hooks for attention layers
-        for layer_name in self.config.attention_layers:
-            if hasattr(model, layer_name):
-                layer = getattr(model, layer_name)
-                hooks.append(layer.register_forward_hook(attention_hook(layer_name)))
+        if self.config.attention_layers:
+            for layer_name in self.config.attention_layers:
+                if hasattr(model, layer_name):
+                    layer = getattr(model, layer_name)
+                    hooks.append(layer.register_forward_hook(attention_hook(layer_name)))
 
         # Forward pass
         with torch.no_grad():
@@ -555,11 +631,12 @@ class AttentionDistiller:
         student_attentions: dict[str, torch.Tensor],
     ) -> torch.Tensor:
         """Compute attention-based distillation loss."""
-        total_loss = 0.0
+        total_loss = torch.tensor(0.0)
 
-        for layer_name in self.config.attention_layers:
-            if layer_name in teacher_attentions and layer_name in student_attentions:
-                teacher_attn = teacher_attentions[layer_name]
+        if self.config.attention_layers:
+            for layer_name in self.config.attention_layers:
+                if layer_name in teacher_attentions and layer_name in student_attentions:
+                    teacher_attn = teacher_attentions[layer_name]
                 student_attn = student_attentions[layer_name]
 
                 # Adapt dimensions if necessary
@@ -653,37 +730,38 @@ class StudentModelFactory:
 class DistillationBenchmark:
     """Benchmark distilled models against teacher and student baselines."""
 
-    def __init__(self):
-        self.results = {}
+    def __init__(self) -> None:
+        self.results: dict[str, Any] = {}
 
     def benchmark(
         self,
         teacher_model: nn.Module,
         student_model: nn.Module,
         distilled_model: nn.Module,
-        test_loader: torch.utils.data.DataLoader,
+        test_loader: DataLoader[Any],
     ) -> dict[str, Any]:
         """Compare teacher, student, and distilled models."""
-        results = {
+        results: dict[str, dict[str, float]] = {
             "teacher": self._evaluate_model(teacher_model, test_loader),
             "student_baseline": self._evaluate_model(student_model, test_loader),
             "distilled": self._evaluate_model(distilled_model, test_loader),
         }
 
         # Calculate improvements
-        results["distillation_gain"] = (
+        results_final: dict[str, Any] = dict(results)
+        results_final["distillation_gain"] = (
             results["distilled"]["accuracy"] - results["student_baseline"]["accuracy"]
         )
 
-        results["knowledge_retention"] = (
+        results_final["knowledge_retention"] = (
             results["distilled"]["accuracy"] / results["teacher"]["accuracy"]
         )
 
-        self.results = results
-        return results
+        self.results = results_final
+        return results_final
 
     def _evaluate_model(
-        self, model: nn.Module, test_loader: torch.utils.data.DataLoader
+        self, model: nn.Module, test_loader: DataLoader[Any]
     ) -> dict[str, float]:
         """Evaluate a single model."""
         model.eval()
@@ -704,7 +782,7 @@ class DistillationBenchmark:
 
         return {"accuracy": correct / total, "loss": total_loss / len(test_loader)}
 
-    def print_results(self):
+    def print_results(self) -> None:
         """Print benchmark results."""
         if not self.results:
             print("No benchmark results available")

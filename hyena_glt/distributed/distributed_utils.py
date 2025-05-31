@@ -4,6 +4,8 @@ Based on patterns from BLT and Savanna repositories.
 """
 
 import logging
+from collections.abc import Callable
+from datetime import timedelta
 from typing import Any
 
 import torch
@@ -35,7 +37,7 @@ def init_distributed_training(
     if device_manager.is_distributed:
         # Set timeout for large clusters
         if timeout_minutes > 0:
-            torch.timedelta(minutes=timeout_minutes)
+            timedelta(minutes=timeout_minutes)
 
         device_manager.setup_distributed(backend=backend)
 
@@ -75,11 +77,15 @@ def wrap_model_for_distributed(
     if not device_manager.is_distributed:
         return model
 
-    if use_fsdp and transformer_layer_cls:
+    if use_fsdp:
         # Use FSDP for large models
-        auto_wrap_policy = transformer_auto_wrap_policy(
-            transformer_layer_cls=transformer_layer_cls
-        )
+        auto_wrap_policy: Callable[..., Any] | None
+        if transformer_layer_cls:
+            auto_wrap_policy = transformer_auto_wrap_policy(  # type: ignore[call-arg, assignment]
+                transformer_layer_cls={transformer_layer_cls}
+            )
+        else:
+            auto_wrap_policy = None
 
         model = FSDP(
             model,
@@ -210,7 +216,7 @@ def save_checkpoint_distributed(
     device_manager: DeviceManager,
     scaler: torch.cuda.amp.GradScaler | None = None,
     metadata: dict[str, Any] | None = None,
-):
+) -> None:
     """
     Save checkpoint in distributed training.
 

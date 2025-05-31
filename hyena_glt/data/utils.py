@@ -124,7 +124,7 @@ def calculate_gc_content(sequence: str) -> float:
     return gc_count / total_count
 
 
-def find_orfs(sequence: str, min_length: int = 100) -> list[dict]:
+def find_orfs(sequence: str, min_length: int = 100) -> list[dict[str, Any]]:
     """Find open reading frames in a DNA sequence."""
     sequence = sequence.upper()
     orfs = []

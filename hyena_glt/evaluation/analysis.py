@@ -4,7 +4,9 @@ Analysis utilities for model evaluation and results interpretation.
 
 import json
 import warnings
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,7 +36,7 @@ except ImportError:
 class ModelAnalyzer:
     """Comprehensive model analysis utilities."""
 
-    def __init__(self, model: torch.nn.Module, tokenizer=None):
+    def __init__(self, model: torch.nn.Module, tokenizer: Any = None):
         self.model = model
         self.tokenizer = tokenizer
         self.device = next(model.parameters()).device
@@ -99,8 +101,8 @@ class ModelAnalyzer:
         # Register hooks to capture intermediate representations
         activations = {}
 
-        def get_activation(name):
-            def hook(model, input, output):
+        def get_activation(name: str) -> Callable:
+            def hook(model: Any, input: Any, output: Any) -> None:
                 activations[name] = output.detach()
 
             return hook
@@ -161,7 +163,7 @@ class ModelAnalyzer:
             input_ids, baseline, target=target_class, return_convergence_delta=False
         )
 
-        return attributions.cpu().numpy()
+        return attributions.cpu().numpy()  # type: ignore[no-any-return]
 
     def analyze_layer_importance(self, input_ids: torch.Tensor) -> dict[str, float]:
         """
@@ -207,8 +209,8 @@ class ResultsAnalyzer:
         summary_data = []
 
         for task_name, result in self.results.items():
-            row = {"task": task_name}
-            row.update(result.metrics)
+            row: dict[str, Any] = {"task": task_name}
+            row.update(result.metrics)  # type: ignore[arg-type]
             summary_data.append(row)
 
         return pd.DataFrame(summary_data)
@@ -377,7 +379,7 @@ class StatisticalAnalyzer:
             Dictionary containing test results
         """
         # Extract metric values for each task across runs
-        task_values = {}
+        task_values: dict[str, list[float]] = {}
         for results in self.results_list:
             for task_name, result in results.items():
                 if metric in result.metrics:
@@ -458,9 +460,9 @@ class StatisticalAnalyzer:
                     values.append(results[task_name].metrics[metric])
 
             if len(values) > 1:
-                values = np.array(values)
-                mean = np.mean(values)
-                sem = stats.sem(values)
+                values_array = np.array(values)
+                mean = np.mean(values_array)
+                sem = stats.sem(values_array)
 
                 # Use t-distribution for small samples
                 if len(values) < 30:
@@ -481,7 +483,7 @@ class VisualizationUtils:
     @staticmethod
     def create_interactive_performance_dashboard(
         results: dict[str, EvaluationResult], save_path: str | None = None
-    ):
+    ) -> Any:
         """
         Create an interactive dashboard for performance analysis.
 
@@ -498,8 +500,8 @@ class VisualizationUtils:
         # Prepare data
         summary_data = []
         for task_name, result in results.items():
-            row = {"Task": task_name}
-            row.update(result.metrics)
+            row: dict[str, Any] = {"Task": task_name}
+            row.update(result.metrics)  # type: ignore[arg-type]
             summary_data.append(row)
 
         df = pd.DataFrame(summary_data)

@@ -54,14 +54,14 @@ class QuantizationConfig:
     # Layer-specific settings
     quantize_embedding: bool = False
     quantize_output: bool = True
-    skip_layers: list[str] = None
+    skip_layers: list[str] | None = None
 
     # Advanced options
     per_channel: bool = True
     symmetric: bool = False
     reduce_range: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.skip_layers is None:
             self.skip_layers = []
 
@@ -71,7 +71,7 @@ class ModelQuantizer:
 
     def __init__(self, config: QuantizationConfig):
         self.config = config
-        self.quantized_model = None
+        self.quantized_model: nn.Module | None = None
         self.calibrated = False
 
     def quantize_model(
@@ -116,12 +116,12 @@ class ModelQuantizer:
         logger.info("Applying dynamic quantization...")
 
         # Set quantization configuration
-        model.eval()
+        model.eval()  # type: ignore[attr-defined]
 
         # Define modules to quantize
         modules_to_quantize = {nn.Linear}
         if self.config.quantize_embedding:
-            modules_to_quantize.add(nn.Embedding)
+            modules_to_quantize.add(nn.Embedding)  # type: ignore[arg-type]
 
         # Apply dynamic quantization
         quantized_model = quantize_dynamic(
@@ -132,7 +132,7 @@ class ModelQuantizer:
         )
 
         logger.info("Dynamic quantization completed")
-        return quantized_model
+        return quantized_model  # type: ignore[no-any-return]
 
     def _static_quantize(
         self, model: HyenaGLT, calibration_loader: torch.utils.data.DataLoader
@@ -144,13 +144,14 @@ class ModelQuantizer:
         torch.backends.quantized.engine = self.config.backend
 
         # Prepare model for quantization
-        model.eval()
-        model.qconfig = get_default_qconfig(self.config.backend)
+        model.eval()  # type: ignore[attr-defined]
+        model.qconfig = get_default_qconfig(self.config.backend)  # type: ignore[attr-defined]
 
         # Skip specific layers if requested
-        for layer_name in self.config.skip_layers:
-            if hasattr(model, layer_name):
-                getattr(model, layer_name).qconfig = None
+        if self.config.skip_layers is not None:
+            for layer_name in self.config.skip_layers:
+                if hasattr(model, layer_name):
+                    getattr(model, layer_name).qconfig = None
 
         # Prepare model
         prepared_model = prepare(model, inplace=False)
@@ -163,7 +164,7 @@ class ModelQuantizer:
         quantized_model = convert(prepared_model, inplace=False)
 
         logger.info("Static quantization completed")
-        return quantized_model
+        return quantized_model  # type: ignore[no-any-return]
 
     def _qat_quantize(
         self, model: HyenaGLT, train_loader: torch.utils.data.DataLoader
@@ -175,13 +176,14 @@ class ModelQuantizer:
         torch.backends.quantized.engine = self.config.backend
 
         # Prepare model for QAT
-        model.train()
-        model.qconfig = get_default_qat_qconfig(self.config.backend)
+        model.train()  # type: ignore[attr-defined]
+        model.qconfig = get_default_qat_qconfig(self.config.backend)  # type: ignore[attr-defined]
 
         # Skip specific layers if requested
-        for layer_name in self.config.skip_layers:
-            if hasattr(model, layer_name):
-                getattr(model, layer_name).qconfig = None
+        if self.config.skip_layers is not None:
+            for layer_name in self.config.skip_layers:
+                if hasattr(model, layer_name):
+                    getattr(model, layer_name).qconfig = None
 
         # Prepare for QAT
         prepared_model = prepare_qat(model, inplace=False)
@@ -195,41 +197,41 @@ class ModelQuantizer:
         quantized_model = convert(trained_model, inplace=False)
 
         logger.info("QAT completed")
-        return quantized_model
+        return quantized_model  # type: ignore[no-any-return]
 
-    def save_quantized_model(self, save_path: str):
+    def save_quantized_model(self, save_path: str) -> None:
         """Save the quantized model."""
         if self.quantized_model is None:
             raise ValueError("No quantized model to save")
 
-        save_path = Path(save_path)
-        save_path.mkdir(parents=True, exist_ok=True)
+        save_path_obj = Path(save_path)
+        save_path_obj.mkdir(parents=True, exist_ok=True)
 
         # Save model
-        model_path = save_path / "quantized_model.pt"
+        model_path = save_path_obj / "quantized_model.pt"
         torch.save(self.quantized_model.state_dict(), model_path)
 
         # Save config
-        config_path = save_path / "quantization_config.json"
+        config_path = save_path_obj / "quantization_config.json"
         with open(config_path, "w") as f:
             json.dump(self.config.__dict__, f, indent=2)
 
-        logger.info(f"Quantized model saved to {save_path}")
+        logger.info(f"Quantized model saved to {save_path_obj}")
 
     def load_quantized_model(
         self, load_path: str, model_class: type = HyenaGLT
-    ) -> nn.Module:
+    ) -> nn.Module | None:
         """Load a quantized model."""
-        load_path = Path(load_path)
+        load_path_obj = Path(load_path)
 
         # Load config
-        config_path = load_path / "quantization_config.json"
+        config_path = load_path_obj / "quantization_config.json"
         with open(config_path) as f:
             json.load(f)
 
         # Create model (this would need to be adapted based on actual architecture)
         # For now, returning a placeholder
-        logger.info(f"Quantized model loaded from {load_path}")
+        logger.info(f"Quantized model loaded from {load_path_obj}")
         return self.quantized_model
 
 
@@ -248,7 +250,7 @@ class DynamicQuantizer:
             model, {nn.Linear, nn.LSTM, nn.GRU}, dtype=self.dtype, inplace=False
         )
 
-        return quantized_model
+        return quantized_model  # type: ignore[no-any-return]
 
 
 class QATTrainer:
@@ -313,7 +315,7 @@ class QuantizationCalibrator:
 
     def calibrate(
         self, model: nn.Module, calibration_loader: torch.utils.data.DataLoader
-    ):
+    ) -> None:
         """Run calibration on the prepared model."""
         model.eval()
 
@@ -340,21 +342,21 @@ class QuantizationCalibrator:
 class QuantizationBenchmark:
     """Benchmark quantized models against original models."""
 
-    def __init__(self):
-        self.results = {}
+    def __init__(self) -> None:
+        self.results: dict[str, Any] = {}
 
     def benchmark(
         self,
         original_model: nn.Module,
         quantized_model: nn.Module,
         test_loader: torch.utils.data.DataLoader,
-        metrics: list[str] = None,
+        metrics: list[str] | None = None,
     ) -> dict[str, Any]:
         """Compare original and quantized models."""
         if metrics is None:
             metrics = ["accuracy", "latency", "memory"]
 
-        results = {
+        results: dict[str, Any] = {
             "original": {},
             "quantized": {},
             "compression_ratio": None,
@@ -446,7 +448,7 @@ class QuantizationBenchmark:
                 torch.cuda.synchronize()
                 times.append(start_time.elapsed_time(end_time))
 
-        return np.mean(times)
+        return float(np.mean(times))  # type: ignore[no-any-return]
 
     def _measure_memory(self, model: nn.Module) -> int:
         """Measure model memory usage in bytes."""
@@ -466,7 +468,7 @@ class QuantizationBenchmark:
 
         return param_size + buffer_size
 
-    def print_results(self):
+    def print_results(self) -> None:
         """Print benchmark results."""
         if not self.results:
             print("No benchmark results available")

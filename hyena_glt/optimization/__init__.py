@@ -142,7 +142,7 @@ if HAS_MEMORY:
     )
 
 
-def get_optimization_info():
+def get_optimization_info() -> dict[str, bool]:
     """Get information about available optimization modules."""
     info = {
         "quantization": HAS_QUANTIZATION,
@@ -154,7 +154,7 @@ def get_optimization_info():
     return info
 
 
-def check_dependencies():
+def check_dependencies() -> bool:
     """Check if all optimization dependencies are available."""
     missing = []
 

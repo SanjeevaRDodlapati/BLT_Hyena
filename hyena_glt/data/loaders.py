@@ -5,9 +5,10 @@ import random
 from collections import defaultdict
 from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
+from Bio.SeqRecord import SeqRecord
 from torch.utils.data import DataLoader, Dataset, Sampler
 
 from .collators import AdaptiveBatchCollator, MultiModalCollator, SequenceCollator
@@ -50,7 +51,7 @@ class LengthGroupedSampler(Sampler):
 
         # Pre-compute lengths and group indices
         self.lengths = []
-        for i in range(len(dataset)):
+        for i in range(len(dataset)):  # type: ignore[arg-type]
             try:
                 length = self.length_fn(dataset[i])
                 self.lengths.append(length)
@@ -63,12 +64,12 @@ class LengthGroupedSampler(Sampler):
         """Default function to extract sequence length."""
         if "input_ids" in item:
             if isinstance(item["input_ids"], list | np.ndarray):
-                return len(item["input_ids"])
+                return len(item["input_ids"])  # type: ignore[no-any-return]
             elif hasattr(item["input_ids"], "shape"):
-                return item["input_ids"].shape[0]
+                return item["input_ids"].shape[0]  # type: ignore[no-any-return]
         return 0
 
-    def _create_length_groups(self):
+    def _create_length_groups(self) -> None:
         """Group indices by sequence length."""
         length_to_indices = defaultdict(list)
         for idx, length in enumerate(self.lengths):
@@ -142,11 +143,11 @@ class MultiModalSampler(Sampler):
 
         self._group_by_modality()
 
-    def _group_by_modality(self):
+    def _group_by_modality(self) -> None:
         """Group dataset indices by modality."""
         self.modality_groups = defaultdict(list)
 
-        for idx in range(len(self.dataset)):
+        for idx in range(len(self.dataset)):  # type: ignore[arg-type]
             try:
                 item = self.dataset[idx]
                 modality = item.get(self.modality_key, "default")
@@ -260,6 +261,9 @@ class GenomicDataLoader:
         self.pin_memory = pin_memory
         self.drop_last = drop_last
 
+        # Declare sampler attribute with proper type
+        self.sampler: LengthGroupedSampler | None
+
         # Create or load dataset
         if isinstance(dataset, str | Path):
             self.dataset = self._load_dataset_from_file(dataset)
@@ -323,18 +327,15 @@ class GenomicDataLoader:
         # Determine dataset type based on data structure
         if data and "labels" in data[0] and isinstance(data[0]["labels"], list):
             # Token classification
-            sequences = [item["sequence"] for item in data]
-            labels = [item["labels"] for item in data]
             return TokenClassificationDataset(
-                sequences=sequences,
-                labels=labels,
+                data=data,
                 tokenizer=self.tokenizer,
                 max_length=self.max_length,
             )
         else:
             # Sequence classification or other tasks
             return GenomicDataset(
-                data=data, tokenizer=self.tokenizer, max_length=self.max_length
+                data=data, tokenizer=self.tokenizer, max_length=self.max_length or 512
             )
 
     def _load_fasta_dataset(self, file_path: Path) -> Dataset:
@@ -346,10 +347,13 @@ class GenomicDataLoader:
             for record in SeqIO.parse(file_path, "fasta"):
                 sequences.append(str(record.seq))
 
+            # Create data in the expected format
+            data = [{"sequence": seq} for seq in sequences]
+
             return GenomicDataset(
-                sequences=sequences,
+                data=data,
                 tokenizer=self.tokenizer,
-                max_length=self.max_length,
+                max_length=self.max_length or 512,
             )
         except ImportError as e:
             raise ImportError("BioPython required for FASTA file loading") from e
@@ -368,13 +372,16 @@ class GenomicDataLoader:
             # Apply preprocessing if available
             if self.preprocessing:
                 sequences, _, _ = self.preprocessing.preprocess_sequences(
-                    sequences=sequences, qualities=qualities
+                    cast(list[str | SeqRecord], sequences), qualities=qualities
                 )
 
+            # Create data in the expected format
+            data = [{"sequence": seq} for seq in sequences]
+
             return GenomicDataset(
-                sequences=sequences,
+                data=data,
                 tokenizer=self.tokenizer,
-                max_length=self.max_length,
+                max_length=self.max_length or 512,
             )
         except ImportError as e:
             raise ImportError("BioPython required for FASTQ file loading") from e
@@ -392,16 +399,16 @@ class GenomicDataLoader:
             drop_last=self.drop_last,
         )
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Any]:
         """Make this class iterable."""
         return iter(self.get_dataloader())
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return number of batches."""
         if self.sampler:
             return len(self.sampler)
         else:
-            dataset_size = len(self.dataset)
+            dataset_size = len(self.dataset)  # type: ignore[arg-type]
             if self.drop_last:
                 return dataset_size // self.batch_size
             else:
@@ -446,6 +453,9 @@ class MultiModalDataLoader:
         self.max_lengths = max_lengths or {}
         self.align_lengths = align_lengths
 
+        # Declare sampler attribute with proper type
+        self.sampler: MultiModalSampler | None
+
         # Create combined dataset
         self.combined_dataset = self._create_combined_dataset()
 
@@ -475,19 +485,19 @@ class MultiModalDataLoader:
                 # Calculate offsets for each modality
                 for modality, dataset in datasets.items():
                     self.modality_offsets[modality] = self.total_size
-                    self.total_size += len(dataset)
+                    self.total_size += len(dataset)  # type: ignore[arg-type]
 
-            def __len__(self):
+            def __len__(self) -> int:
                 return self.total_size
 
-            def __getitem__(self, idx):
+            def __getitem__(self, idx: int) -> dict[str, Any]:
                 # Find which modality this index belongs to
                 for modality, offset in self.modality_offsets.items():
                     dataset = self.datasets[modality]
-                    if idx < offset + len(dataset):
+                    if idx < offset + len(dataset):  # type: ignore[arg-type]
                         item = dataset[idx - offset]
                         item["modality"] = modality
-                        return item
+                        return item  # type: ignore[no-any-return]
 
                 raise IndexError(f"Index {idx} out of range")
 
@@ -505,16 +515,16 @@ class MultiModalDataLoader:
             pin_memory=True,
         )
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Any]:
         """Make this class iterable."""
         return iter(self.get_dataloader())
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return number of batches."""
         if self.sampler:
             return len(self.sampler)
         else:
-            return (len(self.combined_dataset) + self.batch_size - 1) // self.batch_size
+            return (len(self.combined_dataset) + self.batch_size - 1) // self.batch_size  # type: ignore[arg-type]
 
 
 class StreamingDataLoader:
@@ -591,7 +601,7 @@ class StreamingDataLoader:
         except ImportError as e:
             raise ImportError("BioPython required for FASTA streaming") from e
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Any]:
         """Iterate over batches from streaming data."""
         data_iterator = self._create_data_iterator()
         buffer = []
@@ -640,7 +650,7 @@ def create_genomic_dataloaders(
     max_length: int | None = None,
     num_workers: int = 0,
     preprocessing: GenomicPreprocessor | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> dict[str, GenomicDataLoader]:
     """
     Convenience function to create train/validation/test data loaders.
@@ -680,7 +690,7 @@ def create_genomic_dataloaders(
             max_length=max_length or tokenizer.model_max_length,
         )
     else:
-        train_dataset = train_data
+        train_dataset = cast(GenomicDataset, train_data)
 
     # Training loader
     loaders["train"] = GenomicDataLoader(
@@ -703,7 +713,7 @@ def create_genomic_dataloaders(
                 max_length=max_length or tokenizer.model_max_length,
             )
         else:
-            val_dataset = val_data
+            val_dataset = cast(GenomicDataset, val_data)
 
         loaders["val"] = GenomicDataLoader(
             dataset=val_dataset,
@@ -725,7 +735,7 @@ def create_genomic_dataloaders(
                 max_length=max_length or tokenizer.model_max_length,
             )
         else:
-            test_dataset = test_data
+            test_dataset = cast(GenomicDataset, test_data)
 
         loaders["test"] = GenomicDataLoader(
             dataset=test_dataset,

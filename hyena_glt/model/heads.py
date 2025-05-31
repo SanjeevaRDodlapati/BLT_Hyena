@@ -48,7 +48,7 @@ class SequenceClassificationHead(nn.Module):
         # Initialize weights
         self._init_weights()
 
-    def _init_weights(self):
+    def _init_weights(self) -> None:
         """Initialize classifier weights."""
         for module in self.classifier:
             if isinstance(module, nn.Linear):
@@ -73,7 +73,7 @@ class SequenceClassificationHead(nn.Module):
         pooled = self._pool_sequence(hidden_states, attention_mask)
 
         # Apply classifier
-        logits = self.classifier(pooled)
+        logits: torch.Tensor = self.classifier(pooled)
 
         return logits
 
@@ -124,7 +124,8 @@ class SequenceClassificationHead(nn.Module):
                 ),
             )
 
-            return pooled.squeeze(1)
+            pooled_result: torch.Tensor = pooled.squeeze(1)
+            return pooled_result
 
         else:
             raise ValueError(f"Unknown pooling strategy: {self.pooling_strategy}")
@@ -167,7 +168,7 @@ class TokenClassificationHead(nn.Module):
         # Initialize weights
         self._init_weights()
 
-    def _init_weights(self):
+    def _init_weights(self) -> None:
         """Initialize classifier weights."""
         for module in self.classifier:
             if isinstance(module, nn.Linear):
@@ -262,7 +263,7 @@ class SequenceGenerationHead(nn.Module):
         # Initialize weights
         self._init_weights()
 
-    def _init_weights(self):
+    def _init_weights(self) -> None:
         """Initialize generator weights."""
         for module in self.generator:
             if isinstance(module, nn.Linear):
@@ -334,6 +335,12 @@ class MultiTaskHead(nn.Module):
         for task_name, task_config in task_configs.items():
             task_type = task_config["type"]
 
+            head: (
+                SequenceClassificationHead
+                | TokenClassificationHead
+                | SequenceGenerationHead
+            )
+
             if task_type == "sequence_classification":
                 head = SequenceClassificationHead(
                     config=config,
@@ -368,7 +375,7 @@ class MultiTaskHead(nn.Module):
         task: str,
         labels: torch.Tensor | None = None,
         attention_mask: torch.Tensor | None = None,
-    ) -> dict[str, torch.Tensor]:
+    ) -> dict[str, torch.Tensor | str]:
         """
         Args:
             hidden_states: (batch, seq_len, hidden_size)
@@ -383,7 +390,7 @@ class MultiTaskHead(nn.Module):
             raise ValueError(f"Unknown task: {task}")
 
         # Forward through task-specific head
-        outputs = self.task_heads[task](
+        outputs: dict[str, torch.Tensor | str] = self.task_heads[task](
             hidden_states=hidden_states,
             labels=labels,
             attention_mask=attention_mask,
@@ -394,7 +401,9 @@ class MultiTaskHead(nn.Module):
 
         # Weight the loss if training
         if "loss" in outputs and task in self.task_weights:
-            outputs["loss"] = outputs["loss"] * self.task_weights[task]
+            loss_tensor = outputs["loss"]
+            if isinstance(loss_tensor, torch.Tensor):
+                outputs["loss"] = loss_tensor * self.task_weights[task]
 
         return outputs
 
@@ -402,7 +411,7 @@ class MultiTaskHead(nn.Module):
         self, task_outputs: dict[str, dict[str, torch.Tensor]]
     ) -> torch.Tensor:
         """Compute combined loss across multiple tasks."""
-        total_loss = 0.0
+        total_loss: torch.Tensor = torch.tensor(0.0)
         num_tasks = 0
 
         for task_name, outputs in task_outputs.items():

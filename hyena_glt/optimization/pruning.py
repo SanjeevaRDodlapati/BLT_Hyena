@@ -48,14 +48,14 @@ class PruningConfig:
     finetune_lr: float = 1e-5
 
     # Layer-specific settings
-    skip_layers: list[str] = None
-    layer_sparsities: dict[str, float] = None
+    skip_layers: list[str] | None = None
+    layer_sparsities: dict[str, float] | None = None
 
     # Advanced options
     importance_score: str = "magnitude"  # "magnitude", "gradient", "taylor"
     normalize_scores: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.skip_layers is None:
             self.skip_layers = []
         if self.layer_sparsities is None:
@@ -67,8 +67,8 @@ class ModelPruner:
 
     def __init__(self, config: PruningConfig):
         self.config = config
-        self.pruned_model = None
-        self.pruning_masks = {}
+        self.pruned_model: nn.Module | None = None
+        self.pruning_masks: dict[str, Any] = {}
 
     def prune_model(
         self,
@@ -120,9 +120,9 @@ class ModelPruner:
         if self.config.global_pruning:
             # Global magnitude pruning
             parameters_to_prune = []
-            for name, module in model_copy.named_modules():
+            for name, module in model_copy.named_modules():  # type: ignore[attr-defined]
                 if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
-                    if name not in self.config.skip_layers:
+                    if name not in (self.config.skip_layers or []):
                         parameters_to_prune.append((module, "weight"))
 
             prune.global_unstructured(
@@ -132,19 +132,19 @@ class ModelPruner:
             )
         else:
             # Layer-wise magnitude pruning
-            for name, module in model_copy.named_modules():
+            for name, module in model_copy.named_modules():  # type: ignore[attr-defined]
                 if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
-                    if name not in self.config.skip_layers:
-                        sparsity = self.config.layer_sparsities.get(
+                    if name not in (self.config.skip_layers or []):
+                        sparsity = self.config.layer_sparsities.get(  # type: ignore[union-attr]
                             name, self.config.sparsity
                         )
                         prune.l1_unstructured(module, name="weight", amount=sparsity)
 
         # Store masks
-        self._extract_masks(model_copy)
+        self._extract_masks(model_copy)  # type: ignore[arg-type]
 
         logger.info("Magnitude-based pruning completed")
-        return model_copy
+        return model_copy  # type: ignore[return-value]
 
     def _gradient_prune(
         self, model: HyenaGLT, train_loader: torch.utils.data.DataLoader
@@ -155,7 +155,7 @@ class ModelPruner:
         # Calculate gradient-based importance scores
         gradient_pruner = GradientPruner(self.config)
         importance_scores = gradient_pruner.compute_importance_scores(
-            model, train_loader
+            model, train_loader  # type: ignore[arg-type]
         )
 
         model_copy = copy.deepcopy(model)
@@ -166,10 +166,10 @@ class ModelPruner:
             all_scores = []
             param_mapping = []
 
-            for name, module in model_copy.named_modules():
+            for name, module in model_copy.named_modules():  # type: ignore[attr-defined]
                 if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
                     if (
-                        name not in self.config.skip_layers
+                        name not in (self.config.skip_layers or [])
                         and name in importance_scores
                     ):
                         scores = importance_scores[name].flatten()
@@ -179,25 +179,25 @@ class ModelPruner:
                         )
 
             # Find threshold for global sparsity
-            all_scores = np.array(all_scores)
-            threshold_idx = int(len(all_scores) * self.config.sparsity)
-            threshold = np.partition(all_scores, threshold_idx)[threshold_idx]
+            all_scores_arr = np.array(all_scores)
+            threshold_idx = int(len(all_scores_arr) * self.config.sparsity)
+            threshold = np.partition(all_scores_arr, threshold_idx)[threshold_idx]
 
             # Apply masks
-            for name, module in model_copy.named_modules():
+            for name, module in model_copy.named_modules():  # type: ignore[attr-defined]
                 if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
                     if (
-                        name not in self.config.skip_layers
+                        name not in (self.config.skip_layers or [])
                         and name in importance_scores
                     ):
                         mask = importance_scores[name] > threshold
                         prune.custom_from_mask(module, name="weight", mask=mask)
 
         # Store masks
-        self._extract_masks(model_copy)
+        self._extract_masks(model_copy)  # type: ignore[arg-type]
 
         logger.info("Gradient-based pruning completed")
-        return model_copy
+        return model_copy  # type: ignore[return-value]
 
     def _structured_prune(self, model: HyenaGLT) -> nn.Module:
         """Apply structured pruning."""
@@ -206,13 +206,13 @@ class ModelPruner:
         model_copy = copy.deepcopy(model)
         structured_pruner = StructuredPruner(self.config)
 
-        for name, module in model_copy.named_modules():
+        for name, module in model_copy.named_modules():  # type: ignore[attr-defined]
             if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
-                if name not in self.config.skip_layers:
+                if name not in (self.config.skip_layers or []):
                     structured_pruner.prune_module(module, name)
 
         logger.info("Structured pruning completed")
-        return model_copy
+        return model_copy  # type: ignore[return-value]
 
     def _random_prune(self, model: HyenaGLT) -> nn.Module:
         """Apply random pruning (baseline)."""
@@ -220,18 +220,18 @@ class ModelPruner:
 
         model_copy = copy.deepcopy(model)
 
-        for name, module in model_copy.named_modules():
+        for name, module in model_copy.named_modules():  # type: ignore[attr-defined]
             if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
-                if name not in self.config.skip_layers:
+                if name not in (self.config.skip_layers or []):
                     prune.random_unstructured(
                         module, name="weight", amount=self.config.sparsity
                     )
 
         # Store masks
-        self._extract_masks(model_copy)
+        self._extract_masks(model_copy)  # type: ignore[arg-type]
 
         logger.info("Random pruning completed")
-        return model_copy
+        return model_copy  # type: ignore[return-value]
 
     def _finetune_pruned_model(
         self, model: nn.Module, train_loader: torch.utils.data.DataLoader
@@ -267,7 +267,7 @@ class ModelPruner:
 
         return model
 
-    def _extract_masks(self, model: nn.Module):
+    def _extract_masks(self, model: nn.Module) -> None:
         """Extract pruning masks from the model."""
         self.pruning_masks = {}
 
@@ -277,7 +277,7 @@ class ModelPruner:
 
     def get_sparsity_info(self, model: nn.Module) -> dict[str, Any]:
         """Get detailed sparsity information."""
-        sparsity_info = {
+        sparsity_info: dict[str, Any] = {
             "overall_sparsity": 0.0,
             "layer_sparsities": {},
             "total_params": 0,
@@ -294,48 +294,48 @@ class ModelPruner:
                 layer_pruned = (weight == 0).sum().item()
 
                 total_params += layer_total
-                pruned_params += layer_pruned
+                pruned_params += int(layer_pruned)
 
-                layer_sparsity = layer_pruned / layer_total
+                layer_sparsity: float = float(layer_pruned) / float(layer_total)
                 sparsity_info["layer_sparsities"][name] = layer_sparsity
 
-        sparsity_info["total_params"] = total_params
-        sparsity_info["pruned_params"] = pruned_params
+        sparsity_info["total_params"] = int(total_params)
+        sparsity_info["pruned_params"] = int(pruned_params)
         sparsity_info["overall_sparsity"] = (
             pruned_params / total_params if total_params > 0 else 0.0
         )
 
         return sparsity_info
 
-    def save_pruned_model(self, save_path: str):
+    def save_pruned_model(self, save_path: str) -> None:
         """Save the pruned model and masks."""
         if self.pruned_model is None:
             raise ValueError("No pruned model to save")
 
-        save_path = Path(save_path)
-        save_path.mkdir(parents=True, exist_ok=True)
+        save_path_obj = Path(save_path)
+        save_path_obj.mkdir(parents=True, exist_ok=True)
 
         # Save model
-        model_path = save_path / "pruned_model.pt"
+        model_path = save_path_obj / "pruned_model.pt"
         torch.save(self.pruned_model.state_dict(), model_path)
 
         # Save masks
         if self.pruning_masks:
-            masks_path = save_path / "pruning_masks.pt"
+            masks_path = save_path_obj / "pruning_masks.pt"
             torch.save(self.pruning_masks, masks_path)
 
         # Save config
-        config_path = save_path / "pruning_config.json"
+        config_path = save_path_obj / "pruning_config.json"
         with open(config_path, "w") as f:
             json.dump(self.config.__dict__, f, indent=2)
 
         # Save sparsity info
         sparsity_info = self.get_sparsity_info(self.pruned_model)
-        sparsity_path = save_path / "sparsity_info.json"
+        sparsity_path = save_path_obj / "sparsity_info.json"
         with open(sparsity_path, "w") as f:
             json.dump(sparsity_info, f, indent=2)
 
-        logger.info(f"Pruned model saved to {save_path}")
+        logger.info(f"Pruned model saved to {save_path_obj}")
 
 
 class StructuredPruner:
@@ -344,14 +344,14 @@ class StructuredPruner:
     def __init__(self, config: PruningConfig):
         self.config = config
 
-    def prune_module(self, module: nn.Module, name: str):
+    def prune_module(self, module: nn.Module, name: str) -> None:
         """Apply structured pruning to a module."""
         if isinstance(module, nn.Linear):
             self._prune_linear(module)
         elif isinstance(module, nn.Conv1d | nn.Conv2d):
             self._prune_conv(module)
 
-    def _prune_linear(self, module: nn.Linear):
+    def _prune_linear(self, module: nn.Linear) -> None:
         """Prune linear layer."""
         if self.config.structured_type == "channel":
             # Prune input channels
@@ -360,7 +360,7 @@ class StructuredPruner:
             # Prune output channels
             self._prune_linear_channels(module, dim=0)
 
-    def _prune_conv(self, module: nn.Conv1d | nn.Conv2d):
+    def _prune_conv(self, module: nn.Conv1d | nn.Conv2d) -> None:
         """Prune convolutional layer."""
         if self.config.structured_type == "filter":
             # Prune output filters
@@ -369,7 +369,7 @@ class StructuredPruner:
             # Prune input channels
             self._prune_conv_channels(module)
 
-    def _prune_linear_channels(self, module: nn.Linear, dim: int):
+    def _prune_linear_channels(self, module: nn.Linear, dim: int) -> None:
         """Prune channels in linear layer."""
         weight = module.weight
 
@@ -395,7 +395,7 @@ class StructuredPruner:
         else:
             prune.custom_from_mask(module, name="weight", mask=mask.unsqueeze(0))
 
-    def _prune_conv_filters(self, module: nn.Conv1d | nn.Conv2d):
+    def _prune_conv_filters(self, module: nn.Conv1d | nn.Conv2d) -> None:
         """Prune filters in convolutional layer."""
         weight = module.weight
 
@@ -419,7 +419,7 @@ class StructuredPruner:
 
         prune.custom_from_mask(module, name="weight", mask=mask)
 
-    def _prune_conv_channels(self, module: nn.Conv1d | nn.Conv2d):
+    def _prune_conv_channels(self, module: nn.Conv1d | nn.Conv2d) -> None:
         """Prune input channels in convolutional layer."""
         weight = module.weight
 
@@ -465,7 +465,7 @@ class UnstructuredPruner:
 
         for name, module in model.named_modules():
             if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
-                if name not in self.config.skip_layers:
+                if name not in (self.config.skip_layers or []):
                     parameters_to_prune.append((module, "weight"))
 
         prune.global_unstructured(
@@ -480,8 +480,8 @@ class UnstructuredPruner:
         """Apply layer-wise unstructured pruning."""
         for name, module in model.named_modules():
             if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
-                if name not in self.config.skip_layers:
-                    sparsity = self.config.layer_sparsities.get(
+                if name not in (self.config.skip_layers or []):
+                    sparsity = self.config.layer_sparsities.get(  # type: ignore[union-attr]
                         name, self.config.sparsity
                     )
                     prune.l1_unstructured(module, name="weight", amount=sparsity)
@@ -571,7 +571,7 @@ class PruningScheduler:
 
         return sparsity
 
-    def step(self):
+    def step(self) -> None:
         """Advance the scheduler."""
         self.current_step += 1
 

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import torch
-from transformers import PreTrainedTokenizer
+from transformers import PreTrainedTokenizer  # type: ignore[attr-defined]
 
 from .utils import generate_kmers, reverse_complement
 
@@ -65,7 +65,7 @@ class GenomicTokenizer(PreTrainedTokenizer):
 
         self.ids_to_tokens = {v: k for k, v in self.vocab.items()}
 
-        super().__init__(
+        super().__init__(  # type: ignore[no-untyped-call]
             pad_token=self.special_tokens["pad_token"],
             unk_token=self.special_tokens["unk_token"],
             cls_token=self.special_tokens["cls_token"],
@@ -111,7 +111,7 @@ class GenomicTokenizer(PreTrainedTokenizer):
     def _load_vocab(self, vocab_file: str) -> dict[str, int]:
         """Load vocabulary from file."""
         with open(vocab_file) as f:
-            vocab = json.load(f)
+            vocab: dict[str, int] = json.load(f)
         return vocab
 
     def save_vocabulary(
@@ -135,7 +135,7 @@ class GenomicTokenizer(PreTrainedTokenizer):
         """Return vocabulary dictionary."""
         return self.vocab.copy()
 
-    def _tokenize(self, text: str) -> list[str]:
+    def _tokenize(self, text: str, **kwargs: Any) -> list[str]:  # type: ignore[override]
         """Tokenize sequence into k-mers and individual characters."""
         # Clean sequence
         sequence = self._preprocess_sequence(text)
@@ -193,7 +193,7 @@ class GenomicTokenizer(PreTrainedTokenizer):
 
     def _convert_id_to_token(self, index: int) -> str:
         """Convert ID to token."""
-        return self.ids_to_tokens.get(index, self.unk_token)
+        return self.ids_to_tokens.get(index, self.unk_token)  # type: ignore[no-any-return]
 
     def encode_plus(
         self,
@@ -271,8 +271,11 @@ class GenomicTokenizer(PreTrainedTokenizer):
 
         return output
 
-    def decode(
-        self, token_ids: list[int] | torch.Tensor, skip_special_tokens: bool = True
+    def decode(  # type: ignore[override]
+        self,
+        token_ids: list[int] | torch.Tensor,
+        skip_special_tokens: bool = True,
+        **kwargs: Any,
     ) -> str:
         """Decode token IDs back to sequence."""
         if isinstance(token_ids, torch.Tensor):

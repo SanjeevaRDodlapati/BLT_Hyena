@@ -5,7 +5,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Any, Optional, Union
 
-from transformers import PretrainedConfig
+from transformers import PretrainedConfig  # type: ignore[attr-defined]
 
 
 class HyenaGLTConfig(PretrainedConfig):
@@ -125,7 +125,7 @@ class HyenaGLTConfig(PretrainedConfig):
         # Validation
         self._validate_config()
 
-        super().__init__(**kwargs)
+        super().__init__(**kwargs)  # type: ignore[no-untyped-call]
 
     def _validate_config(self) -> None:
         """Validate configuration parameters."""

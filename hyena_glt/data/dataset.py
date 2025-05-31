@@ -13,12 +13,12 @@ from .tokenizer import GenomicTokenizer
 from .utils import mask_sequence, reverse_complement
 
 
-class GenomicDataset(Dataset):
+class GenomicDataset(Dataset[dict[str, Any]]):
     """Base dataset class for genomic sequences."""
 
     def __init__(
         self,
-        data: list[dict] | str | Path,
+        data: list[dict[str, Any]] | str | Path,
         tokenizer: GenomicTokenizer,
         max_length: int = 512,
         include_reverse_complement: bool = False,
@@ -44,13 +44,14 @@ class GenomicDataset(Dataset):
         if self.include_reverse_complement:
             self._add_reverse_complements()
 
-    def _load_data(self, data_path: str | Path) -> list[dict]:
+    def _load_data(self, data_path: str | Path) -> list[dict[Any, Any]]:
         """Load data from file."""
         data_path = Path(data_path)
 
         if data_path.suffix == ".json":
             with open(data_path) as f:
-                return json.load(f)
+                data: list[dict[Any, Any]] = json.load(f)
+                return data
         elif data_path.suffix == ".jsonl":
             data = []
             with open(data_path) as f:
@@ -59,11 +60,12 @@ class GenomicDataset(Dataset):
             return data
         elif data_path.suffix in [".csv", ".tsv"]:
             df = pd.read_csv(data_path, sep="\t" if data_path.suffix == ".tsv" else ",")
-            return df.to_dict("records")
+            records: list[dict[Any, Any]] = df.to_dict("records")
+            return records
         else:
             raise ValueError(f"Unsupported file format: {data_path.suffix}")
 
-    def _validate_data(self):
+    def _validate_data(self) -> None:
         """Validate that data has required fields."""
         if not self.data:
             raise ValueError("Dataset is empty")
@@ -78,7 +80,7 @@ class GenomicDataset(Dataset):
         if missing_fields:
             raise ValueError(f"Missing required fields: {missing_fields}")
 
-    def _add_reverse_complements(self):
+    def _add_reverse_complements(self) -> None:
         """Add reverse complement sequences to dataset."""
         if self.tokenizer.sequence_type not in ["dna"]:
             return
@@ -134,12 +136,12 @@ class SequenceClassificationDataset(GenomicDataset):
 
     def __init__(
         self,
-        data: list[dict] | str | Path,
+        data: list[dict[Any, Any]] | str | Path,
         tokenizer: GenomicTokenizer,
         label_column: str = "label",
         num_classes: int | None = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         self.label_column = label_column
         super().__init__(data, tokenizer, **kwargs)
 
@@ -148,7 +150,7 @@ class SequenceClassificationDataset(GenomicDataset):
         self.label2id, self.id2label = self._create_label_mappings()
         self.num_classes = num_classes or len(self.label2id)
 
-    def _validate_data(self):
+    def _validate_data(self) -> None:
         """Validate data with labels."""
         super()._validate_data()
 
@@ -178,11 +180,11 @@ class TokenClassificationDataset(GenomicDataset):
 
     def __init__(
         self,
-        data: list[dict] | str | Path,
+        data: list[dict[Any, Any]] | str | Path,
         tokenizer: GenomicTokenizer,
         labels_column: str = "labels",
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         self.labels_column = labels_column
         super().__init__(data, tokenizer, **kwargs)
 
@@ -195,7 +197,7 @@ class TokenClassificationDataset(GenomicDataset):
         self.label2id, self.id2label = self._create_label_mappings(all_labels)
         self.num_classes = len(self.label2id)
 
-    def _validate_data(self):
+    def _validate_data(self) -> None:
         """Validate data with token labels."""
         super()._validate_data()
 
@@ -273,15 +275,15 @@ class SequenceGenerationDataset(GenomicDataset):
 
     def __init__(
         self,
-        data: list[dict] | str | Path,
+        data: list[dict[Any, Any]] | str | Path,
         tokenizer: GenomicTokenizer,
         target_column: str = "target",
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         self.target_column = target_column
         super().__init__(data, tokenizer, **kwargs)
 
-    def _validate_data(self):
+    def _validate_data(self) -> None:
         """Validate data with targets."""
         super()._validate_data()
 
@@ -312,7 +314,7 @@ class SequenceGenerationDataset(GenomicDataset):
         return output
 
 
-class MultiTaskDataset(Dataset):
+class MultiTaskDataset(Dataset[dict[str, Any]]):
     """Dataset that combines multiple genomic tasks."""
 
     def __init__(
@@ -332,7 +334,7 @@ class MultiTaskDataset(Dataset):
         # Create task sampling indices
         self._create_sampling_indices()
 
-    def _create_sampling_indices(self):
+    def _create_sampling_indices(self) -> None:
         """Create indices for task sampling."""
         if self.task_sampling_strategy == "round_robin":
             self.indices = []

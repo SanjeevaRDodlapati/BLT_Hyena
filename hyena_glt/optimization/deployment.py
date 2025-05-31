@@ -72,7 +72,7 @@ class ModelOptimizer:
 
     def __init__(self, config: DeploymentConfig):
         self.config = config
-        self.optimized_models = {}
+        self.optimized_models: dict[str, Any] = {}
 
     def optimize_for_deployment(
         self,
@@ -114,45 +114,47 @@ class ModelOptimizer:
 
         return results
 
-    def _prepare_model_for_inference(self, model: HyenaGLT) -> nn.Module:
+    def _prepare_model_for_inference(self, model: HyenaGLT) -> HyenaGLT:
         """Prepare model for inference optimization."""
-        model.eval()
+        if hasattr(model, 'eval'):
+            model.eval()  # type: ignore[attr-defined]
 
         if self.config.optimize_for_inference:
             # Apply inference optimizations
-            model = self._apply_inference_optimizations(model)
+            model = self._apply_inference_optimizations(model)  # type: ignore[assignment]
 
         return model
 
-    def _apply_inference_optimizations(self, model: nn.Module) -> nn.Module:
+    def _apply_inference_optimizations(self, model: HyenaGLT | nn.Module) -> HyenaGLT | nn.Module:
         """Apply various inference optimizations."""
         # Freeze batch normalization
-        for module in model.modules():
-            if isinstance(module, nn.BatchNorm1d | nn.BatchNorm2d):
-                module.eval()
-                for param in module.parameters():
-                    param.requires_grad = False
+        if hasattr(model, 'modules'):
+            for module in model.modules():  # type: ignore[attr-defined]
+                if isinstance(module, nn.BatchNorm1d | nn.BatchNorm2d):
+                    module.eval()
+                    for param in module.parameters():
+                        param.requires_grad = False
 
         # Fuse operations if enabled
         if self.config.enable_fusion:
-            model = self._fuse_operations(model)
+            model = self._fuse_operations(model)  # type: ignore[arg-type]
 
         return model
 
-    def _fuse_operations(self, model: nn.Module) -> nn.Module:
+    def _fuse_operations(self, model: HyenaGLT | nn.Module) -> HyenaGLT | nn.Module:
         """Fuse compatible operations for better performance."""
         # This is a simplified version - actual fusion would be more complex
         torch.backends.cudnn.benchmark = True
 
         # Enable JIT optimizations
         if hasattr(torch.jit, "optimize_for_inference"):
-            model = torch.jit.optimize_for_inference(model)
+            model = torch.jit.optimize_for_inference(model)  # type: ignore[arg-type]
 
         return model
 
     def _export_onnx(
         self,
-        model: nn.Module,
+        model: HyenaGLT | nn.Module,
         sample_input: torch.Tensor,
         save_path: str | None = None,
     ) -> str:
@@ -166,7 +168,7 @@ class ModelOptimizer:
 
         # Prepare export path
         if save_path:
-            onnx_path = Path(save_path) / "model.onnx"
+            onnx_path: Path | str = Path(save_path) / "model.onnx"
         else:
             onnx_path = "model.onnx"
 
@@ -193,12 +195,12 @@ class ModelOptimizer:
 
         # Optimize ONNX model if requested
         if self.config.onnx_optimize:
-            self._optimize_onnx_model(onnx_path)
+            self._optimize_onnx_model(str(onnx_path))
 
         logger.info(f"ONNX model saved to {onnx_path}")
         return str(onnx_path)
 
-    def _optimize_onnx_model(self, onnx_path: str):
+    def _optimize_onnx_model(self, onnx_path: str) -> None:
         """Optimize ONNX model."""
         import onnx
         from onnx import optimizer
@@ -215,7 +217,7 @@ class ModelOptimizer:
 
     def _export_torchscript(
         self,
-        model: nn.Module,
+        model: HyenaGLT | nn.Module,
         sample_input: torch.Tensor,
         save_path: str | None = None,
     ) -> str:
@@ -224,7 +226,7 @@ class ModelOptimizer:
 
         # Prepare export path
         if save_path:
-            ts_path = Path(save_path) / "model.pt"
+            ts_path: Path | str = Path(save_path) / "model.pt"
         else:
             ts_path = "model.pt"
 
@@ -247,7 +249,7 @@ class ModelOptimizer:
 
     def _export_tensorrt(
         self,
-        model: nn.Module,
+        model: HyenaGLT | nn.Module,
         sample_input: torch.Tensor,
         save_path: str | None = None,
     ) -> str:
@@ -346,7 +348,7 @@ class TensorRTOptimizer:
 
         # Prepare output path
         if save_path:
-            trt_path = Path(save_path) / "model.trt"
+            trt_path: Path | str = Path(save_path) / "model.trt"
         else:
             trt_path = "model.trt"
 
@@ -396,9 +398,9 @@ class InferenceEngine:
 
     def __init__(self, config: DeploymentConfig):
         self.config = config
-        self.engines = {}
+        self.engines: dict[str, Any] = {}
 
-    def load_model(self, model_path: str, model_format: str = "pytorch"):
+    def load_model(self, model_path: str, model_format: str = "pytorch") -> Any:
         """Load model for inference."""
         if model_format == "pytorch":
             engine = self._load_pytorch_model(model_path)
@@ -414,19 +416,19 @@ class InferenceEngine:
         self.engines[model_format] = engine
         return engine
 
-    def _load_pytorch_model(self, model_path: str):
+    def _load_pytorch_model(self, model_path: str) -> Any:
         """Load PyTorch model."""
-        model = torch.load(model_path, map_location=self.config.device)
+        model = torch.load(model_path, map_location=self.config.device)  # type: ignore[no-any-return]
         model.eval()
         return model
 
-    def _load_torchscript_model(self, model_path: str):
+    def _load_torchscript_model(self, model_path: str) -> Any:
         """Load TorchScript model."""
-        model = torch.jit.load(model_path, map_location=self.config.device)
+        model = torch.jit.load(model_path, map_location=self.config.device)  # type: ignore[no-any-return]
         model.eval()
         return model
 
-    def _load_onnx_model(self, model_path: str):
+    def _load_onnx_model(self, model_path: str) -> Any:
         """Load ONNX model."""
         if not HAS_ONNX:
             raise ImportError("ONNX Runtime not available")
@@ -441,7 +443,7 @@ class InferenceEngine:
         session = ort.InferenceSession(model_path, providers=providers)
         return session
 
-    def _load_tensorrt_model(self, model_path: str):
+    def _load_tensorrt_model(self, model_path: str) -> Any:
         """Load TensorRT model."""
         if not HAS_TENSORRT:
             raise ImportError("TensorRT not available")
@@ -465,19 +467,23 @@ class InferenceEngine:
         engine = self.engines[model_format]
 
         if model_format in ["pytorch", "torchscript"]:
+            if isinstance(input_data, np.ndarray):
+                input_data = torch.from_numpy(input_data)
             return self._predict_pytorch(engine, input_data)
         elif model_format == "onnx":
             return self._predict_onnx(engine, input_data)
         elif model_format == "tensorrt":
             return self._predict_tensorrt(engine, input_data)
+        else:
+            raise ValueError(f"Unsupported model format: {model_format}")
 
-    def _predict_pytorch(self, model, input_data: torch.Tensor) -> torch.Tensor:
+    def _predict_pytorch(self, model: Any, input_data: torch.Tensor) -> torch.Tensor:
         """PyTorch model inference."""
         with torch.no_grad():
-            return model(input_data)
+            return model(input_data)  # type: ignore[no-any-return]
 
     def _predict_onnx(
-        self, session, input_data: torch.Tensor | np.ndarray
+        self, session: Any, input_data: torch.Tensor | np.ndarray
     ) -> np.ndarray:
         """ONNX model inference."""
         if isinstance(input_data, torch.Tensor):
@@ -487,10 +493,10 @@ class InferenceEngine:
         ort_inputs = {input_name: input_data}
         ort_outputs = session.run(None, ort_inputs)
 
-        return ort_outputs[0]
+        return ort_outputs[0]  # type: ignore[no-any-return]
 
     def _predict_tensorrt(
-        self, context, input_data: torch.Tensor | np.ndarray
+        self, context: Any, input_data: torch.Tensor | np.ndarray
     ) -> np.ndarray:
         """TensorRT model inference."""
         # This is a simplified version - actual TensorRT inference is more complex
@@ -503,7 +509,7 @@ class ModelProfiler:
 
     def __init__(self, config: DeploymentConfig):
         self.config = config
-        self.profiling_results = {}
+        self.profiling_results: dict[str, Any] = {}
 
     def profile_model(
         self,
@@ -560,12 +566,12 @@ class ModelProfiler:
     def _get_memory_usage(self) -> int:
         """Get current memory usage in bytes."""
         if torch.cuda.is_available():
-            return torch.cuda.memory_allocated()
+            return int(torch.cuda.memory_allocated())
         else:
             process = psutil.Process()
-            return process.memory_info().rss
+            return int(process.memory_info().rss)  # type: ignore[no-any-return]
 
-    def print_profiling_results(self):
+    def print_profiling_results(self) -> None:
         """Print profiling results."""
         if not self.profiling_results:
             print("No profiling results available")
@@ -600,8 +606,8 @@ class ModelProfiler:
 class DeploymentBenchmark:
     """Comprehensive deployment benchmarking."""
 
-    def __init__(self):
-        self.benchmark_results = {}
+    def __init__(self) -> None:
+        self.benchmark_results: dict[str, Any] = {}
 
     def run_comprehensive_benchmark(
         self,
@@ -611,7 +617,7 @@ class DeploymentBenchmark:
         config: DeploymentConfig,
     ) -> dict[str, Any]:
         """Run comprehensive deployment benchmark."""
-        results = {"accuracy": {}, "performance": {}, "resource_usage": {}}
+        results: dict[str, Any] = {"accuracy": {}, "performance": {}, "resource_usage": {}}
 
         # Test accuracy
         for format_name, model_path in optimized_models.items():

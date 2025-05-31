@@ -10,10 +10,11 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, Union
 
 import torch
 import torch.nn as nn
-from torch.optim import Optimizer
+from torch.utils.data import DataLoader
 
 from ..config import HyenaGLTConfig
 from ..data.dataset import GenomicDataset
@@ -24,6 +25,14 @@ from ..model.hyena_glt import (
     HyenaGLTForSequenceGeneration,
     HyenaGLTForTokenClassification,
 )
+
+# Union type for all adapted models
+AdaptedModelType = Union[
+    HyenaGLTForSequenceClassification,
+    HyenaGLTForTokenClassification,
+    HyenaGLTForSequenceGeneration,
+    HyenaGLTForMultiTask
+]
 from .metrics import GenomicMetrics
 from .optimization import AdamWWithScheduler, LayerWiseDecayOptimizer
 from .trainer import HyenaGLTTrainer, TrainingConfig
@@ -141,7 +150,7 @@ class LayerFreezer:
     @staticmethod
     def get_layer_groups(model: nn.Module) -> dict[str, list[str]]:
         """Get layer groups for discriminative learning rates."""
-        layer_groups = {
+        layer_groups: dict[str, list[str]] = {
             "embeddings": [],
             "encoder": [],
             "hyena_blocks": [],
@@ -176,7 +185,7 @@ class ModelAdapter:
         task_type: str,
         num_labels: int | None = None,
         config: HyenaGLTConfig | None = None,
-    ) -> nn.Module:
+    ) -> AdaptedModelType:
         """Adapt a pre-trained model for a specific task."""
 
         if config is None:
@@ -186,6 +195,8 @@ class ModelAdapter:
         if num_labels is not None:
             config.num_labels = num_labels
 
+        # Create adapted model with specific type
+        adapted_model: AdaptedModelType
         if task_type == "sequence_classification":
             adapted_model = HyenaGLTForSequenceClassification(config)
             adapted_model.hyena_glt = model
@@ -196,7 +207,9 @@ class ModelAdapter:
             adapted_model = HyenaGLTForSequenceGeneration(config)
             adapted_model.hyena_glt = model
         elif task_type == "multitask":
-            adapted_model = HyenaGLTForMultiTask(config)
+            # Get task_configs from config if available, otherwise use empty dict
+            task_configs = getattr(config, 'task_configs', {})
+            adapted_model = HyenaGLTForMultiTask(config, task_configs)
             adapted_model.hyena_glt = model
         else:
             raise ValueError(f"Unknown task type: {task_type}")
@@ -205,7 +218,7 @@ class ModelAdapter:
         return adapted_model
 
     @staticmethod
-    def resize_token_embeddings(model: nn.Module, new_vocab_size: int):
+    def resize_token_embeddings(model: nn.Module, new_vocab_size: int) -> None:
         """Resize token embeddings for new vocabulary."""
         if hasattr(model, "hyena_glt"):
             base_model = model.hyena_glt
@@ -242,10 +255,10 @@ class FineTuner:
 
     def __init__(self, config: FinetuningConfig):
         self.config = config
-        self.model = None
-        self.trainer = None
+        self.model: HyenaGLTForSequenceClassification | HyenaGLTForTokenClassification | HyenaGLTForSequenceGeneration | HyenaGLTForMultiTask | None = None
+        self.trainer: HyenaGLTTrainer | None = None
 
-    def load_pretrained_model(self) -> nn.Module:
+    def load_pretrained_model(self) -> HyenaGLTForSequenceClassification | HyenaGLTForTokenClassification | HyenaGLTForSequenceGeneration | HyenaGLTForMultiTask:
         """Load pre-trained model."""
         logger.info(
             f"Loading pre-trained model from {self.config.pretrained_model_path}"
@@ -270,9 +283,9 @@ class FineTuner:
 
         # Load weights
         if "model_state_dict" in checkpoint:
-            base_model.load_state_dict(checkpoint["model_state_dict"])
+            base_model.load_state_dict(checkpoint["model_state_dict"])  # type: ignore[attr-defined]
         else:
-            base_model.load_state_dict(checkpoint)
+            base_model.load_state_dict(checkpoint)  # type: ignore[attr-defined]
 
         # Adapt for task
         self.model = ModelAdapter.adapt_model_for_task(
@@ -281,20 +294,20 @@ class FineTuner:
 
         return self.model
 
-    def setup_model_for_finetuning(self):
+    def setup_model_for_finetuning(self) -> None:
         """Setup model for fine-tuning with freezing and other configurations."""
         if self.model is None:
             raise ValueError("Model not loaded. Call load_pretrained_model() first.")
 
         # Apply freezing strategy
         if self.config.freeze_backbone:
-            LayerFreezer.freeze_backbone(self.model)
+            LayerFreezer.freeze_backbone(self.model)  # type: ignore[arg-type]
 
         if self.config.freeze_layers:
-            LayerFreezer.freeze_parameters(self.model, self.config.freeze_layers)
+            LayerFreezer.freeze_parameters(self.model, self.config.freeze_layers)  # type: ignore[arg-type]
 
         if self.config.unfreeze_layers:
-            LayerFreezer.unfreeze_parameters(self.model, self.config.unfreeze_layers)
+            LayerFreezer.unfreeze_parameters(self.model, self.config.unfreeze_layers)  # type: ignore[arg-type]
 
         # Apply dropout if specified
         if self.config.dropout_rate is not None:
@@ -302,27 +315,32 @@ class FineTuner:
 
         logger.info("Model setup for fine-tuning completed")
 
-    def _set_dropout_rate(self, dropout_rate: float):
+    def _set_dropout_rate(self, dropout_rate: float) -> None:
         """Set dropout rate for all dropout layers."""
-        for module in self.model.modules():
+        if self.model is None:
+            return
+        for module in self.model.modules():  # type: ignore[union-attr]
             if isinstance(module, nn.Dropout):
                 module.p = dropout_rate
 
-    def create_optimizer(self) -> Optimizer:
+    def create_optimizer(self) -> AdamWWithScheduler | LayerWiseDecayOptimizer:
         """Create optimizer with optional layer-wise learning rate decay."""
+        if self.model is None:
+            raise ValueError("Model not loaded")
+
         if not self.config.use_layer_wise_decay:
             # Standard optimizer
             return AdamWWithScheduler(
-                self.model.parameters(),
+                self.model.parameters(),  # type: ignore[union-attr]
                 lr=self.config.learning_rate,
                 weight_decay=self.config.weight_decay,
             )
 
         # Layer-wise decay optimizer
-        layer_groups = LayerFreezer.get_layer_groups(self.model)
+        layer_groups = LayerFreezer.get_layer_groups(self.model)  # type: ignore[arg-type]
 
         return LayerWiseDecayOptimizer(
-            self.model,
+            self.model,  # type: ignore[arg-type]
             base_lr=self.config.learning_rate,
             layer_decay=self.config.layer_wise_lr_decay,
             weight_decay=self.config.weight_decay,
@@ -342,37 +360,28 @@ class FineTuner:
 
         return TrainingConfig(
             output_dir=self.config.output_dir,
-            num_train_epochs=self.config.num_epochs,
-            per_device_train_batch_size=self.config.batch_size,
-            per_device_eval_batch_size=self.config.batch_size,
+            num_epochs=self.config.num_epochs,
+            batch_size=self.config.batch_size,
             gradient_accumulation_steps=self.config.gradient_accumulation_steps,
             learning_rate=self.config.learning_rate,
             weight_decay=self.config.weight_decay,
             warmup_steps=warmup_steps,
             max_grad_norm=self.config.max_grad_norm,
-            evaluation_strategy=self.config.eval_strategy,
             eval_steps=self.config.eval_steps,
-            save_strategy=self.config.save_strategy,
             save_steps=self.config.save_steps,
             logging_steps=self.config.logging_steps,
             early_stopping_patience=self.config.early_stopping_patience,
-            early_stopping_threshold=self.config.early_stopping_threshold,
-            label_smoothing_factor=self.config.label_smoothing,
             fp16=self.config.fp16,
             bf16=self.config.bf16,
             dataloader_num_workers=self.config.dataloader_num_workers,
-            dataloader_pin_memory=self.config.dataloader_pin_memory,
-            remove_unused_columns=self.config.remove_unused_columns,
-            report_to=self.config.report_to,
-            seed=self.config.seed,
         )
 
     def fine_tune(
         self,
         train_dataset: GenomicDataset,
         eval_dataset: GenomicDataset | None = None,
-        compute_metrics: Callable | None = None,
-    ):
+        compute_metrics: Callable[[Any], dict[str, float]] | None = None,
+    ) -> HyenaGLTTrainer:
         """Fine-tune the model on the given dataset."""
 
         # Load and setup model
@@ -387,13 +396,15 @@ class FineTuner:
         training_config = self.create_training_config(train_dataset, eval_dataset)
 
         # Create trainer
+        # Convert datasets to DataLoaders since HyenaGLTTrainer expects DataLoaders
+        train_dataloader = DataLoader(train_dataset, batch_size=self.config.batch_size, shuffle=True)
+        eval_dataloader = DataLoader(eval_dataset, batch_size=self.config.batch_size, shuffle=False) if eval_dataset else None
+
         self.trainer = HyenaGLTTrainer(
-            model=self.model,
+            model=self.model,  # type: ignore[arg-type]
             config=training_config,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-            optimizer=optimizer,
-            compute_metrics=compute_metrics,
+            train_dataloader=train_dataloader,
+            eval_dataloader=eval_dataloader,
         )
 
         # Start training
@@ -401,7 +412,7 @@ class FineTuner:
         self.trainer.train()
 
         # Save final model
-        self.trainer.save_model()
+        self.trainer.save_model(self.config.output_dir)
         logger.info(f"Fine-tuning completed. Model saved to {self.config.output_dir}")
 
         return self.trainer
@@ -411,9 +422,10 @@ class FineTuner:
         if self.trainer is None:
             raise ValueError("Model not fine-tuned. Call fine_tune() first.")
 
-        return self.trainer.evaluate(eval_dataset)
+        eval_dataloader = DataLoader(eval_dataset, batch_size=self.config.batch_size, shuffle=False)
+        return self.trainer.evaluate(eval_dataloader)
 
-    def save_config(self):
+    def save_config(self) -> None:
         """Save fine-tuning configuration."""
         config_path = Path(self.config.output_dir) / "finetuning_config.json"
         config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -429,7 +441,7 @@ class TaskSpecificFineTuner:
 
     @staticmethod
     def create_sequence_classification_config(
-        pretrained_model_path: str, output_dir: str, num_labels: int, **kwargs
+        pretrained_model_path: str, output_dir: str, num_labels: int, **kwargs: Any
     ) -> FinetuningConfig:
         """Create configuration for sequence classification fine-tuning."""
         return FinetuningConfig(
@@ -445,7 +457,7 @@ class TaskSpecificFineTuner:
 
     @staticmethod
     def create_token_classification_config(
-        pretrained_model_path: str, output_dir: str, num_labels: int, **kwargs
+        pretrained_model_path: str, output_dir: str, num_labels: int, **kwargs: Any
     ) -> FinetuningConfig:
         """Create configuration for token classification fine-tuning."""
         return FinetuningConfig(
@@ -463,7 +475,7 @@ class TaskSpecificFineTuner:
 
     @staticmethod
     def create_generation_config(
-        pretrained_model_path: str, output_dir: str, **kwargs
+        pretrained_model_path: str, output_dir: str, **kwargs: Any
     ) -> FinetuningConfig:
         """Create configuration for sequence generation fine-tuning."""
         return FinetuningConfig(
@@ -482,7 +494,7 @@ class TaskSpecificFineTuner:
         pretrained_model_path: str,
         output_dir: str,
         task_type: str = "sequence_classification",
-        **kwargs,
+        **kwargs: Any,
     ) -> FinetuningConfig:
         """Create configuration for domain adaptation."""
         return FinetuningConfig(
@@ -506,8 +518,8 @@ def finetune_for_sequence_classification(
     eval_dataset: GenomicDataset | None,
     output_dir: str,
     num_labels: int,
-    **kwargs,
-):
+    **kwargs: Any,
+) -> HyenaGLTTrainer:
     """Fine-tune model for sequence classification."""
     config = TaskSpecificFineTuner.create_sequence_classification_config(
         pretrained_model_path, output_dir, num_labels, **kwargs
@@ -516,11 +528,12 @@ def finetune_for_sequence_classification(
     finetuner = FineTuner(config)
 
     # Create metrics function
-    def compute_metrics(eval_pred):
+    def compute_metrics(eval_pred: Any) -> dict[str, float]:
         metrics = GenomicMetrics()
         predictions, labels = eval_pred
         predictions = predictions.argmax(axis=-1)
-        return metrics.compute_classification_metrics(predictions, labels)
+        metrics.update(torch.tensor(predictions), torch.tensor(labels))
+        return metrics.compute()
 
     return finetuner.fine_tune(train_dataset, eval_dataset, compute_metrics)
 
@@ -531,8 +544,8 @@ def finetune_for_token_classification(
     eval_dataset: GenomicDataset | None,
     output_dir: str,
     num_labels: int,
-    **kwargs,
-):
+    **kwargs: Any,
+) -> HyenaGLTTrainer:
     """Fine-tune model for token classification."""
     config = TaskSpecificFineTuner.create_token_classification_config(
         pretrained_model_path, output_dir, num_labels, **kwargs
@@ -541,8 +554,8 @@ def finetune_for_token_classification(
     finetuner = FineTuner(config)
 
     # Create metrics function for token classification
-    def compute_metrics(eval_pred):
-        metrics = GenomicMetrics()
+    def compute_metrics(eval_pred: Any) -> dict[str, float]:
+        metrics = GenomicMetrics(task_type="token_classification")
         predictions, labels = eval_pred
         predictions = predictions.argmax(axis=-1)
 
@@ -555,7 +568,8 @@ def finetune_for_token_classification(
         predictions = predictions[mask]
         labels = labels[mask]
 
-        return metrics.compute_classification_metrics(predictions, labels)
+        metrics.update(torch.tensor(predictions), torch.tensor(labels))
+        return metrics.compute()
 
     return finetuner.fine_tune(train_dataset, eval_dataset, compute_metrics)
 
@@ -565,8 +579,8 @@ def finetune_for_generation(
     train_dataset: GenomicDataset,
     eval_dataset: GenomicDataset | None,
     output_dir: str,
-    **kwargs,
-):
+    **kwargs: Any,
+) -> HyenaGLTTrainer:
     """Fine-tune model for sequence generation."""
     config = TaskSpecificFineTuner.create_generation_config(
         pretrained_model_path, output_dir, **kwargs
@@ -575,9 +589,11 @@ def finetune_for_generation(
     finetuner = FineTuner(config)
 
     # Create metrics function for generation
-    def compute_metrics(eval_pred):
-        metrics = GenomicMetrics()
+    def compute_metrics(eval_pred: Any) -> dict[str, float]:
+        metrics = GenomicMetrics(task_type="generation")
         predictions, labels = eval_pred
-        return {"perplexity": metrics.compute_perplexity(predictions, labels)}
+        metrics.update(torch.tensor(predictions), torch.tensor(labels))
+        result = metrics.compute()
+        return {"perplexity": result.get("perplexity", 0.0)}
 
     return finetuner.fine_tune(train_dataset, eval_dataset, compute_metrics)

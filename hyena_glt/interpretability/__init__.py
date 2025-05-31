@@ -39,7 +39,7 @@ class InterpretabilityConfig:
 
     # Gradient-based methods
     analyze_gradients: bool = True
-    gradient_methods: list[str] = None  # ['vanilla', 'integrated', 'guided']
+    gradient_methods: list[str] | None = None  # ['vanilla', 'integrated', 'guided']
 
     # Genomic-specific analysis
     motif_analysis: bool = True
@@ -49,7 +49,7 @@ class InterpretabilityConfig:
     save_plots: bool = True
     output_dir: str = "./interpretability_outputs"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.gradient_methods is None:
             self.gradient_methods = ["vanilla", "integrated", "guided"]
 
@@ -223,10 +223,15 @@ class GradientAnalyzer:
         target_logit = logits[0, target_class]
         target_logit.backward()
 
-        gradients = input_ids.grad.clone()
-        input_ids.grad.zero_()
-
-        return gradients
+        gradients = input_ids.grad
+        if gradients is not None:
+            gradients = gradients.clone()
+            if input_ids.grad is not None:
+                input_ids.grad.zero_()
+            return gradients
+        else:
+            # Return zero gradients if None
+            return torch.zeros_like(input_ids)
 
     def integrated_gradients(
         self,
@@ -309,10 +314,10 @@ class GenomicMotifAnalyzer:
         min_frequency: int = 3,
     ) -> list[dict[str, Any]]:
         """Find consensus motifs across multiple sequences."""
-        motif_counts = {}
+        motif_counts: dict[str, dict[str, Any]] = {}
 
         for seq, scores in zip(sequences, importance_scores, strict=False):
-            important_subseqs = self.extract_important_subsequences(
+            important_subseqs: list[tuple[str, float, int]] = self.extract_important_subsequences(
                 seq, scores, motif_length
             )
 
@@ -400,7 +405,7 @@ class ModelInterpreter:
             seq_length = len(sequence)
             sequence_str = sequence
 
-        results = {"sequence": sequence_str, "length": seq_length}
+        results: dict[str, Any] = {"sequence": sequence_str, "length": seq_length}
 
         # Attention analysis
         if self.config.analyze_attention:
@@ -429,28 +434,33 @@ class ModelInterpreter:
 
                 # Visualize if requested
                 if self.config.save_plots:
+                    # Ensure we have a string representation for visualization
+                    if isinstance(sequence, torch.Tensor):
+                        sequence_for_viz = sequence_str
+                    else:
+                        sequence_for_viz = sequence
                     self.attention_analyzer.visualize_attention_patterns(
-                        attention_weights, [sequence], save_path=self.config.output_dir
+                        attention_weights, [sequence_for_viz], save_path=self.config.output_dir
                     )
 
         # Gradient analysis
         if self.config.analyze_gradients and target_class is not None:
             self.logger.info("Analyzing gradients...")
-            gradient_results = {}
+            gradient_results: dict[str, Any] = {}
 
-            if "vanilla" in self.config.gradient_methods:
+            if self.config.gradient_methods and "vanilla" in self.config.gradient_methods:
                 vanilla_grads = self.gradient_analyzer.vanilla_gradients(
                     input_ids, target_class, attention_mask
                 )
                 gradient_results["vanilla"] = vanilla_grads
 
-            if "integrated" in self.config.gradient_methods:
+            if self.config.gradient_methods and "integrated" in self.config.gradient_methods:
                 integrated_grads = self.gradient_analyzer.integrated_gradients(
                     input_ids, target_class, attention_mask=attention_mask
                 )
                 gradient_results["integrated"] = integrated_grads
 
-            if "guided" in self.config.gradient_methods:
+            if self.config.gradient_methods and "guided" in self.config.gradient_methods:
                 guided_grads = self.gradient_analyzer.guided_backpropagation(
                     input_ids, target_class, attention_mask
                 )
@@ -467,8 +477,13 @@ class ModelInterpreter:
             )
 
             if importance_scores is not None:
+                # Ensure we have a string representation for motif analysis
+                if isinstance(sequence, torch.Tensor):
+                    sequence_for_motif = sequence_str
+                else:
+                    sequence_for_motif = sequence
                 important_subseqs = self.motif_analyzer.extract_important_subsequences(
-                    sequence, importance_scores[0]
+                    sequence_for_motif, importance_scores[0]
                 )
                 results["motifs"] = important_subseqs
 
@@ -576,8 +591,9 @@ class ModelInterpreter:
             return obj
 
 
-def example_interpretability_analysis():
+def example_interpretability_analysis() -> tuple[dict[str, Any], dict[str, Any]]:
     """Example usage of interpretability tools."""
+    from typing import cast
     from hyena_glt.config import HyenaGLTConfig
     from hyena_glt.model import HyenaGLTForSequenceClassification
 
@@ -596,7 +612,7 @@ def example_interpretability_analysis():
     )
 
     # Initialize interpreter
-    interpreter = ModelInterpreter(model, tokenizer, interp_config)
+    interpreter = ModelInterpreter(cast(nn.Module, model), tokenizer, interp_config)
 
     # Analyze single sequence
     test_sequence = "ATGCGATCGATCGATCGATCGATCGATCGTAG"

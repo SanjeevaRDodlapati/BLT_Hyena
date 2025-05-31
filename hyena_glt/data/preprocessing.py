@@ -294,12 +294,12 @@ class GenomicPreprocessor:
 
         try:
             if file_format == "fasta":
-                for record in SeqIO.parse(file_path, "fasta"):
+                for record in SeqIO.parse(file_path, "fasta"):  # type: ignore[no-untyped-call]
                     sequences.append(str(record.seq))
                     headers.append(record.id)
                     qualities.append(None)
             elif file_format == "fastq":
-                for record in SeqIO.parse(file_path, "fastq"):
+                for record in SeqIO.parse(file_path, "fastq"):  # type: ignore[no-untyped-call]
                     sequences.append(str(record.seq))
                     headers.append(record.id)
                     # Convert Phred scores to numeric as floats

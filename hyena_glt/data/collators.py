@@ -125,15 +125,19 @@ class SequenceCollator:
                         ]
                     )
                 padded_input_ids.append(ids)
-            input_ids = torch.stack(padded_input_ids)
+            input_ids_tensor = torch.stack(padded_input_ids)
         else:
             # No padding - return as list (for models that handle variable lengths)
-            input_ids = input_ids
+            input_ids_tensor = (
+                torch.stack(input_ids)
+                if isinstance(input_ids[0], torch.Tensor)
+                else torch.tensor(input_ids)
+            )
 
         # Create attention mask
         attention_mask = None
         if self.return_attention_mask and target_length:
-            attention_mask = torch.zeros_like(input_ids, dtype=torch.long)
+            attention_mask = torch.zeros_like(input_ids_tensor, dtype=torch.long)
             for i, length in enumerate(sequence_lengths):
                 actual_length = min(length, target_length)
                 attention_mask[i, :actual_length] = 1
@@ -171,7 +175,11 @@ class SequenceCollator:
                         padded_labels.append(label_seq)
                     labels = torch.stack(padded_labels)
                 else:
-                    labels = labels_list
+                    labels = (
+                        torch.stack(labels_list)
+                        if isinstance(labels_list[0], torch.Tensor)
+                        else torch.tensor(labels_list)
+                    )
             else:
                 # Sequence classification - simple tensor
                 labels = torch.tensor(labels_list, dtype=torch.long)
@@ -179,7 +187,7 @@ class SequenceCollator:
         # Handle token type IDs (if requested)
         token_type_ids = None
         if self.return_token_type_ids and target_length:
-            token_type_ids = torch.zeros_like(input_ids, dtype=torch.long)
+            token_type_ids = torch.zeros_like(input_ids_tensor, dtype=torch.long)
 
         # Collect metadata
         metadata = None
@@ -195,7 +203,7 @@ class SequenceCollator:
                     metadata[key] = [f.get(key) for f in features]
 
         return GenomicCollatorOutput(
-            input_ids=input_ids,
+            input_ids=input_ids_tensor,
             attention_mask=attention_mask,
             labels=labels,
             token_type_ids=token_type_ids,
@@ -258,7 +266,7 @@ class MultiModalCollator:
             Dictionary with collated features per modality
         """
         # Group features by modality
-        modality_features = {}
+        modality_features: dict[str, list[dict[str, Any]]] = {}
         for feature in features:
             modality = feature.get(self.modality_key, "default")
             if modality not in modality_features:
@@ -385,7 +393,7 @@ class AdaptiveBatchCollator:
 
         # Create adaptive batches
         batches = []
-        current_batch = []
+        current_batch: list[dict[str, Any]] = []
         current_max_length = 0
 
         for _i, (feature, length) in enumerate(zip(features, lengths, strict=False)):
@@ -446,7 +454,7 @@ class StreamingCollator:
         batch_size: int = 32,
         max_length: int | None = None,
         buffer_size: int = 1000,
-        preprocessing_fn: Callable | None = None,
+        preprocessing_fn: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
     ):
         """
         Initialize streaming collator.
@@ -471,7 +479,7 @@ class StreamingCollator:
             return_attention_mask=True,
         )
 
-        self.buffer = []
+        self.buffer: list[dict[str, Any]] = []
 
     def add_to_buffer(self, feature: dict[str, Any]) -> GenomicCollatorOutput | None:
         """

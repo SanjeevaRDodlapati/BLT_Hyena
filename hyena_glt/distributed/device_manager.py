@@ -5,7 +5,7 @@ Based on patterns from BLT, Savanna, and Vortex repositories.
 
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 
 import torch
 import torch.distributed as dist
@@ -28,7 +28,7 @@ class DeviceManager:
         self.world_size = world_size or int(os.environ.get("WORLD_SIZE", 1))
         self.rank = int(os.environ.get("RANK", 0))
 
-        self._device: Optional[torch.device] = None
+        self._device: torch.device | None = None
         self._is_distributed = self.world_size > 1
         self._device_count = 0
 
@@ -90,7 +90,11 @@ class DeviceManager:
 
         if not dist.is_initialized():
             # Use NCCL for GPU, fallback to gloo for CPU
-            if self._device is not None and self._device.type == "cuda" and backend == "nccl":
+            if (
+                self._device is not None
+                and self._device.type == "cuda"
+                and backend == "nccl"
+            ):
                 backend = "nccl"
             else:
                 backend = "gloo"
@@ -153,7 +157,7 @@ class GPUClusterConfig:
     def __init__(
         self,
         nodes: int = 1,
-        gpus_per_node: Optional[int] = None,
+        gpus_per_node: int | None = None,
         backend: str = "nccl",
         mixed_precision: bool = True,
         gradient_checkpointing: bool = False,

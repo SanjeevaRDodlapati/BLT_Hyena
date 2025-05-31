@@ -24,7 +24,7 @@ class HyenaGLTPretrainedModel(PreTrainedModel):
     base_model_prefix = "hyena_glt"
     supports_gradient_checkpointing = True
 
-    def _init_weights(self, module):
+    def _init_weights(self, module: nn.Module) -> None:
         """Initialize model weights."""
         if isinstance(module, nn.Linear):
             nn.init.xavier_uniform_(module.weight)
@@ -64,6 +64,7 @@ class HyenaGLT(HyenaGLTPretrainedModel):
         )
 
         # Local encoder (BLT-inspired)
+        self.local_encoder: nn.ModuleList | None
         if config.local_encoder_layers > 0:
             self.local_encoder = nn.ModuleList(
                 [
@@ -82,6 +83,7 @@ class HyenaGLT(HyenaGLTPretrainedModel):
             self.local_encoder = None
 
         # Initial token merger
+        self.initial_merger: AdaptiveTokenMerger | None
         if config.dynamic_patching:
             self.initial_merger = AdaptiveTokenMerger(
                 config=config,
@@ -98,6 +100,7 @@ class HyenaGLT(HyenaGLTPretrainedModel):
         )
 
         # Local decoder (BLT-inspired)
+        self.local_decoder: nn.ModuleList | None
         if config.local_decoder_layers > 0:
             self.local_decoder = nn.ModuleList(
                 [
@@ -125,21 +128,21 @@ class HyenaGLT(HyenaGLTPretrainedModel):
         self.gradient_checkpointing = False
 
         # Initialize weights
-        self.apply(self._init_weights)
+        self.apply(self._init_weights)  # type: ignore[attr-defined]
 
-    def enable_gradient_checkpointing(self):
+    def enable_gradient_checkpointing(self) -> None:
         """Enable gradient checkpointing for memory efficiency."""
         self.gradient_checkpointing = True
 
-    def disable_gradient_checkpointing(self):
+    def disable_gradient_checkpointing(self) -> None:
         """Disable gradient checkpointing."""
         self.gradient_checkpointing = False
 
-    def get_input_embeddings(self):
+    def get_input_embeddings(self) -> nn.Embedding:
         """Return input embeddings."""
         return self.token_embeddings
 
-    def set_input_embeddings(self, new_embeddings):
+    def set_input_embeddings(self, new_embeddings: nn.Embedding) -> None:
         """Set input embeddings."""
         self.token_embeddings = new_embeddings
 
@@ -150,7 +153,7 @@ class HyenaGLT(HyenaGLTPretrainedModel):
         return_dict: bool = True,
         output_hidden_states: bool = False,
         output_merge_info: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """
         Args:
@@ -197,7 +200,7 @@ class HyenaGLT(HyenaGLTPretrainedModel):
         # Local encoder processing
         if self.local_encoder is not None:
             for layer in self.local_encoder:
-                if self.gradient_checkpointing and self.training:
+                if self.gradient_checkpointing and self.training:  # type: ignore[attr-defined]
                     hidden_states = torch.utils.checkpoint.checkpoint(
                         layer, hidden_states, attention_mask
                     )
@@ -234,10 +237,10 @@ class HyenaGLT(HyenaGLTPretrainedModel):
                 merge_info_list.append(merge_info)
 
         # Main Hyena-GLT layers
-        all_hidden_states = [] if output_hidden_states else None
+        all_hidden_states: list[torch.Tensor] | None = [] if output_hidden_states else None
 
         for _i, layer in enumerate(self.layers):
-            if output_hidden_states:
+            if output_hidden_states and all_hidden_states is not None:
                 all_hidden_states.append(hidden_states)
 
             # Determine if we should use cross-attention
@@ -245,7 +248,7 @@ class HyenaGLT(HyenaGLTPretrainedModel):
                 layer.cross_attention is not None and original_sequence is not None
             )
 
-            if self.gradient_checkpointing and self.training:
+            if self.gradient_checkpointing and self.training:  # type: ignore[attr-defined]
                 hidden_states, layer_merge_info = torch.utils.checkpoint.checkpoint(
                     layer,
                     hidden_states,
@@ -268,7 +271,7 @@ class HyenaGLT(HyenaGLTPretrainedModel):
             if layer_merge_info is not None and output_merge_info:
                 merge_info_list.append(layer_merge_info)
 
-        if output_hidden_states:
+        if output_hidden_states and all_hidden_states is not None:
             all_hidden_states.append(hidden_states)
 
         # Local decoder processing
@@ -277,7 +280,7 @@ class HyenaGLT(HyenaGLTPretrainedModel):
             memory = original_sequence
 
             for layer in self.local_decoder:
-                if self.gradient_checkpointing and self.training:
+                if self.gradient_checkpointing and self.training:  # type: ignore[attr-defined]
                     hidden_states = torch.utils.checkpoint.checkpoint(
                         layer, hidden_states, memory
                     )
@@ -298,7 +301,7 @@ class HyenaGLT(HyenaGLTPretrainedModel):
             outputs["merge_info"] = merge_info_list
 
         if not return_dict:
-            return tuple(v for v in outputs.values() if v is not None)
+            return tuple(v for v in outputs.values() if v is not None)  # type: ignore[return-value]
 
         return outputs
 
@@ -321,19 +324,19 @@ class HyenaGLTForSequenceClassification(HyenaGLTPretrainedModel):
         )
 
         # Initialize weights
-        self.apply(self._init_weights)
+        self.apply(self._init_weights)  # type: ignore[attr-defined]
 
     def forward(
         self,
         input_ids: torch.Tensor,
         attention_mask: torch.Tensor | None = None,
         labels: torch.Tensor | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> dict[str, torch.Tensor]:
         """Forward pass for sequence classification."""
 
         # Get base model outputs
-        outputs = self.hyena_glt(
+        outputs = self.hyena_glt.forward(  # type: ignore[operator]
             input_ids=input_ids, attention_mask=attention_mask, **kwargs
         )
 
@@ -371,19 +374,19 @@ class HyenaGLTForTokenClassification(HyenaGLTPretrainedModel):
         )
 
         # Initialize weights
-        self.apply(self._init_weights)
+        self.apply(self._init_weights)  # type: ignore[attr-defined]
 
     def forward(
         self,
         input_ids: torch.Tensor,
         attention_mask: torch.Tensor | None = None,
         labels: torch.Tensor | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> dict[str, torch.Tensor]:
         """Forward pass for token classification."""
 
         # Get base model outputs
-        outputs = self.hyena_glt(
+        outputs = self.hyena_glt.forward(  # type: ignore[operator]
             input_ids=input_ids, attention_mask=attention_mask, **kwargs
         )
 
@@ -394,7 +397,7 @@ class HyenaGLTForTokenClassification(HyenaGLTPretrainedModel):
             attention_mask=attention_mask,
         )
 
-        return result
+        return result  # type: ignore[no-any-return]
 
 
 class HyenaGLTForSequenceGeneration(HyenaGLTPretrainedModel):
@@ -414,19 +417,19 @@ class HyenaGLTForSequenceGeneration(HyenaGLTPretrainedModel):
         )
 
         # Initialize weights
-        self.apply(self._init_weights)
+        self.apply(self._init_weights)  # type: ignore[attr-defined]
 
     def forward(
         self,
         input_ids: torch.Tensor,
         attention_mask: torch.Tensor | None = None,
         labels: torch.Tensor | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> dict[str, torch.Tensor]:
         """Forward pass for sequence generation."""
 
         # Get base model outputs
-        outputs = self.hyena_glt(
+        outputs = self.hyena_glt.forward(  # type: ignore[operator]
             input_ids=input_ids, attention_mask=attention_mask, **kwargs
         )
 
@@ -437,7 +440,7 @@ class HyenaGLTForSequenceGeneration(HyenaGLTPretrainedModel):
             attention_mask=attention_mask,
         )
 
-        return result
+        return result  # type: ignore[no-any-return]
 
 
 class HyenaGLTForMultiTask(HyenaGLTPretrainedModel):
@@ -458,15 +461,15 @@ class HyenaGLTForMultiTask(HyenaGLTPretrainedModel):
         )
 
         # Initialize weights
-        self.apply(self._init_weights)
+        self.apply(self._init_weights)  # type: ignore[attr-defined]
 
     def forward(
         self,
         input_ids: torch.Tensor,
         attention_mask: torch.Tensor | None = None,
-        task: str = None,
+        task: str | None = None,
         labels: torch.Tensor | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> dict[str, torch.Tensor]:
         """Forward pass for multi-task learning."""
 
@@ -474,7 +477,7 @@ class HyenaGLTForMultiTask(HyenaGLTPretrainedModel):
             raise ValueError("Task must be specified for multi-task model")
 
         # Get base model outputs
-        outputs = self.hyena_glt(
+        outputs = self.hyena_glt.forward(  # type: ignore[operator]
             input_ids=input_ids, attention_mask=attention_mask, **kwargs
         )
 
@@ -486,4 +489,4 @@ class HyenaGLTForMultiTask(HyenaGLTPretrainedModel):
             attention_mask=attention_mask,
         )
 
-        return result
+        return result  # type: ignore[no-any-return]

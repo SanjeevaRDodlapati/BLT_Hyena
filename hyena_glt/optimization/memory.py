@@ -16,6 +16,7 @@ import psutil
 import torch
 import torch.nn as nn
 import torch.utils.checkpoint as checkpoint
+from numpy.typing import NDArray
 
 from ..model import HyenaGLT
 
@@ -32,7 +33,7 @@ class MemoryConfig:
 
     # Activation checkpointing
     activation_checkpointing: bool = False
-    checkpoint_activations: list[str] = None
+    checkpoint_activations: list[str] | None = None
 
     # Memory management
     enable_memory_efficient_attention: bool = True
@@ -53,7 +54,7 @@ class MemoryConfig:
     activation_offload: bool = False
     parameter_offload: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.checkpoint_activations is None:
             self.checkpoint_activations = []
 
@@ -61,14 +62,14 @@ class MemoryConfig:
 class MemoryOptimizer:
     """Main memory optimization interface."""
 
-    def __init__(self, config: MemoryConfig):
+    def __init__(self, config: MemoryConfig) -> None:
         self.config = config
-        self.memory_stats = {}
-        self.optimized_model = None
+        self.memory_stats: dict[str, Any] = {}
+        self.optimized_model: HyenaGLT | None = None
 
     def optimize_model(
         self, model: HyenaGLT, enable_profiling: bool = False
-    ) -> nn.Module:
+    ) -> HyenaGLT:
         """
         Apply memory optimizations to the model.
 
@@ -109,7 +110,7 @@ class MemoryOptimizer:
         logger.info("Memory optimizations applied")
         return model
 
-    def _apply_gradient_checkpointing(self, model: HyenaGLT) -> nn.Module:
+    def _apply_gradient_checkpointing(self, model: HyenaGLT) -> HyenaGLT:
         """Apply gradient checkpointing to reduce memory usage."""
         logger.info("Applying gradient checkpointing...")
 
@@ -132,37 +133,39 @@ class MemoryOptimizer:
         logger.info(f"Applied gradient checkpointing to {num_to_checkpoint} layers")
         return model
 
-    def _apply_activation_checkpointing(self, model: HyenaGLT) -> nn.Module:
+    def _apply_activation_checkpointing(self, model: HyenaGLT) -> HyenaGLT:
         """Apply activation checkpointing to specific modules."""
         logger.info("Applying activation checkpointing...")
 
         activation_checkpointer = ActivationCheckpointing(self.config)
 
-        for name in self.config.checkpoint_activations:
-            if hasattr(model, name):
-                module = getattr(model, name)
-                checkpointed_module = activation_checkpointer.wrap_module(module)
-                setattr(model, name, checkpointed_module)
+        if self.config.checkpoint_activations:
+            for name in self.config.checkpoint_activations:
+                if hasattr(model, name):
+                    module = getattr(model, name)
+                    checkpointed_module = activation_checkpointer.wrap_module(module)
+                    setattr(model, name, checkpointed_module)
 
-        logger.info(
-            f"Applied activation checkpointing to {len(self.config.checkpoint_activations)} modules"
-        )
+            logger.info(
+                f"Applied activation checkpointing to {len(self.config.checkpoint_activations)} modules"
+            )
         return model
 
-    def _apply_memory_efficient_attention(self, model: HyenaGLT) -> nn.Module:
+    def _apply_memory_efficient_attention(self, model: HyenaGLT) -> HyenaGLT:
         """Apply memory-efficient attention mechanisms."""
         logger.info("Applying memory-efficient attention...")
 
         # Replace attention modules with memory-efficient versions
-        for name, _module in model.named_modules():
-            if "attention" in name.lower() or "attn" in name.lower():
-                # Replace with memory-efficient attention
-                # This would depend on the specific attention implementation
-                pass
+        if hasattr(model, 'named_modules'):
+            for name, _module in model.named_modules():  # type: ignore[attr-defined]
+                if "attention" in name.lower() or "attn" in name.lower():
+                    # Replace with memory-efficient attention
+                    # This would depend on the specific attention implementation
+                    pass
 
         return model
 
-    def _apply_cpu_offload(self, model: HyenaGLT) -> nn.Module:
+    def _apply_cpu_offload(self, model: HyenaGLT) -> HyenaGLT:
         """Apply CPU offloading for parameters and activations."""
         logger.info("Applying CPU offloading...")
 
@@ -174,20 +177,20 @@ class MemoryOptimizer:
 
         return model
 
-    def _apply_parameter_offload(self, model: HyenaGLT) -> nn.Module:
+    def _apply_parameter_offload(self, model: HyenaGLT) -> HyenaGLT:
         """Offload parameters to CPU when not in use."""
         # This would implement parameter offloading
         # Complex implementation involving hooks and device management
         logger.info("Parameter offloading applied")
         return model
 
-    def _apply_activation_offload(self, model: HyenaGLT) -> nn.Module:
+    def _apply_activation_offload(self, model: HyenaGLT) -> HyenaGLT:
         """Offload activations to CPU to save GPU memory."""
         # This would implement activation offloading
         logger.info("Activation offloading applied")
         return model
 
-    def _setup_mixed_precision(self, model: HyenaGLT) -> nn.Module:
+    def _setup_mixed_precision(self, model: HyenaGLT) -> HyenaGLT:
         """Setup mixed precision training."""
         logger.info("Setting up mixed precision...")
 
@@ -196,19 +199,20 @@ class MemoryOptimizer:
         return model
 
     def _get_checkpointable_layers(
-        self, model: nn.Module
+        self, model: HyenaGLT
     ) -> list[tuple[str, nn.Module]]:
         """Get layers that can be checkpointed."""
         checkpointable_layers = []
 
-        for name, module in model.named_modules():
-            # Skip root module and leaf modules without parameters
-            if name == "" or len(list(module.children())) == 0:
-                continue
+        if hasattr(model, 'named_modules'):
+            for name, module in model.named_modules():  # type: ignore[attr-defined]
+                # Skip root module and leaf modules without parameters
+                if name == "" or len(list(module.children())) == 0:
+                    continue
 
-            # Check if module has significant computation
-            if self._is_checkpointable(module):
-                checkpointable_layers.append((name, module))
+                # Check if module has significant computation
+                if self._is_checkpointable(module):
+                    checkpointable_layers.append((name, module))
 
         return checkpointable_layers
 
@@ -229,11 +233,12 @@ class MemoryOptimizer:
             or "block" in type(module).__name__.lower()
         )
 
-    def _setup_memory_profiling(self):
+    def _setup_memory_profiling(self) -> None:
         """Setup memory profiling hooks."""
         if not hasattr(self, "memory_profiler"):
             self.memory_profiler = MemoryProfiler(self.config)
-            self.memory_profiler.setup_hooks(self.optimized_model)
+            if self.optimized_model is not None:
+                self.memory_profiler.setup_hooks(self.optimized_model)  # type: ignore[arg-type]
 
 
 class GradientCheckpointing:
@@ -244,11 +249,11 @@ class GradientCheckpointing:
         """Apply gradient checkpointing to a specific layer."""
 
         class CheckpointedLayer(nn.Module):
-            def __init__(self, original_layer):
+            def __init__(self, original_layer: nn.Module) -> None:
                 super().__init__()
                 self.layer = original_layer
 
-            def forward(self, *args, **kwargs):
+            def forward(self, *args: Any, **kwargs: Any) -> Any:
                 # Use gradient checkpointing for this layer
                 return checkpoint.checkpoint(self.layer, *args, **kwargs)
 
@@ -259,7 +264,7 @@ class GradientCheckpointing:
         """Apply checkpointing to sequential layers in segments."""
 
         class CheckpointedSequential(nn.Module):
-            def __init__(self, layers, segments):
+            def __init__(self, layers: nn.Sequential, segments: int) -> None:
                 super().__init__()
                 self.layers = layers
                 self.segments = segments
@@ -271,13 +276,13 @@ class GradientCheckpointing:
                 ]
                 self.segment_boundaries[-1] = len(layers)
 
-            def forward(self, x):
+            def forward(self, x: torch.Tensor) -> torch.Tensor:
                 for i in range(self.segments):
                     start_idx = self.segment_boundaries[i]
                     end_idx = self.segment_boundaries[i + 1]
 
                     # Create a function for this segment
-                    def segment_forward(input_tensor, start=start_idx, end=end_idx):
+                    def segment_forward(input_tensor: torch.Tensor, start: int = start_idx, end: int = end_idx) -> torch.Tensor:
                         for j in range(start, end):
                             input_tensor = self.layers[j](input_tensor)
                         return input_tensor
@@ -293,21 +298,21 @@ class GradientCheckpointing:
 class ActivationCheckpointing:
     """Activation checkpointing for specific modules."""
 
-    def __init__(self, config: MemoryConfig):
+    def __init__(self, config: MemoryConfig) -> None:
         self.config = config
 
     def wrap_module(self, module: nn.Module) -> nn.Module:
         """Wrap a module with activation checkpointing."""
 
         class CheckpointedModule(nn.Module):
-            def __init__(self, original_module):
+            def __init__(self, original_module: nn.Module) -> None:
                 super().__init__()
                 self.module = original_module
-                self.checkpointed_activations = {}
+                self.checkpointed_activations: dict[int, Any] = {}
 
-            def forward(self, *args, **kwargs):
+            def forward(self, *args: Any, **kwargs: Any) -> Any:
                 # Store activations for checkpointing
-                def checkpoint_hook(module, input, output):
+                def checkpoint_hook(module: nn.Module, input: Any, output: Any) -> None:
                     # Store only if training
                     if self.training:
                         # Store activations on CPU to save GPU memory
@@ -334,26 +339,26 @@ class ActivationCheckpointing:
 class MemoryProfiler:
     """Memory profiling and monitoring utilities."""
 
-    def __init__(self, config: MemoryConfig):
+    def __init__(self, config: MemoryConfig) -> None:
         self.config = config
-        self.memory_stats = {
+        self.memory_stats: dict[str, Any] = {
             "peak_memory": 0,
             "allocated_memory": [],
             "cached_memory": [],
             "layer_memory": {},
         }
-        self.hooks = []
+        self.hooks: list[Any] = []
 
-    def setup_hooks(self, model: nn.Module):
+    def setup_hooks(self, model: nn.Module) -> None:
         """Setup memory profiling hooks."""
         for name, module in model.named_modules():
             hook = module.register_forward_hook(self._memory_hook(name))
             self.hooks.append(hook)
 
-    def _memory_hook(self, layer_name: str):
+    def _memory_hook(self, layer_name: str) -> Callable[..., None]:
         """Create a memory monitoring hook for a layer."""
 
-        def hook(module, input, output):
+        def hook(module: nn.Module, input: Any, output: Any) -> None:
             if torch.cuda.is_available():
                 allocated = torch.cuda.memory_allocated()
                 cached = torch.cuda.memory_cached()
@@ -391,7 +396,7 @@ class MemoryProfiler:
 
         return summary
 
-    def print_memory_summary(self):
+    def print_memory_summary(self) -> None:
         """Print memory usage summary."""
         summary = self.get_memory_summary()
 
@@ -415,13 +420,13 @@ class MemoryProfiler:
             for layer, memory in sorted_layers[:5]:
                 print(f"  {layer}: {memory / 1024 / 1024:.2f} MB")
 
-    def clear_hooks(self):
+    def clear_hooks(self) -> None:
         """Remove all memory profiling hooks."""
         for hook in self.hooks:
             hook.remove()
         self.hooks.clear()
 
-    def reset_stats(self):
+    def reset_stats(self) -> None:
         """Reset memory statistics."""
         self.memory_stats = {
             "peak_memory": 0,
@@ -437,14 +442,14 @@ class MemoryProfiler:
 class MemoryEfficientTraining:
     """Memory-efficient training utilities."""
 
-    def __init__(self, config: MemoryConfig):
+    def __init__(self, config: MemoryConfig) -> None:
         self.config = config
         self.gc_counter = 0
 
     def optimize_training_step(
         self,
         model: nn.Module,
-        loss_fn: Callable,
+        loss_fn: Callable[..., torch.Tensor],
         optimizer: torch.optim.Optimizer,
         inputs: torch.Tensor,
         targets: torch.Tensor,
@@ -489,7 +494,7 @@ class MemoryEfficientTraining:
 
         return loss
 
-    def _maybe_garbage_collect(self, step: int):
+    def _maybe_garbage_collect(self, step: int) -> None:
         """Conditionally perform garbage collection."""
         if self.config.aggressive_gc:
             self.gc_counter += 1
@@ -503,7 +508,7 @@ class MemoryEfficientTraining:
 class AdaptiveBatchSizer:
     """Adaptive batch sizing to maximize memory utilization."""
 
-    def __init__(self, config: MemoryConfig):
+    def __init__(self, config: MemoryConfig) -> None:
         self.config = config
         self.current_batch_size = config.max_batch_size
         self.memory_threshold = 0.9  # Use up to 90% of available memory
@@ -512,7 +517,7 @@ class AdaptiveBatchSizer:
         self,
         model: nn.Module,
         sample_input: torch.Tensor,
-        loss_fn: Callable,
+        loss_fn: Callable[..., torch.Tensor],
         max_iterations: int = 10,
     ) -> int:
         """Find optimal batch size through binary search."""
@@ -579,8 +584,8 @@ class AdaptiveBatchSizer:
 class MemoryBenchmark:
     """Benchmark memory usage of different optimization strategies."""
 
-    def __init__(self):
-        self.benchmark_results = {}
+    def __init__(self) -> None:
+        self.benchmark_results: dict[str, Any] = {}
 
     def benchmark_optimizations(
         self,
@@ -597,7 +602,8 @@ class MemoryBenchmark:
 
             # Create optimized model
             model = base_model.__class__(base_model.config)
-            model.load_state_dict(base_model.state_dict())
+            if hasattr(base_model, 'load_state_dict') and hasattr(base_model, 'state_dict'):
+                model.load_state_dict(base_model.state_dict())  # type: ignore[attr-defined]
 
             optimizer = MemoryOptimizer(config)
             optimized_model = optimizer.optimize_model(model, enable_profiling=True)
@@ -613,7 +619,7 @@ class MemoryBenchmark:
         return results
 
     def _benchmark_single_config(
-        self, model: nn.Module, sample_input: torch.Tensor, num_iterations: int
+        self, model: HyenaGLT, sample_input: torch.Tensor, num_iterations: int
     ) -> dict[str, float]:
         """Benchmark a single configuration."""
         memory_stats = {
@@ -625,8 +631,13 @@ class MemoryBenchmark:
 
         memory_readings = []
 
-        model.train()
-        optimizer = torch.optim.Adam(model.parameters())
+        if hasattr(model, 'train'):
+            model.train()  # type: ignore[attr-defined]
+        if hasattr(model, 'parameters'):
+            optimizer = torch.optim.Adam(model.parameters())  # type: ignore[attr-defined]
+        else:
+            # Fallback if parameters method doesn't exist
+            optimizer = torch.optim.Adam([])
         criterion = nn.CrossEntropyLoss()
 
         for _i in range(num_iterations):
@@ -639,7 +650,10 @@ class MemoryBenchmark:
             optimizer.zero_grad()
 
             target = torch.randint(0, 10, (sample_input.size(0),))
-            output = model(sample_input)
+            if callable(model):
+                output = model(sample_input)  # type: ignore[operator]
+            else:
+                raise ValueError("Model is not callable")
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()
@@ -657,15 +671,16 @@ class MemoryBenchmark:
             memory_stats["peak_memory"] = max(memory_stats["peak_memory"], peak_memory)
 
         # Calculate statistics
-        memory_readings = np.array(memory_readings)
-        memory_stats["avg_memory"] = np.mean(memory_readings) / 1024 / 1024  # MB
-        memory_stats["min_memory"] = np.min(memory_readings) / 1024 / 1024
-        memory_stats["max_memory"] = np.max(memory_readings) / 1024 / 1024
+        memory_readings_array: NDArray[Any] = np.array(memory_readings)
+        avg_memory_float: float = float(np.mean(memory_readings_array))
+        memory_stats["avg_memory"] = avg_memory_float / 1024 / 1024  # MB
+        memory_stats["min_memory"] = float(np.min(memory_readings_array)) / 1024 / 1024
+        memory_stats["max_memory"] = float(np.max(memory_readings_array)) / 1024 / 1024
         memory_stats["peak_memory"] = memory_stats["peak_memory"] / 1024 / 1024
 
         return memory_stats
 
-    def print_benchmark_results(self):
+    def print_benchmark_results(self) -> None:
         """Print memory benchmark results."""
         if not self.benchmark_results:
             print("No benchmark results available")

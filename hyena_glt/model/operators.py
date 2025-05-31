@@ -77,14 +77,16 @@ class DynamicConvolution(nn.Module):
         if self.dropout is not None:
             x_conv = self.dropout(x_conv)
 
-        return x_conv
+        # Explicit type annotation to fix MyPy "returning Any" error
+        result_conv: torch.Tensor = x_conv
+        return result_conv
 
     def _create_segment_mask(
         self, boundaries: torch.Tensor, kernel_size: int
     ) -> torch.Tensor:
         """Create mask that prevents convolution across segment boundaries."""
         _, seq_len = boundaries.shape
-        mask = torch.ones_like(boundaries)
+        mask: torch.Tensor = torch.ones_like(boundaries)
 
         # For each boundary, mask the kernel_size positions around it
         boundary_positions = torch.nonzero(boundaries, as_tuple=True)
@@ -94,7 +96,9 @@ class DynamicConvolution(nn.Module):
             end = min(seq_len, pos + kernel_size // 2 + 1)
             mask[b, start:end] *= 0.5  # Reduce but don't completely eliminate
 
-        return mask
+        # Explicit type annotation to fix MyPy "returning Any" error
+        result_mask: torch.Tensor = mask
+        return result_mask
 
 
 class HyenaOperator(nn.Module):
@@ -146,6 +150,7 @@ class HyenaOperator(nn.Module):
         )
 
         # Gating mechanism
+        self.glu: nn.GLU | None
         if config.use_glu:
             self.glu = nn.GLU(dim=-1)
         else:
@@ -186,7 +191,7 @@ class HyenaOperator(nn.Module):
 
         # Apply Hyena recurrence with dynamic segments
         y = self._apply_hyena_recurrence(
-            splits[1:], filter_coeffs, segment_boundaries, attention_mask
+            list(splits[1:]), filter_coeffs, segment_boundaries, attention_mask
         )
 
         # Combine short and long range
@@ -206,11 +211,13 @@ class HyenaOperator(nn.Module):
         # Residual connection with layer norm
         output = self.norm(output + x)
 
-        return output
+        # Explicit type annotation to fix MyPy "returning Any" error
+        result_output: torch.Tensor = output
+        return result_output
 
     def _apply_hyena_recurrence(
         self,
-        x_streams: list,
+        x_streams: list[torch.Tensor],
         filter_coeffs: torch.Tensor,
         segment_boundaries: torch.Tensor | None = None,
         attention_mask: torch.Tensor | None = None,
@@ -223,7 +230,7 @@ class HyenaOperator(nn.Module):
         x1, x2 = x_streams[0], x_streams[1] if len(x_streams) > 1 else x_streams[0]
 
         # Apply convolution with learned filters
-        x_filtered = self._segment_aware_convolution(
+        x_filtered: torch.Tensor = self._segment_aware_convolution(
             x1, filter_coeffs, segment_boundaries
         )
 
@@ -234,7 +241,9 @@ class HyenaOperator(nn.Module):
         if attention_mask is not None:
             output = output * attention_mask.unsqueeze(-1)
 
-        return output
+        # Explicit type annotation to fix MyPy "returning Any" error
+        result_output: torch.Tensor = output
+        return result_output
 
     def _segment_aware_convolution(
         self,
@@ -298,9 +307,9 @@ class HyenaOperator(nn.Module):
             output = output * segment_mask.unsqueeze(1)
 
         # Reshape back
-        output = rearrange(output, "b d l -> b l d")
+        output_reshaped: torch.Tensor = rearrange(output, "b d l -> b l d")
 
-        return output
+        return output_reshaped
 
     def _create_causal_segment_mask(
         self, boundaries: torch.Tensor, filter_len: int
@@ -365,7 +374,7 @@ class HyenaFilter(nn.Module):
 
         self._init_parameters()
 
-    def _init_parameters(self):
+    def _init_parameters(self) -> None:
         """Initialize filter parameters."""
         # Initialize frequencies for biological-relevant scales
         with torch.no_grad():
@@ -422,9 +431,11 @@ class HyenaFilter(nn.Module):
         filter_coeffs = self.dropout(filter_coeffs)
 
         # Average across channels and transpose
-        filter_coeffs = filter_coeffs.mean(dim=0).transpose(0, 1)  # (d_model, seq_len)
+        filter_output: torch.Tensor = filter_coeffs.mean(dim=0).transpose(
+            0, 1
+        )  # (d_model, seq_len)
 
-        return filter_coeffs
+        return filter_output
 
 
 class GenomicPositionalEncoding(nn.Module):
@@ -454,7 +465,9 @@ class GenomicPositionalEncoding(nn.Module):
 
         self.register_buffer("pe", pe)
 
-    def _add_genomic_encodings(self, pe: torch.Tensor, max_len: int, d_model: int):
+    def _add_genomic_encodings(
+        self, pe: torch.Tensor, max_len: int, d_model: int
+    ) -> None:
         """Add genomic-specific positional encodings."""
         # Codon-based encoding (period 3)
         codon_positions = torch.arange(max_len) % 3
@@ -487,4 +500,5 @@ class GenomicPositionalEncoding(nn.Module):
         Returns:
             Positional encoding of shape (seq_len, d_model)
         """
-        return self.pe[:seq_len]
+        pe_slice: torch.Tensor = self.pe[:seq_len]
+        return pe_slice

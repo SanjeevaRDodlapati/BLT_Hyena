@@ -12,7 +12,7 @@ import shutil
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import requests
 import torch
@@ -49,7 +49,7 @@ class ModelInfo:
 class ModelRegistry:
     """Registry of available pre-trained models."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.models = self._initialize_models()
 
     def _initialize_models(self) -> dict[str, ModelInfo]:
@@ -179,9 +179,10 @@ class ModelRegistry:
 
     def get_model_info(self, model_name: str) -> ModelInfo | None:
         """Get information about a specific model."""
-        return self.models.get(model_name)
+        result = self.models.get(model_name)
+        return result  # type: ignore[no-any-return]
 
-    def register_model(self, model_info: ModelInfo):
+    def register_model(self, model_info: ModelInfo) -> None:
         """Register a new model."""
         self.models[model_info.name] = model_info
         logger.info(f"Registered model: {model_info.name}")
@@ -190,9 +191,9 @@ class ModelRegistry:
 class ModelDownloader:
     """Utility for downloading and caching pre-trained models."""
 
-    def __init__(self, cache_dir: str | None = None):
+    def __init__(self, cache_dir: str | None = None) -> None:
         if cache_dir is None:
-            cache_dir = Path.home() / ".cache" / "hyena_glt"
+            cache_dir = str(Path.home() / ".cache" / "hyena_glt")
 
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -238,7 +239,7 @@ class ModelDownloader:
         logger.info(f"Model {model_info.name} downloaded successfully")
         return model_path
 
-    def _download_file(self, url: str, destination: Path):
+    def _download_file(self, url: str, destination: Path) -> None:
         """Download a file from URL to destination."""
         with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
             try:
@@ -277,7 +278,7 @@ class ModelDownloader:
         actual_checksum = sha256_hash.hexdigest()
         return actual_checksum == expected_checksum
 
-    def clear_cache(self, model_name: str | None = None):
+    def clear_cache(self, model_name: str | None = None) -> None:
         """Clear model cache."""
         if model_name:
             model_cache_dir = self.cache_dir / model_name
@@ -294,7 +295,7 @@ class ModelDownloader:
 class PretrainedModelManager:
     """Main class for managing pre-trained models."""
 
-    def __init__(self, cache_dir: str | None = None):
+    def __init__(self, cache_dir: str | None = None) -> None:
         self.registry = ModelRegistry()
         self.downloader = ModelDownloader(cache_dir)
 
@@ -333,15 +334,16 @@ class PretrainedModelManager:
         # Load weights
         checkpoint = torch.load(model_path, map_location="cpu")
         if "model_state_dict" in checkpoint:
-            base_model.load_state_dict(checkpoint["model_state_dict"])
+            base_model.load_state_dict(checkpoint["model_state_dict"])  # type: ignore[attr-defined]
         else:
-            base_model.load_state_dict(checkpoint)
+            base_model.load_state_dict(checkpoint)  # type: ignore[attr-defined]
 
         # Adapt for specific task if specified
+        model: nn.Module
         if task:
             model = self._adapt_for_task(base_model, task, config)
         else:
-            model = base_model
+            model = cast(nn.Module, base_model)  # Safe cast: HyenaGLT is nn.Module
 
         # Move to device
         if device:
@@ -355,23 +357,25 @@ class PretrainedModelManager:
     ) -> nn.Module:
         """Adapt base model for specific task."""
         if task == "sequence_classification":
-            model = HyenaGLTForSequenceClassification(config)
-            model.hyena_glt = base_model
+            model: nn.Module = HyenaGLTForSequenceClassification(config)  # type: ignore[assignment]
+            model.hyena_glt = base_model  # type: ignore[attr-defined,assignment]
         elif task == "token_classification":
-            model = HyenaGLTForTokenClassification(config)
-            model.hyena_glt = base_model
+            model = HyenaGLTForTokenClassification(config)  # type: ignore[assignment]
+            model.hyena_glt = base_model  # type: ignore[attr-defined,assignment]
         elif task == "sequence_generation":
-            model = HyenaGLTForSequenceGeneration(config)
-            model.hyena_glt = base_model
+            model = HyenaGLTForSequenceGeneration(config)  # type: ignore[assignment]
+            model.hyena_glt = base_model  # type: ignore[attr-defined,assignment]
         elif task == "multitask":
-            model = HyenaGLTForMultiTask(config)
-            model.hyena_glt = base_model
+            # Get task_configs from config if available, otherwise use empty dict
+            task_configs = getattr(config, 'task_configs', {})
+            model = HyenaGLTForMultiTask(config, task_configs)  # type: ignore[assignment]
+            model.hyena_glt = base_model  # type: ignore[attr-defined,assignment]
         else:
             raise ValueError(f"Unknown task: {task}")
 
         return model
 
-    def list_available_models(self, **filters) -> list[ModelInfo]:
+    def list_available_models(self, **filters: Any) -> list[ModelInfo]:
         """List available models with optional filtering."""
         return self.registry.list_models(**filters)
 
@@ -387,7 +391,7 @@ class PretrainedModelManager:
 
         return self.downloader.download_model(model_info, force_download)
 
-    def clear_cache(self, model_name: str | None = None):
+    def clear_cache(self, model_name: str | None = None) -> None:
         """Clear model cache."""
         self.downloader.clear_cache(model_name)
 
@@ -412,7 +416,7 @@ def load_pretrained_model(
     )
 
 
-def list_pretrained_models(**filters) -> list[ModelInfo]:
+def list_pretrained_models(**filters: Any) -> list[ModelInfo]:
     """List available pre-trained models."""
     manager = PretrainedModelManager()
     return manager.list_available_models(**filters)
@@ -431,9 +435,9 @@ class ModelConverter:
     def convert_to_onnx(
         model: nn.Module,
         output_path: str,
-        input_shape: tuple = (1, 512),
+        input_shape: tuple[int, ...] = (1, 512),
         opset_version: int = 11,
-    ):
+    ) -> None:
         """Convert model to ONNX format."""
         try:
             import torch.onnx
@@ -464,8 +468,8 @@ class ModelConverter:
 
     @staticmethod
     def convert_to_torchscript(
-        model: nn.Module, output_path: str, input_shape: tuple = (1, 512)
-    ):
+        model: nn.Module, output_path: str, input_shape: tuple[int, ...] = (1, 512)
+    ) -> None:
         """Convert model to TorchScript format."""
         model.eval()
         dummy_input = torch.randint(0, 1000, input_shape)
@@ -488,4 +492,4 @@ class ModelConverter:
             raise ValueError(f"Unsupported quantization type: {quantization_type}")
 
         logger.info(f"Model quantized with {quantization_type} quantization")
-        return quantized_model
+        return quantized_model  # type: ignore[no-any-return]

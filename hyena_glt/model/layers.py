@@ -15,7 +15,17 @@ from .position_embeddings import BLTPositionManager
 class AdaptiveTokenMerger(nn.Module):
     """
     Adaptive token merger inspired by BLT's dynamic patching.
-    Merges tokens based on genomic sequence content and patterns.
+    Merges tokens based on genomic sequence content        # Cross-attention to original sequence if available
+        if self.cross_attention is not None and self.cross_norm is not None and original_sequence is not None:
+            residual = hidden_states
+            hidden_states = self.cross_norm(hidden_states)
+
+            # Cross-attention to original sequence
+            attn_output, _ = self.cross_attention(
+                query=hidden_states,
+                key=original_sequence,
+                value=original_sequence,
+            )ns.
     """
 
     def __init__(
@@ -187,7 +197,7 @@ class AdaptiveTokenMerger(nn.Module):
                             new_boundaries[split_pos] = 1
 
                 new_boundaries[boundary_pos[i]] = 1
-                current_start = boundary_pos[i]
+                current_start = int(boundary_pos[i].item())
 
             boundaries[b] = new_boundaries
 
@@ -198,13 +208,13 @@ class AdaptiveTokenMerger(nn.Module):
         x: torch.Tensor,
         boundaries: torch.Tensor,
         attention_mask: torch.Tensor | None = None,
-    ) -> tuple[torch.Tensor, torch.Tensor, dict]:
+    ) -> tuple[torch.Tensor, torch.Tensor, dict[str, Any]]:
         """Perform the actual token merging."""
         batch_size, seq_len, d_model = x.shape
 
         merged_sequences = []
         segment_boundaries_list = []
-        merge_stats = {"patches_per_batch": []}
+        merge_stats: dict[str, Any] = {"patches_per_batch": []}
 
         for b in range(batch_size):
             # Get boundary positions for this batch
@@ -312,7 +322,7 @@ class DynamicHyenaLayer(nn.Module):
 
         # Token merger for this layer
         if config.dynamic_patching:
-            self.token_merger = AdaptiveTokenMerger(
+            self.token_merger: AdaptiveTokenMerger | None = AdaptiveTokenMerger(
                 config=config,
                 d_model=config.hidden_size,
                 min_patch_size=config.min_patch_size,
@@ -351,7 +361,7 @@ class DynamicHyenaLayer(nn.Module):
         attention_mask: torch.Tensor | None = None,
         segment_boundaries: torch.Tensor | None = None,
         return_merge_info: bool = False,
-    ) -> tuple[torch.Tensor, dict | None]:
+    ) -> tuple[torch.Tensor, dict[str, Any] | None]:
         """
         Args:
             hidden_states: (batch, seq_len, hidden_size)
@@ -427,13 +437,15 @@ class HyenaGLTBlock(nn.Module):
         # Optional cross-attention to original sequence
         if config.cross_attention_layers > 0 and layer_idx is not None:
             if layer_idx < config.cross_attention_layers:
-                self.cross_attention = nn.MultiheadAttention(
-                    embed_dim=config.hidden_size,
-                    num_heads=config.num_attention_heads,
-                    dropout=config.attention_dropout,
-                    batch_first=True,
+                self.cross_attention: nn.MultiheadAttention | None = (
+                    nn.MultiheadAttention(
+                        embed_dim=config.hidden_size,
+                        num_heads=config.num_attention_heads,
+                        dropout=config.attention_dropout,
+                        batch_first=True,
+                    )
                 )
-                self.cross_norm = nn.LayerNorm(config.hidden_size)
+                self.cross_norm: nn.LayerNorm | None = nn.LayerNorm(config.hidden_size)
             else:
                 self.cross_attention = None
                 self.cross_norm = None
@@ -457,7 +469,7 @@ class HyenaGLTBlock(nn.Module):
         attention_mask: torch.Tensor | None = None,
         segment_boundaries: torch.Tensor | None = None,
         return_merge_info: bool = False,
-    ) -> tuple[torch.Tensor, dict | None]:
+    ) -> tuple[torch.Tensor, dict[str, Any] | None]:
         """
         Args:
             hidden_states: Current hidden states
@@ -483,7 +495,11 @@ class HyenaGLTBlock(nn.Module):
         )
 
         # Apply cross-attention if available and original sequence provided
-        if self.cross_attention is not None and original_sequence is not None:
+        if (
+            self.cross_attention is not None
+            and self.cross_norm is not None
+            and original_sequence is not None
+        ):
             residual = hidden_states
             hidden_states = self.cross_norm(hidden_states)
 

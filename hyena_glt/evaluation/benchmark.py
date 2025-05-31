@@ -25,8 +25,8 @@ class BenchmarkConfig:
     description: str
     datasets: list[str]
     metrics: list[str]
-    batch_sizes: list[int] = None
-    sequence_lengths: list[int] = None
+    batch_sizes: list[int] | None = None
+    sequence_lengths: list[int] | None = None
     num_runs: int = 3
     warmup_runs: int = 1
     device: str = "cuda"
@@ -164,7 +164,7 @@ class ModelProfiler:
             torch.cuda.synchronize()
 
         # Time inference
-        times = []
+        times: list[float] = []
         for _ in range(num_runs):
             start_time = time.perf_counter()
 
@@ -177,15 +177,17 @@ class ModelProfiler:
             end_time = time.perf_counter()
             times.append(end_time - start_time)
 
-        times = np.array(times)
+        times_array = np.array(times)
 
         return {
-            "mean_inference_time": np.mean(times),
-            "std_inference_time": np.std(times),
-            "min_inference_time": np.min(times),
-            "max_inference_time": np.max(times),
-            "median_inference_time": np.median(times),
-            "throughput_samples_per_sec": input_shapes["input_ids"][0] / np.mean(times),
+            "mean_inference_time": float(np.mean(times_array)),
+            "std_inference_time": float(np.std(times_array)),
+            "min_inference_time": float(np.min(times_array)),
+            "max_inference_time": float(np.max(times_array)),
+            "median_inference_time": float(np.median(times_array)),
+            "throughput_samples_per_sec": float(
+                input_shapes["input_ids"][0] / np.mean(times_array)
+            ),
         }
 
 
@@ -200,7 +202,10 @@ class ScalabilityBenchmark:
         self, base_config: dict, batch_sizes: list[int]
     ) -> dict[str, list[dict]]:
         """Benchmark across different batch sizes."""
-        results = {"batch_sizes": batch_sizes, "metrics": []}
+        results: dict[str, list[dict] | list[int]] = {
+            "batch_sizes": batch_sizes,
+            "metrics": [],
+        }
 
         for batch_size in batch_sizes:
             print(f"Testing batch size: {batch_size}")
@@ -209,9 +214,10 @@ class ScalabilityBenchmark:
             model = self.model_factory(base_config)
             profiler = ModelProfiler(model)
 
-            # Input shape with current batch size
-            input_shapes = {
-                "input_ids": (batch_size, base_config.get("max_length", 512))
+            # Input shape with current batch size - ensure int type
+            max_length: int = int(base_config.get("max_length", 512))
+            input_shapes: dict[str, tuple[int, ...]] = {
+                "input_ids": (batch_size, max_length)
             }
 
             try:
@@ -219,31 +225,36 @@ class ScalabilityBenchmark:
                 memory_metrics = profiler.measure_memory_usage(input_shapes)
                 speed_metrics = profiler.profile_inference_speed(input_shapes)
 
-                batch_results = {
+                batch_results: dict[str, object] = {
                     "batch_size": batch_size,
                     "memory_metrics": memory_metrics,
                     "speed_metrics": speed_metrics,
                 }
 
-                results["metrics"].append(batch_results)
+                results["metrics"].append(batch_results)  # type: ignore[arg-type]
 
             except RuntimeError as e:
                 if "out of memory" in str(e):
                     print(f"OOM at batch size {batch_size}")
-                    results["metrics"].append(
-                        {"batch_size": batch_size, "error": "OOM"}
-                    )
+                    oom_result: dict[str, object] = {
+                        "batch_size": batch_size,
+                        "error": "OOM",
+                    }
+                    results["metrics"].append(oom_result)  # type: ignore[arg-type]
                     break
                 else:
                     raise e
 
-        return results
+        return results  # type: ignore[return-value]
 
     def run_sequence_length_scaling(
         self, base_config: dict, sequence_lengths: list[int]
     ) -> dict[str, list[dict]]:
         """Benchmark across different sequence lengths."""
-        results = {"sequence_lengths": sequence_lengths, "metrics": []}
+        results: dict[str, list[dict] | list[int]] = {
+            "sequence_lengths": sequence_lengths,
+            "metrics": [],
+        }
 
         for seq_len in sequence_lengths:
             print(f"Testing sequence length: {seq_len}")
@@ -256,8 +267,11 @@ class ScalabilityBenchmark:
             model = self.model_factory(config_copy)
             profiler = ModelProfiler(model)
 
-            # Input shape with current sequence length
-            input_shapes = {"input_ids": (base_config.get("batch_size", 8), seq_len)}
+            # Input shape with current sequence length - ensure int type
+            batch_size: int = int(base_config.get("batch_size", 8))
+            input_shapes: dict[str, tuple[int, ...]] = {
+                "input_ids": (batch_size, seq_len)
+            }
 
             try:
                 # Profile this configuration
@@ -265,26 +279,28 @@ class ScalabilityBenchmark:
                 speed_metrics = profiler.profile_inference_speed(input_shapes)
                 param_metrics = profiler.count_parameters()
 
-                seq_results = {
+                seq_results: dict[str, object] = {
                     "sequence_length": seq_len,
                     "parameter_metrics": param_metrics,
                     "memory_metrics": memory_metrics,
                     "speed_metrics": speed_metrics,
                 }
 
-                results["metrics"].append(seq_results)
+                results["metrics"].append(seq_results)  # type: ignore[arg-type]
 
             except RuntimeError as e:
                 if "out of memory" in str(e):
                     print(f"OOM at sequence length {seq_len}")
-                    results["metrics"].append(
-                        {"sequence_length": seq_len, "error": "OOM"}
-                    )
+                    oom_result: dict[str, object] = {
+                        "sequence_length": seq_len,
+                        "error": "OOM",
+                    }
+                    results["metrics"].append(oom_result)  # type: ignore[arg-type]
                     break
                 else:
                     raise e
 
-        return results
+        return results  # type: ignore[return-value]
 
 
 class ComparisonBenchmark:
@@ -442,7 +458,7 @@ class BenchmarkRunner:
 
         return benchmark_result
 
-    def save_results(self, benchmark_result: BenchmarkResult):
+    def save_results(self, benchmark_result: BenchmarkResult) -> None:
         """Save benchmark results to disk."""
         # Convert to dictionary for JSON serialization
         result_dict = asdict(benchmark_result)

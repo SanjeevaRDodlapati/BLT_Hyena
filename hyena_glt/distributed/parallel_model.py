@@ -64,11 +64,11 @@ class DistributedHyenaGLT(nn.Module):
         # Store original model for access to attributes
         self._original_model = model
 
-    def forward(self, *args, **kwargs):
+    def forward(self, *args: Any, **kwargs: Any) -> Any:
         """Forward pass through the distributed model."""
         return self.model(*args, **kwargs)
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         """Delegate attribute access to the wrapped model."""
         try:
             return super().__getattr__(name)
@@ -100,7 +100,7 @@ class DistributedHyenaGLT(nn.Module):
             "model_size_mb": total_params * 4 / 1e6,  # Assuming float32
         }
 
-    def sync_parameters(self):
+    def sync_parameters(self) -> None:
         """Synchronize parameters across all processes."""
         if self.device_manager.is_distributed:
             for param in self.model.parameters():
@@ -145,7 +145,7 @@ class ModelParallelHyenaGLT(nn.Module):
             self.is_parallel = True
             self._setup_model_parallel(model)
 
-    def _setup_model_parallel(self, model: nn.Module):
+    def _setup_model_parallel(self, model: nn.Module) -> None:
         """Setup model parallelism across available GPUs."""
         # Simple strategy: split sequential layers across GPUs
         layers = []
@@ -185,10 +185,10 @@ class ModelParallelHyenaGLT(nn.Module):
         if self.device_manager.is_main_process:
             logger.info(f"Model split across {gpus_to_use} GPUs")
 
-    def forward(self, x, *args, **kwargs):
+    def forward(self, x: torch.Tensor, *args: Any, **kwargs: Any) -> torch.Tensor:
         """Forward pass through model parallel layers."""
         if not self.is_parallel:
-            return self.model(x, *args, **kwargs)
+            return self.model(x, *args, **kwargs)  # type: ignore[no-any-return]
 
         # Pass input through each GPU sequentially
         current_device = x.device
@@ -266,4 +266,4 @@ def create_distributed_model(
         # Single process training
         model = device_manager.move_to_device(model)
 
-    return model
+    return model  # type: ignore[no-any-return]
