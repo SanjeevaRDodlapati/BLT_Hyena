@@ -39,66 +39,43 @@ coverage.xml
 *.cover
 *.py,cover
 .hypothesis/
-.pytest_cache/
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# Results and output directories
+results/
+outputs/
+logs/
+models/
+checkpoints/
+wandb/
 
-# IPython
-profile_default/
-ipython_config.py
+# Test artifacts
+test_output/
+attention_maps/
+plots/
+*.pt
+*.pth
+*.ckpt
 
-# Virtual environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# IDE
+# IDE and editor files
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# Environment files
+.env
+.venv/
+venv/
+env/
 
-# Model files
-*.pth
-*.bin
-*.safetensors
-checkpoints/
-models/
-logs/
-wandb/
-
-# Data files
-data/
-datasets/
-*.fasta
-*.fa
-*.fastq
-*.fq
-*.vcf
-*.gff
-*.gtf
-*.bed
-*.sam
-*.bam
-*.cram
+# SSH and git files
+.ssh/
+*.key
+*.pub
 
 # Temporary files
 *.tmp
 *.temp
-.tmp/
-.temp/
+.DS_Store
+Thumbs.db
