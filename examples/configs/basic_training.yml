@@ -1,0 +1,33 @@
+data:
+  test_file: processed_data/dna_classification/test.hdf5
+  tokenizer_path: processed_data/dna_classification/tokenizer.json
+  train_file: processed_data/dna_classification/train.hdf5
+  val_file: processed_data/dna_classification/val.hdf5
+model:
+  hidden_size: 512
+  kmer_size: 6
+  max_position_embeddings: 16384
+  model_size: small
+  model_type: hyena_glt
+  num_layers: 8
+  sequence_type: dna
+  vocab_size: 4096
+optimization:
+  gradient_clipping: 1.0
+  mixed_precision: true
+  optimizer: adamw
+  weight_decay: 0.01
+system:
+  device: auto
+  gradient_checkpointing: false
+  num_workers: 4
+training:
+  batch_size: 16
+  data_path: processed_data/dna_classification/
+  epochs: 10
+  eval_steps: 100
+  learning_rate: 0.0001
+  max_length: 1024
+  output_dir: training_output/dna_model/
+  save_steps: 500
+  warmup_steps: 1000

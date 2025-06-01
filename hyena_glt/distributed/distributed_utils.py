@@ -147,7 +147,7 @@ def setup_mixed_precision(
         # Create advanced mixed precision config
         mp_config = MixedPrecisionConfig(
             mode=precision_mode,
-            dynamic_loss_scaling=getattr(config, 'dynamic_loss_scaling', True),
+            dynamic_loss_scale=getattr(config, 'dynamic_loss_scale', True),
             gradient_clipping=getattr(config, 'gradient_clipping', 1.0),
             kernel_precision=getattr(config, 'kernel_precision', 'ieee'),
             monitor_overflow=getattr(config, 'precision_monitoring', True),

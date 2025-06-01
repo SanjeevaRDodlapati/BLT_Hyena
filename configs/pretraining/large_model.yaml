@@ -1,0 +1,87 @@
+# Large model configuration for production pretraining
+model:
+  d_model: 1024
+  n_layer: 24
+  n_head: 16
+  vocab_size: 32
+  max_position_embeddings: 16384
+  layer_norm_epsilon: 1e-5
+  dropout: 0.1
+  use_cache: false
+
+data:
+  data_paths:
+    - "/path/to/genomic/data"
+  data_types: ["fasta", "txt"]
+  max_sequence_length: 16384
+  tokenizer_type: "dna"
+  num_workers: 8
+  pin_memory: true
+  data_mixing_weights: [1.0]
+  validation_split: 0.05
+  validation_data_paths: []
+  preprocessing:
+    filter_short_sequences: true
+    min_sequence_length: 200
+    remove_ambiguous_bases: false
+    reverse_complement_augmentation: true
+
+strategy:
+  name: "mlm"
+  mask_probability: 0.15
+  mask_token_probability: 0.8
+  random_token_probability: 0.1
+  leave_unmasked_probability: 0.1
+  span_masking:
+    enable: true
+    mean_span_length: 3.0
+    max_span_length: 10
+  oadm:
+    enable: false
+    num_diffusion_steps: 1000
+    noise_schedule: "cosine"
+
+loss:
+  type: "cross_entropy"
+  label_smoothing: 0.1
+  focal_loss:
+    enable: false
+    alpha: 1.0
+    gamma: 2.0
+  ignore_index: -100
+
+optimization:
+  learning_rate: 6e-5
+  weight_decay: 0.01
+  batch_size: 8
+  gradient_accumulation_steps: 16
+  max_steps: 500000
+  warmup_steps: 25000
+  lr_scheduler: "cosine"
+  optimizer: "adamw"
+  max_grad_norm: 1.0
+  early_stopping:
+    enable: false
+    patience: 20
+    min_delta: 0.0001
+
+hardware:
+  device: "auto"
+  mixed_precision: true
+  compile_model: true
+  dataloader_num_workers: 8
+  pin_memory: true
+
+logging:
+  output_dir: "./pretraining_output_large"
+  experiment_name: "hyena_glt_large"
+  log_every_n_steps: 100
+  save_every_n_steps: 10000
+  validate_every_n_steps: 2000
+  max_checkpoints_to_keep: 5
+  wandb:
+    enable: true
+    project: "hyena-glt"
+    entity: null
+    tags: ["pretraining", "genomics", "large"]
+  resume_from_checkpoint: null

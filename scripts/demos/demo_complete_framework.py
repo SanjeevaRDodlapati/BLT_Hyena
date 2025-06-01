@@ -17,7 +17,13 @@ Date: May 30, 2025
 
 import argparse
 import logging
+import os
+import sys
 import time
+
+# Add project root to Python path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, project_root)
 
 import numpy as np
 import torch
@@ -207,12 +213,20 @@ def demo_data_processing(seq_length: int = 128, batch_size: int = 4):
     # Create data loaders
     print("📦 Creating data loaders...")
 
-    dataset = GenomicDataset(
-        data=sample_sequences, tokenizer=tokenizer, max_length=seq_length
+    # Split data manually for train/validation
+    split_idx = int(len(sample_sequences) * 0.8)  # 80% train, 20% validation
+    train_sequences = sample_sequences[:split_idx]
+    val_sequences = sample_sequences[split_idx:]
+
+    train_dataset = GenomicDataset(
+        data=train_sequences, tokenizer=tokenizer, max_length=seq_length
+    )
+    val_dataset = GenomicDataset(
+        data=val_sequences, tokenizer=tokenizer, max_length=seq_length
     )
 
     loaders = create_genomic_dataloaders(
-        train_data=dataset, tokenizer=tokenizer, batch_size=batch_size, val_split=0.2
+        train_data=train_dataset, val_data=val_dataset, tokenizer=tokenizer, batch_size=batch_size
     )
 
     print("   ✅ Data loaders created")

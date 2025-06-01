@@ -68,8 +68,8 @@ def main():
         input_ids = torch.tensor([tokens])
         outputs = model(input_ids)
 
-    print(f"   ✓ Output shape: {outputs.logits.shape}")
-    print(f"   ✓ Output statistics: mean={outputs.logits.mean():.4f}, std={outputs.logits.std():.4f}")
+    print(f"   ✓ Output shape: {outputs['last_hidden_state'].shape}")
+    print(f"   ✓ Output statistics: mean={outputs['last_hidden_state'].mean():.4f}, std={outputs['last_hidden_state'].std():.4f}")
 
     # 7. Analysis
     print("\n7. Analyzing results...")
@@ -80,20 +80,34 @@ def main():
     print(f"   ✓ Compression ratio: {token_stats['compression_ratio']:.2f}")
 
     # Embedding analysis
-    embeddings = outputs.hidden_states[-1]  # Last layer embeddings
-    print(f"   ✓ Embedding shape: {embeddings.shape}")
-    print(f"   ✓ Embedding norm: {torch.norm(embeddings).item():.4f}")
+    # Use the last hidden state from the model output
+    if 'last_hidden_state' in outputs:
+        embeddings = outputs['last_hidden_state']
+        print(f"   ✓ Embedding shape: {embeddings.shape}")
+        print(f"   ✓ Embedding norm: {torch.norm(embeddings).item():.4f}")
+    else:
+        print(f"   ✓ Available output keys: {list(outputs.keys())}")
 
     # 8. Generation example (simple next-token prediction)
     print("\n8. Next-token prediction example...")
     with torch.no_grad():
-        # Get logits for last position
-        last_logits = outputs.logits[0, -1, :]
-        predicted_token = torch.argmax(last_logits).item()
-        predicted_prob = torch.softmax(last_logits, dim=-1)[predicted_token].item()
-
-    print(f"   ✓ Predicted next token: {predicted_token}")
-    print(f"   ✓ Prediction confidence: {predicted_prob:.4f}")
+        # Check if we have logits in the output
+        if 'logits' in outputs:
+            last_logits = outputs['logits'][0, -1, :]
+        elif 'last_hidden_state' in outputs:
+            # If no logits, we'll use the last hidden state
+            last_logits = outputs['last_hidden_state'][0, -1, :]
+        else:
+            print("   ! No suitable output for next-token prediction found")
+            last_logits = None
+        
+        if last_logits is not None:
+            predicted_token = torch.argmax(last_logits).item()
+            predicted_prob = torch.softmax(last_logits, dim=-1)[predicted_token].item()
+            print(f"   ✓ Predicted next token: {predicted_token}")
+            print(f"   ✓ Prediction confidence: {predicted_prob:.4f}")
+        else:
+            print("   ! Skipping next-token prediction")
 
     # 9. Sequence classification example
     print("\n9. Sequence classification example...")

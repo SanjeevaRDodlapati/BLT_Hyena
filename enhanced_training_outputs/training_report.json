@@ -1,0 +1,152 @@
+{
+  "experiment_name": "enhanced_hyena_glt",
+  "model_size": "base",
+  "config": {
+    "output_dir": "./enhanced_training_outputs",
+    "experiment_name": "enhanced_hyena_glt",
+    "seed": 42,
+    "num_epochs": 1,
+    "max_steps": 2,
+    "batch_size": 2,
+    "use_multimodal": true,
+    "modalities": [
+      "dna",
+      "rna",
+      "protein"
+    ],
+    "modality_weights": {
+      "dna": 0.5,
+      "rna": 0.3,
+      "protein": 0.2
+    },
+    "use_curriculum": true,
+    "curriculum_strategy": "length_based",
+    "curriculum_stages": 4,
+    "enable_interpretability": true,
+    "attention_analysis": true,
+    "gradient_analysis": true,
+    "real_time_plotting": true,
+    "profile_performance": true,
+    "save_attention_maps": true,
+    "model_size": "base"
+  },
+  "training_results": {
+    "final_step": 2,
+    "final_epoch": 0,
+    "total_loss": 1.5408935546875,
+    "avg_loss": 0.77044677734375
+  },
+  "attention_analysis": {
+    "num_patterns": 12,
+    "pattern_names": [
+      "hyena_glt.layers.0.hyena_layer.hyena_op.short_conv",
+      "hyena_glt.layers.1.hyena_layer.hyena_op.short_conv",
+      "hyena_glt.layers.2.hyena_layer.hyena_op.short_conv",
+      "hyena_glt.layers.3.hyena_layer.hyena_op.short_conv",
+      "hyena_glt.layers.4.hyena_layer.hyena_op.short_conv",
+      "hyena_glt.layers.5.hyena_layer.hyena_op.short_conv",
+      "hyena_glt.layers.6.hyena_layer.hyena_op.short_conv",
+      "hyena_glt.layers.7.hyena_layer.hyena_op.short_conv",
+      "hyena_glt.layers.8.hyena_layer.hyena_op.short_conv",
+      "hyena_glt.layers.9.hyena_layer.hyena_op.short_conv",
+      "hyena_glt.layers.10.hyena_layer.hyena_op.short_conv",
+      "hyena_glt.layers.11.hyena_layer.hyena_op.short_conv"
+    ],
+    "positional_analysis": {
+      "hyena_glt.layers.0.hyena_layer.hyena_op.short_conv": {
+        "local_attention": 0.6398802995681763,
+        "long_range_attention": 0.45616328716278076,
+        "periodicity": 0.5333865145290339,
+        "sparsity": 0.0,
+        "max_attention": 1.0000001192092896
+      },
+      "hyena_glt.layers.1.hyena_layer.hyena_op.short_conv": {
+        "local_attention": 0.6563274065653483,
+        "long_range_attention": 0.5886825323104858,
+        "periodicity": 0.0,
+        "sparsity": 0.0,
+        "max_attention": 1.0000003576278687
+      },
+      "hyena_glt.layers.2.hyena_layer.hyena_op.short_conv": {
+        "local_attention": 0.7959989905357361,
+        "long_range_attention": 0.7959989905357361,
+        "periodicity": 0.0,
+        "sparsity": 0.0,
+        "max_attention": 1.0000005960464478
+      },
+      "hyena_glt.layers.3.hyena_layer.hyena_op.short_conv": {
+        "local_attention": 0.7811285853385925,
+        "long_range_attention": 0.7811285853385925,
+        "periodicity": 0.0,
+        "sparsity": 0.0,
+        "max_attention": 1.0
+      },
+      "hyena_glt.layers.4.hyena_layer.hyena_op.short_conv": {
+        "local_attention": 0.7729116678237915,
+        "long_range_attention": 0.7729116678237915,
+        "periodicity": 0.0,
+        "sparsity": 0.0,
+        "max_attention": 1.0000005960464478
+      },
+      "hyena_glt.layers.5.hyena_layer.hyena_op.short_conv": {
+        "local_attention": 0.7706273198127747,
+        "long_range_attention": 0.7706273198127747,
+        "periodicity": 0.0,
+        "sparsity": 0.0,
+        "max_attention": 0.9999998211860657
+      },
+      "hyena_glt.layers.6.hyena_layer.hyena_op.short_conv": {
+        "local_attention": 0.7824823260307312,
+        "long_range_attention": 0.7824823260307312,
+        "periodicity": 0.0,
+        "sparsity": 0.0,
+        "max_attention": 1.0000003576278687
+      },
+      "hyena_glt.layers.7.hyena_layer.hyena_op.short_conv": {
+        "local_attention": 0.7293112874031067,
+        "long_range_attention": 0.7293112874031067,
+        "periodicity": 0.0,
+        "sparsity": 0.0,
+        "max_attention": 1.000000238418579
+      },
+      "hyena_glt.layers.8.hyena_layer.hyena_op.short_conv": {
+        "local_attention": 0.7793894410133362,
+        "long_range_attention": 0.7793894410133362,
+        "periodicity": 0.0,
+        "sparsity": 0.0,
+        "max_attention": 1.0000003576278687
+      },
+      "hyena_glt.layers.9.hyena_layer.hyena_op.short_conv": {
+        "local_attention": 0.7730072736740112,
+        "long_range_attention": 0.7730072736740112,
+        "periodicity": 0.0,
+        "sparsity": 0.0,
+        "max_attention": 1.0000001192092896
+      },
+      "hyena_glt.layers.10.hyena_layer.hyena_op.short_conv": {
+        "local_attention": 0.781157374382019,
+        "long_range_attention": 0.781157374382019,
+        "periodicity": 0.0,
+        "sparsity": 0.0,
+        "max_attention": 1.000000238418579
+      },
+      "hyena_glt.layers.11.hyena_layer.hyena_op.short_conv": {
+        "local_attention": 0.7657840847969055,
+        "long_range_attention": 0.7657840847969055,
+        "periodicity": 0.0,
+        "sparsity": 0.0,
+        "max_attention": 1.000000238418579
+      }
+    },
+    "avg_local_attention": 0.7523338380787107,
+    "avg_long_range_attention": 0.7313870141903559,
+    "avg_periodicity": 0.04444887621075282
+  },
+  "performance_profile": {
+    "duration_seconds": 49.205020267516375,
+    "memory_delta_mb": 1849.6015625,
+    "peak_memory_mb": 2645.390625,
+    "gpu_memory_delta_mb": 1184.986328125,
+    "peak_gpu_memory_mb": 1184.986328125
+  }
+}

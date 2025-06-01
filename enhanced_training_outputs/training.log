@@ -1,0 +1,519 @@
+2025-05-31 21:47:32,365 - __main__ - INFO - Enhanced Training Pipeline initialized: enhanced_hyena_glt
+2025-05-31 21:47:32,366 - __main__ - INFO - ============================================================
+2025-05-31 21:47:32,366 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-05-31 21:47:32,366 - __main__ - INFO - ============================================================
+2025-05-31 21:47:32,575 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-05-31 21:47:32,575 - __main__ - INFO - Initializing tokenizers...
+2025-05-31 21:47:32,577 - __main__ - INFO - Generating 1000 synthetic multi-modal samples...
+2025-05-31 21:47:35,675 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-05-31 21:47:35,676 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 3.3097s
+  Memory delta: +776.80MB
+  GPU memory delta: +0.00MB
+2025-05-31 21:47:35,676 - __main__ - ERROR - Training pipeline failed: CurriculumLearning.__init__() got an unexpected keyword argument 'strategy'
+2025-05-31 21:51:26,749 - __main__ - INFO - Enhanced Training Pipeline initialized: enhanced_hyena_glt
+2025-05-31 21:51:26,749 - __main__ - INFO - ============================================================
+2025-05-31 21:51:26,749 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-05-31 21:51:26,749 - __main__ - INFO - ============================================================
+2025-05-31 21:51:26,957 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-05-31 21:51:26,957 - __main__ - INFO - Initializing tokenizers...
+2025-05-31 21:51:26,959 - __main__ - INFO - Generating 1000 synthetic multi-modal samples...
+2025-05-31 21:51:29,896 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-05-31 21:51:30,017 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 3.2668s
+  Memory delta: +247.17MB
+  GPU memory delta: +647.42MB
+2025-05-31 21:51:30,017 - __main__ - ERROR - Training pipeline failed: MixedPrecisionConfig.__init__() got an unexpected keyword argument 'dynamic_loss_scaling'
+2025-05-31 22:03:21,556 - __main__ - INFO - Enhanced Training Pipeline initialized: enhanced_hyena_glt
+2025-05-31 22:03:21,556 - __main__ - INFO - ============================================================
+2025-05-31 22:03:21,556 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-05-31 22:03:21,556 - __main__ - INFO - ============================================================
+2025-05-31 22:03:21,745 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-05-31 22:03:21,745 - __main__ - INFO - Initializing tokenizers...
+2025-05-31 22:03:21,747 - __main__ - INFO - Generating 1000 synthetic multi-modal samples...
+2025-05-31 22:03:24,550 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-05-31 22:03:24,638 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 3.0818s
+  Memory delta: +240.61MB
+  GPU memory delta: +647.42MB
+2025-05-31 22:03:24,638 - __main__ - ERROR - Training pipeline failed: MixedPrecisionConfig.__init__() got an unexpected keyword argument 'dynamic_loss_scaling'
+2025-05-31 22:09:38,028 - __main__ - INFO - Enhanced Training Pipeline initialized: enhanced_hyena_glt
+2025-05-31 22:09:38,028 - __main__ - INFO - ============================================================
+2025-05-31 22:09:38,028 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-05-31 22:09:38,028 - __main__ - INFO - ============================================================
+2025-05-31 22:09:38,239 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-05-31 22:09:38,239 - __main__ - INFO - Initializing tokenizers...
+2025-05-31 22:09:38,241 - __main__ - INFO - Generating 1000 synthetic multi-modal samples...
+2025-05-31 22:09:41,396 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-05-31 22:09:41,517 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 3.4882s
+  Memory delta: +235.76MB
+  GPU memory delta: +647.42MB
+2025-05-31 22:09:41,517 - __main__ - ERROR - Training pipeline failed: MixedPrecisionConfig.__init__() got an unexpected keyword argument 'dynamic_loss_scaling'
+2025-05-31 22:22:44,307 - __main__ - INFO - Enhanced Training Pipeline initialized: enhanced_hyena_glt
+2025-05-31 22:22:44,307 - __main__ - INFO - ============================================================
+2025-05-31 22:22:44,307 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-05-31 22:22:44,307 - __main__ - INFO - ============================================================
+2025-05-31 22:22:44,510 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-05-31 22:22:44,510 - __main__ - INFO - Initializing tokenizers...
+2025-05-31 22:22:44,512 - __main__ - INFO - Generating 1000 synthetic multi-modal samples...
+2025-05-31 22:22:47,423 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-05-31 22:22:47,508 - hyena_glt.training.mixed_precision - INFO - Initialized FP16 mixed precision training
+2025-05-31 22:22:47,926 - hyena_glt.training.trainer - INFO - Optimizer: AdamW
+2025-05-31 22:22:47,926 - hyena_glt.training.trainer - INFO - Scheduler: LinearWarmupCosineDecayScheduler
+2025-05-31 22:22:47,926 - hyena_glt.training.trainer - WARNING - Multi-task enabled but no task weights provided
+2025-05-31 22:22:47,926 - hyena_glt.training.trainer - INFO - Curriculum learning enabled
+2025-05-31 22:22:47,930 - hyena_glt.training.trainer - INFO - Trainer initialized with device: cuda
+2025-05-31 22:22:47,931 - hyena_glt.training.trainer - INFO - Model parameters: 150,903,685
+2025-05-31 22:22:47,931 - __main__ - INFO - Starting enhanced training...
+2025-05-31 22:22:47,931 - hyena_glt.training.trainer - INFO - Starting training...
+2025-05-31 22:22:47,936 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 3.6283s
+  Memory delta: +242.29MB
+  GPU memory delta: +647.42MB
+2025-05-31 22:22:47,936 - __main__ - ERROR - Training pipeline failed: list indices must be integers or slices, not str
+2025-05-31 22:30:07,896 - __main__ - INFO - Enhanced Training Pipeline initialized: enhanced_hyena_glt
+2025-05-31 22:30:07,896 - __main__ - INFO - ============================================================
+2025-05-31 22:30:07,896 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-05-31 22:30:07,896 - __main__ - INFO - ============================================================
+2025-05-31 22:30:08,099 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-05-31 22:30:08,099 - __main__ - INFO - Initializing tokenizers...
+2025-05-31 22:30:08,101 - __main__ - INFO - Generating 1000 synthetic multi-modal samples...
+2025-05-31 22:30:11,250 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-05-31 22:30:11,336 - hyena_glt.training.mixed_precision - INFO - Initialized FP16 mixed precision training
+2025-05-31 22:30:11,810 - hyena_glt.training.trainer - INFO - Optimizer: AdamW
+2025-05-31 22:30:11,811 - hyena_glt.training.trainer - INFO - Scheduler: LinearWarmupCosineDecayScheduler
+2025-05-31 22:30:11,811 - hyena_glt.training.trainer - WARNING - Multi-task enabled but no task weights provided
+2025-05-31 22:30:11,811 - hyena_glt.training.trainer - INFO - Curriculum learning enabled
+2025-05-31 22:30:11,812 - hyena_glt.training.trainer - INFO - Trainer initialized with device: cuda
+2025-05-31 22:30:11,813 - hyena_glt.training.trainer - INFO - Model parameters: 150,903,685
+2025-05-31 22:30:11,813 - __main__ - INFO - Starting enhanced training...
+2025-05-31 22:30:11,813 - hyena_glt.training.trainer - INFO - Starting training...
+2025-05-31 22:30:11,818 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 3.9215s
+  Memory delta: +240.25MB
+  GPU memory delta: +647.42MB
+2025-05-31 22:30:11,818 - __main__ - ERROR - Training pipeline failed: dictionary changed size during iteration
+2025-05-31 22:32:48,913 - __main__ - INFO - Enhanced Training Pipeline initialized: enhanced_hyena_glt
+2025-05-31 22:32:48,913 - __main__ - INFO - ============================================================
+2025-05-31 22:32:48,913 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-05-31 22:32:48,913 - __main__ - INFO - ============================================================
+2025-05-31 22:32:49,128 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-05-31 22:32:49,128 - __main__ - INFO - Initializing tokenizers...
+2025-05-31 22:32:49,130 - __main__ - INFO - Generating 1000 synthetic multi-modal samples...
+2025-05-31 22:32:52,360 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-05-31 22:32:52,479 - hyena_glt.training.mixed_precision - INFO - Initialized FP16 mixed precision training
+2025-05-31 22:32:52,894 - hyena_glt.training.trainer - INFO - Optimizer: AdamW
+2025-05-31 22:32:52,895 - hyena_glt.training.trainer - INFO - Scheduler: LinearWarmupCosineDecayScheduler
+2025-05-31 22:32:52,895 - hyena_glt.training.trainer - WARNING - Multi-task enabled but no task weights provided
+2025-05-31 22:32:52,895 - hyena_glt.training.trainer - INFO - Curriculum learning enabled
+2025-05-31 22:32:52,895 - hyena_glt.training.trainer - INFO - Trainer initialized with device: cuda
+2025-05-31 22:32:52,897 - hyena_glt.training.trainer - INFO - Model parameters: 150,903,685
+2025-05-31 22:32:52,897 - __main__ - INFO - Starting enhanced training...
+2025-05-31 22:32:52,897 - hyena_glt.training.trainer - INFO - Starting training...
+2025-05-31 22:32:52,912 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 3.9986s
+  Memory delta: +245.21MB
+  GPU memory delta: +647.61MB
+2025-05-31 22:32:52,912 - __main__ - ERROR - Training pipeline failed: HyenaGLTForSequenceClassification.forward() missing 1 required positional argument: 'input_ids'
+2025-05-31 22:37:58,680 - __main__ - INFO - Enhanced Training Pipeline initialized: key_mapping_test
+2025-05-31 22:37:58,680 - __main__ - INFO - ============================================================
+2025-05-31 22:37:58,680 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-05-31 22:37:58,680 - __main__ - INFO - ============================================================
+2025-05-31 22:37:58,889 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-05-31 22:37:58,889 - __main__ - INFO - Initializing tokenizers...
+2025-05-31 22:37:58,890 - __main__ - INFO - Generating 1000 synthetic multi-modal samples...
+2025-05-31 22:38:00,626 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-05-31 22:38:00,696 - hyena_glt.training.mixed_precision - INFO - Initialized FP16 mixed precision training
+2025-05-31 22:38:01,297 - hyena_glt.training.trainer - INFO - Optimizer: AdamW
+2025-05-31 22:38:01,297 - hyena_glt.training.trainer - INFO - Scheduler: LinearWarmupCosineDecayScheduler
+2025-05-31 22:38:01,297 - hyena_glt.training.trainer - WARNING - Multi-task enabled but no task weights provided
+2025-05-31 22:38:01,297 - hyena_glt.training.trainer - INFO - Curriculum learning enabled
+2025-05-31 22:38:01,298 - hyena_glt.training.trainer - INFO - Trainer initialized with device: cuda
+2025-05-31 22:38:01,300 - hyena_glt.training.trainer - INFO - Model parameters: 38,639,557
+2025-05-31 22:38:01,300 - __main__ - INFO - Starting enhanced training...
+2025-05-31 22:38:01,300 - hyena_glt.training.trainer - INFO - Starting training...
+2025-05-31 22:38:02,106 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 3.4250s
+  Memory delta: +704.21MB
+  GPU memory delta: +304.49MB
+2025-05-31 22:38:02,106 - __main__ - ERROR - Training pipeline failed: quantile() input tensor must be either float or double dtype
+2025-05-31 22:39:48,872 - __main__ - INFO - Enhanced Training Pipeline initialized: quantile_fix_test
+2025-05-31 22:39:48,872 - __main__ - INFO - ============================================================
+2025-05-31 22:39:48,872 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-05-31 22:39:48,872 - __main__ - INFO - ============================================================
+2025-05-31 22:39:49,074 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-05-31 22:39:49,074 - __main__ - INFO - Initializing tokenizers...
+2025-05-31 22:39:49,076 - __main__ - INFO - Generating 1000 synthetic multi-modal samples...
+2025-05-31 22:39:50,566 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-05-31 22:39:50,637 - hyena_glt.training.mixed_precision - INFO - Initialized FP16 mixed precision training
+2025-05-31 22:39:51,215 - hyena_glt.training.trainer - INFO - Optimizer: AdamW
+2025-05-31 22:39:51,215 - hyena_glt.training.trainer - INFO - Scheduler: LinearWarmupCosineDecayScheduler
+2025-05-31 22:39:51,215 - hyena_glt.training.trainer - WARNING - Multi-task enabled but no task weights provided
+2025-05-31 22:39:51,215 - hyena_glt.training.trainer - INFO - Curriculum learning enabled
+2025-05-31 22:39:51,216 - hyena_glt.training.trainer - INFO - Trainer initialized with device: cuda
+2025-05-31 22:39:51,218 - hyena_glt.training.trainer - INFO - Model parameters: 38,639,557
+2025-05-31 22:39:51,218 - __main__ - INFO - Starting enhanced training...
+2025-05-31 22:39:51,218 - hyena_glt.training.trainer - INFO - Starting training...
+2025-05-31 22:39:55,679 - hyena_glt.training.trainer - INFO - Step 0 | train_loss: 1.5414 | step: 0.0000 | epoch: 0.0000 | learning_rate: 0.0000
+2025-05-31 22:40:53,778 - hyena_glt.training.trainer - INFO - Step 0 | eval_main_accuracy: 0.4800 | eval_main_precision: 0.5021 | eval_main_recall: 0.4800 | eval_main_f1: 0.4497 | eval_main_precision_macro: 0.4990 | eval_main_recall_macro: 0.4992 | eval_main_f1_macro: 0.4583 | eval_main_mcc: -0.0018 | eval_main_auc_roc: 0.5414 | eval_main_accuracy_class_0: 0.2593 | eval_main_accuracy_class_1: 0.7391 | eval_eval_loss: 0.8734 | step: 0.0000 | epoch: 0.0000 | learning_rate: 0.0000
+2025-05-31 22:40:53,779 - hyena_glt.training.trainer - INFO - Early stopping: 0/3 (best eval_loss: 0.8734)
+2025-05-31 22:41:53,279 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_0_epoch_0.pt
+2025-05-31 22:44:39,292 - hyena_glt.training.trainer - INFO - Step 25 | train_loss: 0.6056 | step: 25.0000 | epoch: 0.0000 | learning_rate: 0.0000
+2025-05-31 22:44:41,885 - hyena_glt.training.trainer - INFO - Step 25 | train_loss: 1.1312 | step: 25.0000 | epoch: 0.0000 | learning_rate: 0.0000
+2025-05-31 22:47:24,421 - hyena_glt.training.trainer - INFO - Step 50 | train_loss: 1.0669 | step: 50.0000 | epoch: 0.0000 | learning_rate: 0.0000
+2025-05-31 22:48:22,403 - hyena_glt.training.trainer - INFO - Step 50 | eval_main_accuracy: 0.5350 | eval_main_precision: 0.4748 | eval_main_recall: 0.5350 | eval_main_f1: 0.3932 | eval_main_precision_macro: 0.4692 | eval_main_recall_macro: 0.4970 | eval_main_f1_macro: 0.3672 | eval_main_mcc: -0.0193 | eval_main_auc_roc: 0.4414 | eval_main_accuracy_class_0: 0.9722 | eval_main_accuracy_class_1: 0.0217 | eval_eval_loss: 0.8848 | step: 50.0000 | epoch: 0.0000 | learning_rate: 0.0000
+2025-05-31 22:48:22,403 - hyena_glt.training.trainer - INFO - Early stopping: 1/3 (best eval_loss: 0.8734)
+2025-05-31 22:48:22,406 - hyena_glt.training.trainer - INFO - Epoch 0 completed. Average loss: 0.9139
+2025-05-31 22:48:25,895 - hyena_glt.training.trainer - INFO - Step 50 | train_loss: 0.4559 | step: 50.0000 | epoch: 1.0000 | learning_rate: 0.0000
+2025-05-31 22:49:23,868 - hyena_glt.training.trainer - INFO - Step 50 | eval_main_accuracy: 0.5350 | eval_main_precision: 0.4748 | eval_main_recall: 0.5350 | eval_main_f1: 0.3932 | eval_main_precision_macro: 0.4692 | eval_main_recall_macro: 0.4970 | eval_main_f1_macro: 0.3672 | eval_main_mcc: -0.0193 | eval_main_auc_roc: 0.4414 | eval_main_accuracy_class_0: 0.9722 | eval_main_accuracy_class_1: 0.0217 | eval_eval_loss: 0.8848 | step: 50.0000 | epoch: 1.0000 | learning_rate: 0.0000
+2025-05-31 22:49:23,868 - hyena_glt.training.trainer - INFO - Early stopping: 2/3 (best eval_loss: 0.8734)
+2025-05-31 22:52:05,834 - hyena_glt.training.trainer - INFO - Step 75 | train_loss: 1.0474 | step: 75.0000 | epoch: 1.0000 | learning_rate: 0.0000
+2025-05-31 22:52:08,870 - hyena_glt.training.trainer - INFO - Step 75 | train_loss: 0.8807 | step: 75.0000 | epoch: 1.0000 | learning_rate: 0.0000
+2025-05-31 22:54:52,282 - hyena_glt.training.trainer - INFO - Step 100 | train_loss: 0.7990 | step: 100.0000 | epoch: 1.0000 | learning_rate: 0.0001
+2025-05-31 22:55:50,371 - hyena_glt.training.trainer - INFO - Step 100 | eval_main_accuracy: 0.4650 | eval_main_precision: 0.5207 | eval_main_recall: 0.4650 | eval_main_f1: 0.3249 | eval_main_precision_macro: 0.5163 | eval_main_recall_macro: 0.5022 | eval_main_f1_macro: 0.3471 | eval_main_mcc: 0.0120 | eval_main_auc_roc: 0.4984 | eval_main_accuracy_class_0: 0.0370 | eval_main_accuracy_class_1: 0.9674 | eval_eval_loss: 0.7336 | step: 100.0000 | epoch: 1.0000 | learning_rate: 0.0001
+2025-05-31 22:55:50,371 - hyena_glt.training.trainer - INFO - Early stopping: 0/3 (best eval_loss: 0.7336)
+2025-05-31 22:56:51,173 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_100_epoch_1.pt
+2025-05-31 22:56:51,186 - hyena_glt.training.trainer - INFO - Epoch 1 completed. Average loss: 0.7957
+2025-05-31 22:56:55,590 - hyena_glt.training.trainer - INFO - Step 100 | train_loss: 0.6622 | step: 100.0000 | epoch: 2.0000 | learning_rate: 0.0001
+2025-05-31 22:57:53,490 - hyena_glt.training.trainer - INFO - Step 100 | eval_main_accuracy: 0.4650 | eval_main_precision: 0.5207 | eval_main_recall: 0.4650 | eval_main_f1: 0.3249 | eval_main_precision_macro: 0.5163 | eval_main_recall_macro: 0.5022 | eval_main_f1_macro: 0.3471 | eval_main_mcc: 0.0120 | eval_main_auc_roc: 0.4984 | eval_main_accuracy_class_0: 0.0370 | eval_main_accuracy_class_1: 0.9674 | eval_eval_loss: 0.7336 | step: 100.0000 | epoch: 2.0000 | learning_rate: 0.0001
+2025-05-31 22:57:53,491 - hyena_glt.training.trainer - INFO - Early stopping: 1/3 (best eval_loss: 0.7336)
+2025-05-31 22:58:53,562 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_100_epoch_2.pt
+2025-05-31 23:01:39,550 - hyena_glt.training.trainer - INFO - Step 125 | train_loss: 0.6137 | step: 125.0000 | epoch: 2.0000 | learning_rate: 0.0001
+2025-05-31 23:01:43,381 - hyena_glt.training.trainer - INFO - Step 125 | train_loss: 0.6551 | step: 125.0000 | epoch: 2.0000 | learning_rate: 0.0001
+2025-05-31 23:04:21,438 - hyena_glt.training.trainer - INFO - Step 150 | train_loss: 0.6153 | step: 150.0000 | epoch: 2.0000 | learning_rate: 0.0001
+2025-05-31 23:05:19,043 - hyena_glt.training.trainer - INFO - Step 150 | eval_main_accuracy: 0.4600 | eval_main_precision: 0.2116 | eval_main_recall: 0.4600 | eval_main_f1: 0.2899 | eval_main_precision_macro: 0.2300 | eval_main_recall_macro: 0.5000 | eval_main_f1_macro: 0.3151 | eval_main_mcc: 0.0000 | eval_main_auc_roc: 0.4493 | eval_main_accuracy_class_0: 0.0000 | eval_main_accuracy_class_1: 1.0000 | eval_eval_loss: 0.7138 | step: 150.0000 | epoch: 2.0000 | learning_rate: 0.0001
+2025-05-31 23:05:19,043 - hyena_glt.training.trainer - INFO - Early stopping: 0/3 (best eval_loss: 0.7138)
+2025-05-31 23:05:19,045 - hyena_glt.training.trainer - INFO - Epoch 2 completed. Average loss: 0.7687
+2025-05-31 23:05:22,949 - hyena_glt.training.trainer - INFO - Step 150 | train_loss: 0.7337 | step: 150.0000 | epoch: 3.0000 | learning_rate: 0.0001
+2025-05-31 23:06:20,663 - hyena_glt.training.trainer - INFO - Step 150 | eval_main_accuracy: 0.4600 | eval_main_precision: 0.2116 | eval_main_recall: 0.4600 | eval_main_f1: 0.2899 | eval_main_precision_macro: 0.2300 | eval_main_recall_macro: 0.5000 | eval_main_f1_macro: 0.3151 | eval_main_mcc: 0.0000 | eval_main_auc_roc: 0.4493 | eval_main_accuracy_class_0: 0.0000 | eval_main_accuracy_class_1: 1.0000 | eval_eval_loss: 0.7138 | step: 150.0000 | epoch: 3.0000 | learning_rate: 0.0001
+2025-05-31 23:06:20,663 - hyena_glt.training.trainer - INFO - Early stopping: 1/3 (best eval_loss: 0.7138)
+2025-05-31 23:09:04,616 - hyena_glt.training.trainer - INFO - Step 175 | train_loss: 0.9257 | step: 175.0000 | epoch: 3.0000 | learning_rate: 0.0001
+2025-05-31 23:09:07,197 - hyena_glt.training.trainer - INFO - Step 175 | train_loss: 0.7434 | step: 175.0000 | epoch: 3.0000 | learning_rate: 0.0001
+2025-05-31 23:11:50,001 - hyena_glt.training.trainer - INFO - Step 200 | train_loss: 0.8947 | step: 200.0000 | epoch: 3.0000 | learning_rate: 0.0001
+2025-05-31 23:12:47,518 - hyena_glt.training.trainer - INFO - Step 200 | eval_main_accuracy: 0.4600 | eval_main_precision: 0.2116 | eval_main_recall: 0.4600 | eval_main_f1: 0.2899 | eval_main_precision_macro: 0.2300 | eval_main_recall_macro: 0.5000 | eval_main_f1_macro: 0.3151 | eval_main_mcc: 0.0000 | eval_main_auc_roc: 0.5598 | eval_main_accuracy_class_0: 0.0000 | eval_main_accuracy_class_1: 1.0000 | eval_eval_loss: 0.7132 | step: 200.0000 | epoch: 3.0000 | learning_rate: 0.0001
+2025-05-31 23:12:47,518 - hyena_glt.training.trainer - INFO - Early stopping: 2/3 (best eval_loss: 0.7138)
+2025-05-31 23:13:47,978 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_200_epoch_3.pt
+2025-05-31 23:13:48,000 - hyena_glt.training.checkpointing - INFO - Cleaned up old checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_0_epoch_0.pt
+2025-05-31 23:13:48,011 - hyena_glt.training.trainer - INFO - Epoch 3 completed. Average loss: 0.7339
+2025-05-31 23:13:50,773 - hyena_glt.training.trainer - INFO - Step 200 | train_loss: 0.8457 | step: 200.0000 | epoch: 4.0000 | learning_rate: 0.0001
+2025-05-31 23:14:48,385 - hyena_glt.training.trainer - INFO - Step 200 | eval_main_accuracy: 0.4600 | eval_main_precision: 0.2116 | eval_main_recall: 0.4600 | eval_main_f1: 0.2899 | eval_main_precision_macro: 0.2300 | eval_main_recall_macro: 0.5000 | eval_main_f1_macro: 0.3151 | eval_main_mcc: 0.0000 | eval_main_auc_roc: 0.5598 | eval_main_accuracy_class_0: 0.0000 | eval_main_accuracy_class_1: 1.0000 | eval_eval_loss: 0.7132 | step: 200.0000 | epoch: 4.0000 | learning_rate: 0.0001
+2025-05-31 23:14:48,385 - hyena_glt.training.trainer - INFO - Early stopping: 3/3 (best eval_loss: 0.7138)
+2025-05-31 23:15:49,144 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_200_epoch_4.pt
+2025-05-31 23:15:49,179 - hyena_glt.training.checkpointing - INFO - Cleaned up old checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_100_epoch_2.pt
+2025-05-31 23:15:49,193 - hyena_glt.training.trainer - INFO - Early stopping triggered
+2025-05-31 23:15:49,194 - hyena_glt.training.trainer - INFO - Epoch 4 completed. Average loss: 0.0085
+2025-05-31 23:16:47,189 - hyena_glt.training.trainer - INFO - Final evaluation metrics: {'main_accuracy': 0.46, 'main_precision': 0.2116, 'main_recall': 0.46, 'main_f1': 0.2898630136986301, 'main_precision_macro': 0.23, 'main_recall_macro': 0.5, 'main_f1_macro': 0.3150684931506849, 'main_mcc': 0.0, 'main_auc_roc': 0.5598329307568438, 'main_accuracy_class_0': 0.0, 'main_accuracy_class_1': 1.0, 'eval_loss': 0.7131884765625}
+2025-05-31 23:17:47,968 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_200_epoch_4.pt
+2025-05-31 23:17:48,000 - hyena_glt.training.checkpointing - INFO - Cleaned up old checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_100_epoch_1.pt
+2025-05-31 23:17:48,003 - hyena_glt.training.trainer - INFO - Training completed!
+2025-05-31 23:17:48,017 - __main__ - INFO - Analyzing attention patterns...
+2025-05-31 23:17:48,023 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 2279.1506s
+  Memory delta: +1341.29MB
+  GPU memory delta: +396.03MB
+2025-05-31 23:17:48,023 - __main__ - ERROR - Training pipeline failed: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu! (when checking argument for argument index in method wrapper_CUDA__index_select)
+2025-05-31 23:30:53,130 - __main__ - INFO - Enhanced Training Pipeline initialized: key_mapping_test
+2025-05-31 23:30:53,131 - __main__ - INFO - ============================================================
+2025-05-31 23:30:53,131 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-05-31 23:30:53,131 - __main__ - INFO - ============================================================
+2025-05-31 23:30:53,342 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-05-31 23:30:53,342 - __main__ - INFO - Initializing tokenizers...
+2025-05-31 23:30:53,344 - __main__ - INFO - Generating 1000 synthetic multi-modal samples...
+2025-05-31 23:30:54,817 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-05-31 23:30:54,878 - hyena_glt.training.mixed_precision - INFO - Initialized FP16 mixed precision training
+2025-05-31 23:30:55,298 - hyena_glt.training.trainer - INFO - Optimizer: AdamW
+2025-05-31 23:30:55,298 - hyena_glt.training.trainer - INFO - Scheduler: LinearWarmupCosineDecayScheduler
+2025-05-31 23:30:55,298 - hyena_glt.training.trainer - WARNING - Multi-task enabled but no task weights provided
+2025-05-31 23:30:55,299 - hyena_glt.training.trainer - INFO - Curriculum learning enabled
+2025-05-31 23:30:55,300 - hyena_glt.training.checkpointing - INFO - Loaded checkpoint history with 3 checkpoints
+2025-05-31 23:30:55,300 - hyena_glt.training.trainer - INFO - Trainer initialized with device: cuda
+2025-05-31 23:30:55,302 - hyena_glt.training.trainer - INFO - Model parameters: 38,639,557
+2025-05-31 23:30:55,302 - __main__ - INFO - Starting enhanced training...
+2025-05-31 23:30:55,302 - hyena_glt.training.trainer - INFO - Starting training...
+2025-05-31 23:30:58,806 - hyena_glt.training.trainer - INFO - Step 0 | train_loss: 1.5414 | step: 0.0000 | epoch: 0.0000 | learning_rate: 0.0000
+2025-05-31 23:31:57,128 - hyena_glt.training.trainer - INFO - Step 0 | eval_main_accuracy: 0.4800 | eval_main_precision: 0.5021 | eval_main_recall: 0.4800 | eval_main_f1: 0.4497 | eval_main_precision_macro: 0.4990 | eval_main_recall_macro: 0.4992 | eval_main_f1_macro: 0.4583 | eval_main_mcc: -0.0018 | eval_main_auc_roc: 0.5414 | eval_main_accuracy_class_0: 0.2593 | eval_main_accuracy_class_1: 0.7391 | eval_eval_loss: 0.8734 | step: 0.0000 | epoch: 0.0000 | learning_rate: 0.0000
+2025-05-31 23:31:57,128 - hyena_glt.training.trainer - INFO - Early stopping: 0/3 (best eval_loss: 0.8734)
+2025-05-31 23:32:57,027 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_0_epoch_0.pt
+2025-05-31 23:32:57,047 - hyena_glt.training.checkpointing - INFO - Cleaned up old checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_0_epoch_0.pt
+2025-05-31 23:35:44,790 - hyena_glt.training.trainer - INFO - Step 25 | train_loss: 0.5950 | step: 25.0000 | epoch: 0.0000 | learning_rate: 0.0000
+2025-05-31 23:35:47,418 - hyena_glt.training.trainer - INFO - Step 25 | train_loss: 0.8530 | step: 25.0000 | epoch: 0.0000 | learning_rate: 0.0000
+2025-05-31 23:38:31,401 - hyena_glt.training.trainer - INFO - Step 50 | train_loss: 0.9688 | step: 50.0000 | epoch: 0.0000 | learning_rate: 0.0000
+2025-05-31 23:39:30,195 - hyena_glt.training.trainer - INFO - Step 50 | eval_main_accuracy: 0.5650 | eval_main_precision: 0.5603 | eval_main_recall: 0.5650 | eval_main_f1: 0.5398 | eval_main_precision_macro: 0.5593 | eval_main_recall_macro: 0.5465 | eval_main_f1_macro: 0.5294 | eval_main_mcc: 0.1050 | eval_main_auc_roc: 0.6102 | eval_main_accuracy_class_0: 0.7778 | eval_main_accuracy_class_1: 0.3152 | eval_eval_loss: 0.6900 | step: 50.0000 | epoch: 0.0000 | learning_rate: 0.0000
+2025-05-31 23:39:30,196 - hyena_glt.training.trainer - INFO - Early stopping: 0/3 (best eval_loss: 0.6900)
+2025-05-31 23:39:30,198 - hyena_glt.training.trainer - INFO - Epoch 0 completed. Average loss: 0.8748
+2025-05-31 23:39:33,740 - hyena_glt.training.trainer - INFO - Step 50 | train_loss: 0.8321 | step: 50.0000 | epoch: 1.0000 | learning_rate: 0.0000
+2025-05-31 23:40:32,554 - hyena_glt.training.trainer - INFO - Step 50 | eval_main_accuracy: 0.5650 | eval_main_precision: 0.5603 | eval_main_recall: 0.5650 | eval_main_f1: 0.5398 | eval_main_precision_macro: 0.5593 | eval_main_recall_macro: 0.5465 | eval_main_f1_macro: 0.5294 | eval_main_mcc: 0.1050 | eval_main_auc_roc: 0.6102 | eval_main_accuracy_class_0: 0.7778 | eval_main_accuracy_class_1: 0.3152 | eval_eval_loss: 0.6900 | step: 50.0000 | epoch: 1.0000 | learning_rate: 0.0000
+2025-05-31 23:40:32,554 - hyena_glt.training.trainer - INFO - Early stopping: 1/3 (best eval_loss: 0.6900)
+2025-05-31 23:43:15,666 - hyena_glt.training.trainer - INFO - Step 75 | train_loss: 0.7945 | step: 75.0000 | epoch: 1.0000 | learning_rate: 0.0000
+2025-05-31 23:43:18,660 - hyena_glt.training.trainer - INFO - Step 75 | train_loss: 0.7410 | step: 75.0000 | epoch: 1.0000 | learning_rate: 0.0000
+2025-05-31 23:46:03,112 - hyena_glt.training.trainer - INFO - Step 100 | train_loss: 0.9533 | step: 100.0000 | epoch: 1.0000 | learning_rate: 0.0001
+2025-05-31 23:47:01,643 - hyena_glt.training.trainer - INFO - Step 100 | eval_main_accuracy: 0.5450 | eval_main_precision: 0.5346 | eval_main_recall: 0.5450 | eval_main_f1: 0.5045 | eval_main_precision_macro: 0.5329 | eval_main_recall_macro: 0.5223 | eval_main_f1_macro: 0.4913 | eval_main_mcc: 0.0542 | eval_main_auc_roc: 0.5024 | eval_main_accuracy_class_0: 0.8056 | eval_main_accuracy_class_1: 0.2391 | eval_eval_loss: 0.7271 | step: 100.0000 | epoch: 1.0000 | learning_rate: 0.0001
+2025-05-31 23:47:01,643 - hyena_glt.training.trainer - INFO - Early stopping: 2/3 (best eval_loss: 0.6900)
+2025-05-31 23:48:02,838 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_100_epoch_1.pt
+2025-05-31 23:48:02,871 - hyena_glt.training.checkpointing - INFO - Cleaned up old checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_100_epoch_1.pt
+2025-05-31 23:48:02,875 - hyena_glt.training.trainer - INFO - Epoch 1 completed. Average loss: 0.8124
+2025-05-31 23:48:07,337 - hyena_glt.training.trainer - INFO - Step 100 | train_loss: 0.6961 | step: 100.0000 | epoch: 2.0000 | learning_rate: 0.0001
+2025-05-31 23:49:05,731 - hyena_glt.training.trainer - INFO - Step 100 | eval_main_accuracy: 0.5450 | eval_main_precision: 0.5346 | eval_main_recall: 0.5450 | eval_main_f1: 0.5045 | eval_main_precision_macro: 0.5329 | eval_main_recall_macro: 0.5223 | eval_main_f1_macro: 0.4913 | eval_main_mcc: 0.0542 | eval_main_auc_roc: 0.5024 | eval_main_accuracy_class_0: 0.8056 | eval_main_accuracy_class_1: 0.2391 | eval_eval_loss: 0.7271 | step: 100.0000 | epoch: 2.0000 | learning_rate: 0.0001
+2025-05-31 23:49:05,731 - hyena_glt.training.trainer - INFO - Early stopping: 3/3 (best eval_loss: 0.6900)
+2025-05-31 23:50:07,104 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_100_epoch_2.pt
+2025-05-31 23:50:07,145 - hyena_glt.training.checkpointing - INFO - Cleaned up old checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_100_epoch_2.pt
+2025-05-31 23:50:07,159 - hyena_glt.training.trainer - INFO - Early stopping triggered
+2025-05-31 23:50:07,160 - hyena_glt.training.trainer - INFO - Epoch 2 completed. Average loss: 0.0070
+2025-05-31 23:51:05,724 - hyena_glt.training.trainer - INFO - Final evaluation metrics: {'main_accuracy': 0.545, 'main_precision': 0.5345845059991112, 'main_recall': 0.545, 'main_f1': 0.504491963661775, 'main_precision_macro': 0.5328840171826397, 'main_recall_macro': 0.5223429951690821, 'main_f1_macro': 0.4912648497554158, 'main_mcc': 0.05421171227886942, 'main_auc_roc': 0.5023651368760065, 'main_accuracy_class_0': 0.8055555555555556, 'main_accuracy_class_1': 0.2391304347826087, 'eval_loss': 0.7271142578125}
+2025-05-31 23:52:06,880 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_100_epoch_2.pt
+2025-05-31 23:52:06,920 - hyena_glt.training.checkpointing - INFO - Cleaned up old checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_100_epoch_2.pt
+2025-05-31 23:52:06,934 - hyena_glt.training.trainer - INFO - Training completed!
+2025-05-31 23:52:06,957 - __main__ - INFO - Analyzing attention patterns...
+2025-05-31 23:52:07,647 - __main__ - INFO - Attention analysis: {}
+2025-05-31 23:52:09,629 - __main__ - INFO - Generating training report...
+2025-05-31 23:52:09,630 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 1276.4994s
+  Memory delta: +1391.82MB
+  GPU memory delta: +396.04MB
+2025-05-31 23:52:09,631 - __main__ - ERROR - Training pipeline failed: 'ProfilerContext' object has no attribute 'get_summary'
+2025-06-01 00:05:14,414 - __main__ - INFO - Enhanced Training Pipeline initialized: enhanced_hyena_glt
+2025-06-01 00:05:14,414 - __main__ - INFO - ============================================================
+2025-06-01 00:05:14,414 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-06-01 00:05:14,414 - __main__ - INFO - ============================================================
+2025-06-01 00:05:14,619 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-06-01 00:05:14,619 - __main__ - INFO - Initializing tokenizers...
+2025-06-01 00:05:14,621 - __main__ - INFO - Generating 200 synthetic multi-modal samples...
+2025-06-01 00:05:15,977 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-06-01 00:05:16,027 - hyena_glt.training.mixed_precision - INFO - Initialized FP16 mixed precision training
+2025-06-01 00:05:16,472 - hyena_glt.training.trainer - INFO - Optimizer: AdamW
+2025-06-01 00:05:16,472 - hyena_glt.training.trainer - INFO - Scheduler: LinearWarmupCosineDecayScheduler
+2025-06-01 00:05:16,473 - hyena_glt.training.trainer - WARNING - Multi-task enabled but no task weights provided
+2025-06-01 00:05:16,473 - hyena_glt.training.trainer - INFO - Curriculum learning enabled
+2025-06-01 00:05:16,474 - hyena_glt.training.checkpointing - INFO - Loaded checkpoint history with 3 checkpoints
+2025-06-01 00:05:16,474 - hyena_glt.training.trainer - INFO - Trainer initialized with device: cuda
+2025-06-01 00:05:16,475 - hyena_glt.training.trainer - INFO - Model parameters: 38,639,557
+2025-06-01 00:05:16,476 - __main__ - INFO - Starting enhanced training...
+2025-06-01 00:05:16,476 - hyena_glt.training.trainer - INFO - Starting training...
+2025-06-01 00:05:19,944 - hyena_glt.training.trainer - INFO - Step 0 | train_loss: 0.6805 | step: 0.0000 | epoch: 0.0000 | learning_rate: 0.0000
+2025-06-01 00:05:31,950 - hyena_glt.training.trainer - INFO - Step 0 | eval_main_accuracy: 0.3500 | eval_main_precision: 0.3929 | eval_main_recall: 0.3500 | eval_main_f1: 0.2891 | eval_main_precision_macro: 0.3810 | eval_main_recall_macro: 0.4267 | eval_main_f1_macro: 0.3229 | eval_main_mcc: -0.1869 | eval_main_auc_roc: 0.4213 | eval_main_accuracy_class_0: 0.1200 | eval_main_accuracy_class_1: 0.7333 | eval_eval_loss: 0.9420 | step: 0.0000 | epoch: 0.0000 | learning_rate: 0.0000
+2025-06-01 00:05:31,950 - hyena_glt.training.trainer - INFO - Early stopping: 0/3 (best eval_loss: 0.9420)
+2025-06-01 00:05:45,503 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_0_epoch_0.pt
+2025-06-01 00:05:45,520 - hyena_glt.training.checkpointing - INFO - Cleaned up old checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_0_epoch_0.pt
+2025-06-01 00:06:45,070 - hyena_glt.training.trainer - INFO - Step 10 | train_loss: 0.4299 | step: 10.0000 | epoch: 0.0000 | learning_rate: 0.0000
+2025-06-01 00:06:45,071 - hyena_glt.training.trainer - INFO - Epoch 0 completed. Average loss: 0.7601
+2025-06-01 00:06:47,647 - hyena_glt.training.trainer - INFO - Step 10 | train_loss: 1.2316 | step: 10.0000 | epoch: 1.0000 | learning_rate: 0.0000
+2025-06-01 00:07:47,668 - hyena_glt.training.trainer - INFO - Step 20 | train_loss: 0.4682 | step: 20.0000 | epoch: 1.0000 | learning_rate: 0.0000
+2025-06-01 00:07:59,690 - hyena_glt.training.trainer - INFO - Step 20 | eval_main_accuracy: 0.6250 | eval_main_precision: 0.5977 | eval_main_recall: 0.6250 | eval_main_f1: 0.5910 | eval_main_precision_macro: 0.5781 | eval_main_recall_macro: 0.5533 | eval_main_f1_macro: 0.5423 | eval_main_mcc: 0.1291 | eval_main_auc_roc: 0.5187 | eval_main_accuracy_class_0: 0.8400 | eval_main_accuracy_class_1: 0.2667 | eval_eval_loss: 0.6685 | step: 20.0000 | epoch: 1.0000 | learning_rate: 0.0000
+2025-06-01 00:07:59,690 - hyena_glt.training.trainer - INFO - Early stopping: 0/3 (best eval_loss: 0.6685)
+2025-06-01 00:07:59,693 - hyena_glt.training.trainer - INFO - Epoch 1 completed. Average loss: 0.7890
+2025-06-01 00:08:01,933 - hyena_glt.training.trainer - INFO - Step 20 | train_loss: 0.5793 | step: 20.0000 | epoch: 2.0000 | learning_rate: 0.0000
+2025-06-01 00:08:13,925 - hyena_glt.training.trainer - INFO - Step 20 | eval_main_accuracy: 0.6250 | eval_main_precision: 0.5977 | eval_main_recall: 0.6250 | eval_main_f1: 0.5910 | eval_main_precision_macro: 0.5781 | eval_main_recall_macro: 0.5533 | eval_main_f1_macro: 0.5423 | eval_main_mcc: 0.1291 | eval_main_auc_roc: 0.5187 | eval_main_accuracy_class_0: 0.8400 | eval_main_accuracy_class_1: 0.2667 | eval_eval_loss: 0.6685 | step: 20.0000 | epoch: 2.0000 | learning_rate: 0.0000
+2025-06-01 00:08:13,925 - hyena_glt.training.trainer - INFO - Early stopping: 1/3 (best eval_loss: 0.6685)
+2025-06-01 00:09:13,544 - hyena_glt.training.trainer - INFO - Step 30 | train_loss: 0.9496 | step: 30.0000 | epoch: 2.0000 | learning_rate: 0.0001
+2025-06-01 00:09:13,545 - hyena_glt.training.trainer - INFO - Epoch 2 completed. Average loss: 0.8164
+2025-06-01 00:09:25,565 - hyena_glt.training.trainer - INFO - Final evaluation metrics: {'main_accuracy': 0.6, 'main_precision': 0.5698924731182796, 'main_recall': 0.6, 'main_f1': 0.5714285714285714, 'main_precision_macro': 0.5448028673835126, 'main_recall_macro': 0.5333333333333333, 'main_f1_macro': 0.5238095238095238, 'main_mcc': 0.07728981596002804, 'main_auc_roc': 0.4653333333333333, 'main_accuracy_class_0': 0.8, 'main_accuracy_class_1': 0.26666666666666666, 'eval_loss': 0.69012451171875}
+2025-06-01 00:09:40,525 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_30_epoch_2.pt
+2025-06-01 00:09:40,553 - hyena_glt.training.checkpointing - INFO - Cleaned up old checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_30_epoch_2.pt
+2025-06-01 00:09:40,557 - hyena_glt.training.trainer - INFO - Training completed!
+2025-06-01 00:09:40,570 - __main__ - INFO - Analyzing attention patterns...
+2025-06-01 00:09:40,840 - __main__ - INFO - Attention analysis: {}
+2025-06-01 00:09:42,843 - __main__ - INFO - Generating training report...
+2025-06-01 00:09:42,844 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 268.4295s
+  Memory delta: +1377.19MB
+  GPU memory delta: +329.34MB
+2025-06-01 00:09:42,844 - __main__ - ERROR - Training pipeline failed: Profiler context not completed
+2025-06-01 00:20:33,952 - __main__ - INFO - Enhanced Training Pipeline initialized: enhanced_hyena_glt
+2025-06-01 00:20:33,952 - __main__ - INFO - ============================================================
+2025-06-01 00:20:33,952 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-06-01 00:20:33,952 - __main__ - INFO - ============================================================
+2025-06-01 00:20:34,159 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-06-01 00:20:34,160 - __main__ - INFO - Initializing tokenizers...
+2025-06-01 00:20:34,161 - __main__ - INFO - Generating 200 synthetic multi-modal samples...
+2025-06-01 00:20:35,517 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-06-01 00:20:35,518 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 1.5654s
+  Memory delta: +310.02MB
+  GPU memory delta: +0.00MB
+2025-06-01 00:20:35,518 - __main__ - ERROR - Training pipeline failed: TrainingConfig.__init__() got an unexpected keyword argument 'max_steps'
+2025-06-01 00:30:16,398 - __main__ - INFO - Enhanced Training Pipeline initialized: enhanced_hyena_glt
+2025-06-01 00:30:16,399 - __main__ - INFO - ============================================================
+2025-06-01 00:30:16,399 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-06-01 00:30:16,399 - __main__ - INFO - ============================================================
+2025-06-01 00:30:16,400 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-06-01 00:30:16,400 - __main__ - INFO - Initializing tokenizers...
+2025-06-01 00:30:16,409 - __main__ - INFO - Generating 200 synthetic multi-modal samples...
+2025-06-01 00:30:31,163 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-06-01 00:30:31,696 - hyena_glt.training.trainer - INFO - Optimizer: AdamW
+2025-06-01 00:30:31,696 - hyena_glt.training.trainer - INFO - Scheduler: LinearWarmupCosineDecayScheduler
+2025-06-01 00:30:31,696 - hyena_glt.training.trainer - WARNING - Multi-task enabled but no task weights provided
+2025-06-01 00:30:31,697 - hyena_glt.training.trainer - INFO - Curriculum learning enabled
+2025-06-01 00:30:31,710 - hyena_glt.training.checkpointing - INFO - Loaded checkpoint history with 3 checkpoints
+2025-06-01 00:30:31,710 - hyena_glt.training.trainer - INFO - Trainer initialized with device: cpu
+2025-06-01 00:30:31,712 - hyena_glt.training.trainer - INFO - Model parameters: 150,903,685
+2025-06-01 00:30:31,712 - __main__ - INFO - Starting enhanced training...
+2025-06-01 00:30:31,712 - __main__ - INFO - Training with max_steps control: 5 steps
+2025-06-01 00:30:31,712 - hyena_glt.training.trainer - INFO - Starting training...
+2025-06-01 00:41:01,441 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 645.0396s
+  Memory delta: +2327.57MB
+
+2025-06-01 00:42:50,848 - __main__ - INFO - Enhanced Training Pipeline initialized: enhanced_hyena_glt
+2025-06-01 00:42:50,849 - __main__ - INFO - ============================================================
+2025-06-01 00:42:50,849 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-06-01 00:42:50,849 - __main__ - INFO - ============================================================
+2025-06-01 00:42:51,049 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-06-01 00:42:51,049 - __main__ - INFO - Initializing tokenizers...
+2025-06-01 00:42:51,050 - __main__ - INFO - Generating 200 synthetic multi-modal samples...
+2025-06-01 00:42:53,931 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-06-01 00:42:54,054 - hyena_glt.training.mixed_precision - INFO - Initialized FP16 mixed precision training
+2025-06-01 00:42:54,474 - hyena_glt.training.trainer - INFO - Optimizer: AdamW
+2025-06-01 00:42:54,474 - hyena_glt.training.trainer - INFO - Scheduler: LinearWarmupCosineDecayScheduler
+2025-06-01 00:42:54,475 - hyena_glt.training.trainer - WARNING - Multi-task enabled but no task weights provided
+2025-06-01 00:42:54,475 - hyena_glt.training.trainer - INFO - Curriculum learning enabled
+2025-06-01 00:42:54,478 - hyena_glt.training.checkpointing - INFO - Loaded checkpoint history with 3 checkpoints
+2025-06-01 00:42:54,478 - hyena_glt.training.trainer - INFO - Trainer initialized with device: cuda
+2025-06-01 00:42:54,479 - hyena_glt.training.trainer - INFO - Model parameters: 150,903,685
+2025-06-01 00:42:54,479 - __main__ - INFO - Starting enhanced training...
+2025-06-01 00:42:54,479 - __main__ - INFO - Training with max_steps control: 5 steps
+2025-06-01 00:42:54,479 - hyena_glt.training.trainer - INFO - Starting training...
+2025-06-01 00:43:09,380 - __main__ - INFO - Reached max_steps (5). Stopping training.
+2025-06-01 00:43:21,606 - hyena_glt.training.trainer - INFO - Final evaluation metrics: {'main_accuracy': 0.625, 'main_precision': 0.390625, 'main_recall': 0.625, 'main_f1': 0.48076923076923084, 'main_precision_macro': 0.3125, 'main_recall_macro': 0.5, 'main_f1_macro': 0.38461538461538464, 'main_mcc': 0.0, 'main_auc_roc': 0.5519999999999999, 'main_accuracy_class_0': 1.0, 'main_accuracy_class_1': 0.0, 'eval_loss': 0.660211181640625}
+2025-06-01 00:43:45,523 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_5_epoch_0.pt
+2025-06-01 00:43:45,628 - hyena_glt.training.checkpointing - INFO - Cleaned up old checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_5_epoch_0.pt
+2025-06-01 00:43:45,635 - hyena_glt.training.trainer - INFO - Training completed! Stopped at step 5
+2025-06-01 00:43:45,652 - __main__ - INFO - Analyzing attention patterns...
+2025-06-01 00:43:45,928 - __main__ - INFO - Attention analysis: {}
+2025-06-01 00:43:52,423 - __main__ - INFO - Generating training report...
+2025-06-01 00:43:52,424 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 61.5750s
+  Memory delta: +1374.75MB
+  GPU memory delta: +1183.08MB
+2025-06-01 00:43:52,424 - __main__ - ERROR - Training pipeline failed: Profiler context not completed
+2025-06-01 00:47:27,724 - __main__ - INFO - Enhanced Training Pipeline initialized: enhanced_hyena_glt
+2025-06-01 00:47:27,724 - __main__ - INFO - ============================================================
+2025-06-01 00:47:27,724 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-06-01 00:47:27,724 - __main__ - INFO - ============================================================
+2025-06-01 00:47:27,926 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-06-01 00:47:27,926 - __main__ - INFO - Initializing tokenizers...
+2025-06-01 00:47:27,927 - __main__ - INFO - Generating 200 synthetic multi-modal samples...
+2025-06-01 00:47:30,773 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-06-01 00:47:30,894 - hyena_glt.training.mixed_precision - INFO - Initialized FP16 mixed precision training
+2025-06-01 00:47:31,308 - hyena_glt.training.trainer - INFO - Optimizer: AdamW
+2025-06-01 00:47:31,308 - hyena_glt.training.trainer - INFO - Scheduler: LinearWarmupCosineDecayScheduler
+2025-06-01 00:47:31,308 - hyena_glt.training.trainer - WARNING - Multi-task enabled but no task weights provided
+2025-06-01 00:47:31,308 - hyena_glt.training.trainer - INFO - Curriculum learning enabled
+2025-06-01 00:47:31,310 - hyena_glt.training.checkpointing - INFO - Loaded checkpoint history with 3 checkpoints
+2025-06-01 00:47:31,310 - hyena_glt.training.trainer - INFO - Trainer initialized with device: cuda
+2025-06-01 00:47:31,311 - hyena_glt.training.trainer - INFO - Model parameters: 150,903,685
+2025-06-01 00:47:31,311 - __main__ - INFO - Starting enhanced training...
+2025-06-01 00:47:31,311 - __main__ - INFO - Training with max_steps control: 5 steps
+2025-06-01 00:47:31,311 - hyena_glt.training.trainer - INFO - Starting training...
+2025-06-01 00:47:46,086 - __main__ - INFO - Reached max_steps (5). Stopping training.
+2025-06-01 00:47:58,280 - hyena_glt.training.trainer - INFO - Final evaluation metrics: {'main_accuracy': 0.625, 'main_precision': 0.390625, 'main_recall': 0.625, 'main_f1': 0.48076923076923084, 'main_precision_macro': 0.3125, 'main_recall_macro': 0.5, 'main_f1_macro': 0.38461538461538464, 'main_mcc': 0.0, 'main_auc_roc': 0.5533333333333332, 'main_accuracy_class_0': 1.0, 'main_accuracy_class_1': 0.0, 'eval_loss': 0.660894775390625}
+2025-06-01 00:48:21,704 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_5_epoch_0.pt
+2025-06-01 00:48:21,814 - hyena_glt.training.checkpointing - INFO - Cleaned up old checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_5_epoch_0.pt
+2025-06-01 00:48:21,833 - hyena_glt.training.trainer - INFO - Training completed! Stopped at step 5
+2025-06-01 00:48:21,847 - __main__ - INFO - Analyzing attention patterns...
+2025-06-01 00:48:22,118 - __main__ - INFO - Attention analysis: {}
+2025-06-01 00:48:28,594 - __main__ - WARNING - Could not get profiler metrics: Profiler context not completed
+2025-06-01 00:48:28,595 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 60.8708s
+  Memory delta: +1388.33MB
+  GPU memory delta: +1183.08MB
+2025-06-01 00:48:28,595 - __main__ - INFO - Generating training report...
+2025-06-01 00:48:28,602 - __main__ - INFO - Enhanced training pipeline completed successfully!
+2025-06-01 01:01:43,289 - __main__ - INFO - Enhanced Training Pipeline initialized: enhanced_hyena_glt
+2025-06-01 01:01:43,289 - __main__ - INFO - ============================================================
+2025-06-01 01:01:43,289 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-06-01 01:01:43,289 - __main__ - INFO - ============================================================
+2025-06-01 01:01:43,488 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-06-01 01:01:43,489 - __main__ - INFO - Initializing tokenizers...
+2025-06-01 01:01:43,490 - __main__ - INFO - Generating 200 synthetic multi-modal samples...
+2025-06-01 01:01:46,488 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-06-01 01:01:46,579 - hyena_glt.training.mixed_precision - INFO - Initialized FP16 mixed precision training
+2025-06-01 01:01:46,989 - hyena_glt.training.trainer - INFO - Optimizer: AdamW
+2025-06-01 01:01:46,989 - hyena_glt.training.trainer - INFO - Scheduler: LinearWarmupCosineDecayScheduler
+2025-06-01 01:01:46,989 - hyena_glt.training.trainer - WARNING - Multi-task enabled but no task weights provided
+2025-06-01 01:01:46,989 - hyena_glt.training.trainer - INFO - Curriculum learning enabled
+2025-06-01 01:01:46,990 - hyena_glt.training.checkpointing - INFO - Loaded checkpoint history with 3 checkpoints
+2025-06-01 01:01:46,990 - hyena_glt.training.trainer - INFO - Trainer initialized with device: cuda
+2025-06-01 01:01:46,992 - hyena_glt.training.trainer - INFO - Model parameters: 150,903,685
+2025-06-01 01:01:46,992 - __main__ - INFO - Starting enhanced training...
+2025-06-01 01:01:46,992 - __main__ - INFO - Training with max_steps control: 3 steps
+2025-06-01 01:01:46,992 - hyena_glt.training.trainer - INFO - Starting training...
+2025-06-01 01:01:49,632 - __main__ - INFO - Reached max_steps (3). Stopping training.
+2025-06-01 01:02:01,639 - hyena_glt.training.trainer - INFO - Final evaluation metrics: {'main_accuracy': 0.675, 'main_precision': 0.7861842105263158, 'main_recall': 0.675, 'main_f1': 0.5842670401493931, 'main_precision_macro': 0.8289473684210527, 'main_recall_macro': 0.5666666666666667, 'main_f1_macro': 0.5144724556489262, 'main_mcc': 0.29617443887954614, 'main_auc_roc': 0.5746666666666667, 'main_accuracy_class_0': 1.0, 'main_accuracy_class_1': 0.13333333333333333, 'eval_loss': 0.643084716796875}
+2025-06-01 01:02:24,791 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_3_epoch_0.pt
+2025-06-01 01:02:24,892 - hyena_glt.training.checkpointing - INFO - Cleaned up old checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_3_epoch_0.pt
+2025-06-01 01:02:24,895 - hyena_glt.training.trainer - INFO - Training completed! Stopped at step 3
+2025-06-01 01:02:24,901 - __main__ - INFO - Analyzing attention patterns...
+2025-06-01 01:02:25,169 - __main__ - INFO - Attention analysis: {}
+2025-06-01 01:02:31,757 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 48.4677s
+  Memory delta: +1344.50MB
+  GPU memory delta: +1184.99MB
+2025-06-01 01:02:31,757 - __main__ - INFO - Generating training report...
+2025-06-01 01:02:31,763 - __main__ - INFO - Enhanced training pipeline completed successfully!
+2025-06-01 01:06:14,812 - __main__ - INFO - Enhanced Training Pipeline initialized: enhanced_hyena_glt
+2025-06-01 01:06:14,813 - __main__ - INFO - ============================================================
+2025-06-01 01:06:14,813 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-06-01 01:06:14,813 - __main__ - INFO - ============================================================
+2025-06-01 01:06:15,014 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-06-01 01:06:15,014 - __main__ - INFO - Initializing tokenizers...
+2025-06-01 01:06:15,016 - __main__ - INFO - Generating 200 synthetic multi-modal samples...
+2025-06-01 01:06:17,863 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-06-01 01:06:17,987 - hyena_glt.training.mixed_precision - INFO - Initialized FP16 mixed precision training
+2025-06-01 01:06:18,412 - hyena_glt.training.trainer - INFO - Optimizer: AdamW
+2025-06-01 01:06:18,412 - hyena_glt.training.trainer - INFO - Scheduler: LinearWarmupCosineDecayScheduler
+2025-06-01 01:06:18,412 - hyena_glt.training.trainer - WARNING - Multi-task enabled but no task weights provided
+2025-06-01 01:06:18,413 - hyena_glt.training.trainer - INFO - Curriculum learning enabled
+2025-06-01 01:06:18,414 - hyena_glt.training.checkpointing - INFO - Loaded checkpoint history with 3 checkpoints
+2025-06-01 01:06:18,414 - hyena_glt.training.trainer - INFO - Trainer initialized with device: cuda
+2025-06-01 01:06:18,416 - hyena_glt.training.trainer - INFO - Model parameters: 150,903,685
+2025-06-01 01:06:18,416 - __main__ - INFO - Starting enhanced training...
+2025-06-01 01:06:18,416 - __main__ - INFO - Training with max_steps control: 2 steps
+2025-06-01 01:06:18,416 - hyena_glt.training.trainer - INFO - Starting training...
+2025-06-01 01:06:20,186 - __main__ - INFO - Reached max_steps (2). Stopping training.
+2025-06-01 01:06:31,929 - hyena_glt.training.trainer - INFO - Final evaluation metrics: {'main_accuracy': 0.65, 'main_precision': 0.7756410256410257, 'main_recall': 0.65, 'main_f1': 0.53515625, 'main_precision_macro': 0.8205128205128205, 'main_recall_macro': 0.5333333333333333, 'main_f1_macro': 0.453125, 'main_mcc': 0.20672455764868075, 'main_auc_roc': 0.6066666666666667, 'main_accuracy_class_0': 1.0, 'main_accuracy_class_1': 0.06666666666666667, 'eval_loss': 0.645404052734375}
+2025-06-01 01:06:55,065 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_2_epoch_0.pt
+2025-06-01 01:06:55,164 - hyena_glt.training.checkpointing - INFO - Cleaned up old checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_2_epoch_0.pt
+2025-06-01 01:06:55,168 - hyena_glt.training.trainer - INFO - Training completed! Stopped at step 2
+2025-06-01 01:06:55,174 - __main__ - INFO - Analyzing attention patterns...
+2025-06-01 01:06:57,548 - __main__ - INFO - Successfully analyzed 12 Hyena convolution patterns
+2025-06-01 01:06:57,548 - __main__ - INFO - Attention analysis: {'num_patterns': 12, 'pattern_names': ['hyena_glt.layers.0.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.1.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.2.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.3.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.4.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.5.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.6.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.7.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.8.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.9.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.10.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.11.hyena_layer.hyena_op.short_conv'], 'positional_analysis': {'hyena_glt.layers.0.hyena_layer.hyena_op.short_conv': {'local_attention': 0.6399660229682922, 'long_range_attention': 0.42422181367874146, 'periodicity': 0.5335654027484081, 'sparsity': 0.0, 'max_attention': 1.000000238418579}, 'hyena_glt.layers.1.hyena_layer.hyena_op.short_conv': {'local_attention': 0.5967795968055725, 'long_range_attention': nan, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.0000004768371582}, 'hyena_glt.layers.2.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7956587672233582, 'long_range_attention': nan, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 0.9999998807907104}, 'hyena_glt.layers.3.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7807186841964722, 'long_range_attention': nan, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.0000001192092896}, 'hyena_glt.layers.4.hyena_layer.hyena_op.short_conv': {'local_attention': 0.772966206073761, 'long_range_attention': nan, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.0000003576278687}, 'hyena_glt.layers.5.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7706184387207031, 'long_range_attention': nan, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 0.9999998807907104}, 'hyena_glt.layers.6.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7825444340705872, 'long_range_attention': nan, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 0.9999996423721313}, 'hyena_glt.layers.7.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7289400100708008, 'long_range_attention': nan, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.0000001192092896}, 'hyena_glt.layers.8.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7796788215637207, 'long_range_attention': nan, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.0000003576278687}, 'hyena_glt.layers.9.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7732810974121094, 'long_range_attention': nan, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 0.9999997019767761}, 'hyena_glt.layers.10.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7811995148658752, 'long_range_attention': nan, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.0000001192092896}, 'hyena_glt.layers.11.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7656136751174927, 'long_range_attention': nan, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.000000238418579}}, 'avg_local_attention': 0.7473304390907288, 'avg_long_range_attention': nan, 'avg_periodicity': 0.04446378356236735}
+2025-06-01 01:07:03,945 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 49.1324s
+  Memory delta: +1823.77MB
+  GPU memory delta: +1184.77MB
+2025-06-01 01:07:03,946 - __main__ - INFO - Generating training report...
+2025-06-01 01:07:03,953 - __main__ - INFO - Enhanced training pipeline completed successfully!
+2025-06-01 01:11:21,529 - __main__ - INFO - Enhanced Training Pipeline initialized: enhanced_hyena_glt
+2025-06-01 01:11:21,529 - __main__ - INFO - ============================================================
+2025-06-01 01:11:21,529 - __main__ - INFO - STARTING ENHANCED HYENA-GLT TRAINING PIPELINE
+2025-06-01 01:11:21,529 - __main__ - INFO - ============================================================
+2025-06-01 01:11:21,724 - hyena_glt.utils.performance - INFO - Started profiling: operation
+2025-06-01 01:11:21,724 - __main__ - INFO - Initializing tokenizers...
+2025-06-01 01:11:21,726 - __main__ - INFO - Generating 200 synthetic multi-modal samples...
+2025-06-01 01:11:24,489 - __main__ - INFO - Setting up length_based curriculum learning...
+2025-06-01 01:11:24,599 - hyena_glt.training.mixed_precision - INFO - Initialized FP16 mixed precision training
+2025-06-01 01:11:25,012 - hyena_glt.training.trainer - INFO - Optimizer: AdamW
+2025-06-01 01:11:25,012 - hyena_glt.training.trainer - INFO - Scheduler: LinearWarmupCosineDecayScheduler
+2025-06-01 01:11:25,012 - hyena_glt.training.trainer - WARNING - Multi-task enabled but no task weights provided
+2025-06-01 01:11:25,012 - hyena_glt.training.trainer - INFO - Curriculum learning enabled
+2025-06-01 01:11:25,014 - hyena_glt.training.checkpointing - INFO - Loaded checkpoint history with 3 checkpoints
+2025-06-01 01:11:25,014 - hyena_glt.training.trainer - INFO - Trainer initialized with device: cuda
+2025-06-01 01:11:25,016 - hyena_glt.training.trainer - INFO - Model parameters: 150,903,685
+2025-06-01 01:11:25,016 - __main__ - INFO - Starting enhanced training...
+2025-06-01 01:11:25,016 - __main__ - INFO - Training with max_steps control: 2 steps
+2025-06-01 01:11:25,016 - hyena_glt.training.trainer - INFO - Starting training...
+2025-06-01 01:11:27,189 - __main__ - INFO - Reached max_steps (2). Stopping training.
+2025-06-01 01:11:38,869 - hyena_glt.training.trainer - INFO - Final evaluation metrics: {'main_accuracy': 0.65, 'main_precision': 0.6554054054054055, 'main_recall': 0.65, 'main_f1': 0.5672043010752688, 'main_precision_macro': 0.6576576576576576, 'main_recall_macro': 0.5466666666666666, 'main_f1_macro': 0.4982078853046595, 'main_mcc': 0.17155007848855514, 'main_auc_roc': 0.5706666666666667, 'main_accuracy_class_0': 0.96, 'main_accuracy_class_1': 0.13333333333333333, 'eval_loss': 0.648565673828125}
+2025-06-01 01:12:01,909 - hyena_glt.training.checkpointing - INFO - Saved checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_2_epoch_0.pt
+2025-06-01 01:12:02,009 - hyena_glt.training.checkpointing - INFO - Cleaned up old checkpoint: enhanced_training_outputs/models/checkpoints/checkpoint_step_2_epoch_0.pt
+2025-06-01 01:12:02,013 - hyena_glt.training.trainer - INFO - Training completed! Stopped at step 2
+2025-06-01 01:12:02,018 - __main__ - INFO - Analyzing attention patterns...
+2025-06-01 01:12:04,275 - __main__ - INFO - Successfully analyzed 12 Hyena convolution patterns
+2025-06-01 01:12:04,275 - __main__ - INFO - Attention analysis: {'num_patterns': 12, 'pattern_names': ['hyena_glt.layers.0.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.1.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.2.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.3.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.4.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.5.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.6.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.7.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.8.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.9.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.10.hyena_layer.hyena_op.short_conv', 'hyena_glt.layers.11.hyena_layer.hyena_op.short_conv'], 'positional_analysis': {'hyena_glt.layers.0.hyena_layer.hyena_op.short_conv': {'local_attention': 0.6398802995681763, 'long_range_attention': 0.45616328716278076, 'periodicity': 0.5333865145290339, 'sparsity': 0.0, 'max_attention': 1.0000001192092896}, 'hyena_glt.layers.1.hyena_layer.hyena_op.short_conv': {'local_attention': 0.6563274065653483, 'long_range_attention': 0.5886825323104858, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.0000003576278687}, 'hyena_glt.layers.2.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7959989905357361, 'long_range_attention': 0.7959989905357361, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.0000005960464478}, 'hyena_glt.layers.3.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7811285853385925, 'long_range_attention': 0.7811285853385925, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.0}, 'hyena_glt.layers.4.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7729116678237915, 'long_range_attention': 0.7729116678237915, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.0000005960464478}, 'hyena_glt.layers.5.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7706273198127747, 'long_range_attention': 0.7706273198127747, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 0.9999998211860657}, 'hyena_glt.layers.6.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7824823260307312, 'long_range_attention': 0.7824823260307312, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.0000003576278687}, 'hyena_glt.layers.7.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7293112874031067, 'long_range_attention': 0.7293112874031067, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.000000238418579}, 'hyena_glt.layers.8.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7793894410133362, 'long_range_attention': 0.7793894410133362, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.0000003576278687}, 'hyena_glt.layers.9.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7730072736740112, 'long_range_attention': 0.7730072736740112, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.0000001192092896}, 'hyena_glt.layers.10.hyena_layer.hyena_op.short_conv': {'local_attention': 0.781157374382019, 'long_range_attention': 0.781157374382019, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.000000238418579}, 'hyena_glt.layers.11.hyena_layer.hyena_op.short_conv': {'local_attention': 0.7657840847969055, 'long_range_attention': 0.7657840847969055, 'periodicity': 0.0, 'sparsity': 0.0, 'max_attention': 1.000000238418579}}, 'avg_local_attention': 0.7523338380787107, 'avg_long_range_attention': 0.7313870141903559, 'avg_periodicity': 0.04444887621075282}
+2025-06-01 01:12:10,735 - hyena_glt.utils.performance - INFO - Completed profiling: operation
+  Duration: 49.2050s
+  Memory delta: +1849.60MB
+  GPU memory delta: +1184.99MB
+2025-06-01 01:12:10,735 - __main__ - INFO - Generating training report...
+2025-06-01 01:12:10,740 - __main__ - INFO - Enhanced training pipeline completed successfully!

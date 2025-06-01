@@ -1,0 +1,33 @@
+# Large-Scale Genomic Data Preprocessing Configuration
+# ===================================================
+# Configuration for processing large genomic datasets
+# with chunking and overlap for long sequences
+
+preprocessing:
+  task: sequence_classification
+  input_path: data/large_genome_dataset/  # Directory with multiple files
+  max_length: 4096
+  min_length: 100
+  sequence_type: dna
+  stride: 2048  # 50% overlap for long sequences
+  overlap: 2048
+
+tokenization:
+  vocab_size: 16384
+  kmer_size: 8
+
+filtering:
+  filter_n_bases: true
+  filter_repeats: true
+  min_quality: 10.0
+
+output:
+  output_dir: processed_data/large_scale/
+  format: hdf5
+  compress: true
+  chunk_size: 50000
+
+system:
+  num_workers: 16
+  memory_limit: 32GB
+  show_progress: true

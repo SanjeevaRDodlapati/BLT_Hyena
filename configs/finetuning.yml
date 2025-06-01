@@ -1,0 +1,31 @@
+# Fine-tuning Configuration
+# =========================
+# Configuration for fine-tuning pre-trained Hyena-GLT models
+# on task-specific data
+
+model:
+  pretrained_model_path: models/pretrained_hyena_glt.pt
+  model_type: hyena_glt
+  freeze_embeddings: false
+  freeze_encoder_layers: 0  # Number of layers to freeze
+
+training:
+  data_path: processed_data/task_specific/
+  output_dir: training_output/finetuned_model/
+  epochs: 3
+  batch_size: 32
+  learning_rate: 2.0e-5  # Lower LR for fine-tuning
+  max_length: 1024
+  warmup_steps: 500
+  save_steps: 200
+
+data:
+  train_file: processed_data/task_specific/train.hdf5
+  val_file: processed_data/task_specific/val.hdf5
+  tokenizer_path: processed_data/task_specific/tokenizer.json
+
+optimization:
+  optimizer: adamw
+  weight_decay: 0.001  # Lower weight decay for fine-tuning
+  layer_wise_decay: 0.8
+  mixed_precision: true

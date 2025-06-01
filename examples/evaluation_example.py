@@ -142,7 +142,7 @@ def main():
         logger.info(f"Evaluating task: {task_name}")
 
         # Create model for this task
-        model_config = config.copy()
+        model_config = HyenaGLTConfig.from_dict(config.to_dict())
         model_config.num_labels = task_config['num_classes']
 
         model = task_config['model_class'](model_config)
@@ -152,14 +152,36 @@ def main():
         # Get task data
         sequences, labels = tasks_data[task_name]
 
-        # Create data loader
-        dataset = GenomicDataset(
-            sequences=sequences[:50],  # Use subset for demo
-            labels=labels[:50],
-            tokenizer=tokenizer,
-            max_length=512,
-            task_type=task_config['type']
-        )
+        # Create data in the format expected by GenomicDataset
+        data = []
+        for seq, label in zip(sequences[:50], labels[:50]):
+            data.append({
+                'sequence': seq,
+                'label': label
+            })
+
+        # Create data loader using the appropriate dataset class
+        if task_config['type'] == 'sequence_classification':
+            from hyena_glt.data import SequenceClassificationDataset
+            dataset = SequenceClassificationDataset(
+                data=data,
+                tokenizer=tokenizer,
+                max_length=512
+            )
+        elif task_config['type'] == 'token_classification':
+            from hyena_glt.data import TokenClassificationDataset
+            dataset = TokenClassificationDataset(
+                data=data,
+                tokenizer=tokenizer,
+                max_length=512
+            )
+        else:
+            # Default to base GenomicDataset
+            dataset = GenomicDataset(
+                data=data,
+                tokenizer=tokenizer,
+                max_length=512
+            )
 
         data_loader = torch.utils.data.DataLoader(
             dataset, batch_size=8, shuffle=False
@@ -205,12 +227,12 @@ def main():
     benchmark_data_loaders = {}
     for task_name in task_configs.keys():
         sequences, labels = tasks_data[task_name]
+        # Create data in the format expected by GenomicDataset
+        data = [{"sequence": seq, "labels": label} for seq, label in zip(sequences[:20], labels[:20])]
         dataset = GenomicDataset(
-            sequences=sequences[:20],  # Small subset for benchmarking
-            labels=labels[:20],
+            data=data,
             tokenizer=tokenizer,
-            max_length=512,
-            task_type='sequence_classification'
+            max_length=512
         )
         benchmark_data_loaders[task_name] = torch.utils.data.DataLoader(
             dataset, batch_size=4, shuffle=False

@@ -1,0 +1,24 @@
+# Variant Effect Prediction Preprocessing Configuration
+# ===================================================
+# Configuration for preprocessing genetic variants (VCF files)
+# for variant effect prediction tasks
+
+preprocessing:
+  task: variant_effect
+  input_path: data/variants.vcf  # Your VCF file path
+  reference_path: data/reference_genome.fa  # Reference genome path
+  max_length: 2048
+  min_length: 100
+  sequence_type: dna
+
+tokenization:
+  vocab_size: 8192
+  kmer_size: 8
+
+output:
+  output_dir: processed_data/variant_effects/
+  format: hdf5
+
+system:
+  num_workers: 8
+  memory_limit: 16GB

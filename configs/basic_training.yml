@@ -1,0 +1,42 @@
+# Basic Model Training Configuration
+# =================================
+# Configuration for training a small Hyena-GLT model
+# Following savanna's YAML style for better readability
+
+model:
+  model_type: hyena_glt
+  model_size: small
+  vocab_size: 4096
+  hidden_size: 512
+  num_layers: 8
+  max_position_embeddings: 16384
+  sequence_type: dna
+  kmer_size: 6
+
+training:
+  data_path: processed_data/dna_classification/  # Path to preprocessed data
+  output_dir: training_output/dna_model/
+  epochs: 10
+  batch_size: 16
+  learning_rate: 1.0e-4
+  max_length: 1024
+  warmup_steps: 1000
+  save_steps: 500
+  eval_steps: 100
+
+data:
+  train_file: processed_data/dna_classification/train.hdf5
+  val_file: processed_data/dna_classification/val.hdf5
+  test_file: processed_data/dna_classification/test.hdf5
+  tokenizer_path: processed_data/dna_classification/tokenizer.json
+
+optimization:
+  optimizer: adamw
+  weight_decay: 0.01
+  gradient_clipping: 1.0
+  mixed_precision: true
+
+system:
+  device: auto
+  num_workers: 4
+  gradient_checkpointing: false

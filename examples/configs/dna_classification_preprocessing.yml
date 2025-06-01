@@ -1,0 +1,29 @@
+filtering:
+  filter_n_bases: true
+  max_ambiguous_fraction: 0.1
+output:
+  chunk_size: 10000
+  compress: true
+  format: hdf5
+  output_dir: processed_data/dna_classification/
+preprocessing:
+  filter_non_standard: true
+  input_path: data/genome_sequences.fasta
+  max_length: 1024
+  min_length: 50
+  normalize_case: true
+  remove_duplicates: true
+  sequence_type: dna
+  task: sequence_classification
+splitting:
+  random_seed: 42
+  test_fraction: 0.1
+  train_fraction: 0.8
+  val_fraction: 0.1
+system:
+  memory_limit: 8GB
+  num_workers: 4
+  show_progress: true
+tokenization:
+  kmer_size: 6
+  vocab_size: 4096

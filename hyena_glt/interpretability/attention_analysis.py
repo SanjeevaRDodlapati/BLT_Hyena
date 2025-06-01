@@ -89,7 +89,10 @@ class HyenaAttentionAnalyzer:
 
             # Local attention (neighboring positions)
             local_attention = 0.0
-            for offset in range(1, min(6, seq_len)):  # Check positions ±5
+            local_count = 0
+            max_offset = min(5, seq_len // 2)  # Adaptive offset based on sequence length
+            
+            for offset in range(1, max_offset + 1):
                 if offset < seq_len:
                     diagonal_pos = torch.diagonal(
                         pattern, offset=offset, dim1=-2, dim2=-1
@@ -97,23 +100,39 @@ class HyenaAttentionAnalyzer:
                     diagonal_neg = torch.diagonal(
                         pattern, offset=-offset, dim1=-2, dim2=-1
                     )
-                    local_attention += (
-                        diagonal_pos.mean() + diagonal_neg.mean()
-                    ).item()
-            local_attention /= min(10, seq_len * 2 - 2)  # Normalize
+                    if len(diagonal_pos) > 0:
+                        local_attention += diagonal_pos.mean().item()
+                        local_count += 1
+                    if len(diagonal_neg) > 0:
+                        local_attention += diagonal_neg.mean().item()
+                        local_count += 1
+            
+            if local_count > 0:
+                local_attention /= local_count
+            else:
+                local_attention = 0.0
 
             # Long-range attention (distant positions)
+            # Adaptive mask size based on sequence length
+            mask_radius = min(10, seq_len // 4)  # Use smaller mask for short sequences
             long_range_mask = torch.ones_like(pattern[0])
+            
             for i in range(seq_len):
-                # Mask out local region (±10 positions)
-                start_mask = max(0, i - 10)
-                end_mask = min(seq_len, i + 11)
+                # Mask out local region (±mask_radius positions)
+                start_mask = max(0, i - mask_radius)
+                end_mask = min(seq_len, i + mask_radius + 1)
                 long_range_mask[i, start_mask:end_mask] = 0
 
-            long_range_attention_tensor = (
-                pattern * long_range_mask.unsqueeze(0)
-            ).sum() / long_range_mask.sum()
-            long_range_attention = float(long_range_attention_tensor.item())
+            # Check if mask has any elements left
+            mask_sum = long_range_mask.sum()
+            if mask_sum > 0:
+                long_range_attention_tensor = (
+                    pattern * long_range_mask.unsqueeze(0)
+                ).sum() / mask_sum
+                long_range_attention = float(long_range_attention_tensor.item())
+            else:
+                # If no long-range positions exist, set to 0
+                long_range_attention = 0.0
 
             # Periodicity detection (for genomic repeats)
             periodicity_scores = []
@@ -122,8 +141,11 @@ class HyenaAttentionAnalyzer:
                     period_pattern = 0.0
                     count = 0
                     for i in range(seq_len - period):
-                        period_pattern += pattern[:, i, i + period].mean().item()
-                        count += 1
+                        if i + period < seq_len:
+                            period_value = pattern[:, i, i + period].mean().item()
+                            if not np.isnan(period_value) and not np.isinf(period_value):
+                                period_pattern += period_value
+                                count += 1
                     if count > 0:
                         periodicity_scores.append(period_pattern / count)
 

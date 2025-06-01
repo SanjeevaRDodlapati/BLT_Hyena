@@ -1,0 +1,277 @@
+{
+  "timestamp": "2025-05-31 20:39:24",
+  "hardware_info": {
+    "cuda_available": true,
+    "device_count": 1,
+    "device_name": "NVIDIA A100 80GB PCIe",
+    "compute_capability": "8.0",
+    "memory_gb": 79.1500244140625,
+    "multiprocessor_count": 108
+  },
+  "task_specific_results": {
+    "genome_annotation": {
+      "small": {
+        "precision_mode": "fp8",
+        "gradient_clipping": 1.0,
+        "gradient_checkpointing": true,
+        "cpu_offload": false,
+        "stats": {
+          "overflow_count": 0,
+          "scale_updates": 0,
+          "current_scale": 65536.0,
+          "mode": "fp8"
+        }
+      },
+      "medium": {
+        "precision_mode": "fp8",
+        "gradient_clipping": 1.0,
+        "gradient_checkpointing": true,
+        "cpu_offload": false,
+        "stats": {
+          "overflow_count": 0,
+          "scale_updates": 0,
+          "current_scale": 65536.0,
+          "mode": "fp8"
+        }
+      },
+      "large": {
+        "precision_mode": "fp8",
+        "gradient_clipping": 1.0,
+        "gradient_checkpointing": true,
+        "cpu_offload": false,
+        "stats": {
+          "overflow_count": 0,
+          "scale_updates": 0,
+          "current_scale": 65536.0,
+          "mode": "fp8"
+        }
+      }
+    },
+    "variant_effect": {
+      "small": {
+        "precision_mode": "bf16",
+        "gradient_clipping": 0.5,
+        "gradient_checkpointing": false,
+        "cpu_offload": false,
+        "stats": {
+          "overflow_count": 0,
+          "scale_updates": 0,
+          "current_scale": 65536.0,
+          "mode": "bf16"
+        }
+      },
+      "medium": {
+        "precision_mode": "bf16",
+        "gradient_clipping": 0.5,
+        "gradient_checkpointing": false,
+        "cpu_offload": false,
+        "stats": {
+          "overflow_count": 0,
+          "scale_updates": 0,
+          "current_scale": 65536.0,
+          "mode": "bf16"
+        }
+      },
+      "large": {
+        "precision_mode": "bf16",
+        "gradient_clipping": 0.5,
+        "gradient_checkpointing": false,
+        "cpu_offload": false,
+        "stats": {
+          "overflow_count": 0,
+          "scale_updates": 0,
+          "current_scale": 65536.0,
+          "mode": "bf16"
+        }
+      }
+    },
+    "protein_function": {
+      "small": {
+        "precision_mode": "fp8",
+        "gradient_clipping": 1.0,
+        "gradient_checkpointing": true,
+        "cpu_offload": false,
+        "stats": {
+          "overflow_count": 0,
+          "scale_updates": 0,
+          "current_scale": 65536.0,
+          "mode": "fp8"
+        }
+      },
+      "medium": {
+        "precision_mode": "fp8",
+        "gradient_clipping": 1.0,
+        "gradient_checkpointing": true,
+        "cpu_offload": false,
+        "stats": {
+          "overflow_count": 0,
+          "scale_updates": 0,
+          "current_scale": 65536.0,
+          "mode": "fp8"
+        }
+      },
+      "large": {
+        "precision_mode": "fp8",
+        "gradient_clipping": 1.0,
+        "gradient_checkpointing": true,
+        "cpu_offload": true,
+        "stats": {
+          "overflow_count": 0,
+          "scale_updates": 0,
+          "current_scale": 65536.0,
+          "mode": "fp8"
+        }
+      }
+    },
+    "generation": {
+      "small": {
+        "precision_mode": "fp16",
+        "gradient_clipping": 2.0,
+        "gradient_checkpointing": true,
+        "cpu_offload": true,
+        "stats": {
+          "overflow_count": 0,
+          "scale_updates": 0,
+          "current_scale": 65536.0,
+          "mode": "fp16"
+        }
+      },
+      "medium": {
+        "precision_mode": "fp16",
+        "gradient_clipping": 2.0,
+        "gradient_checkpointing": true,
+        "cpu_offload": true,
+        "stats": {
+          "overflow_count": 0,
+          "scale_updates": 0,
+          "current_scale": 65536.0,
+          "mode": "fp16"
+        }
+      },
+      "large": {
+        "precision_mode": "fp16",
+        "gradient_clipping": 2.0,
+        "gradient_checkpointing": true,
+        "cpu_offload": true,
+        "stats": {
+          "overflow_count": 0,
+          "scale_updates": 0,
+          "current_scale": 65536.0,
+          "mode": "fp16"
+        }
+      }
+    }
+  },
+  "hardware_aware_results": {
+    "genome_annotation": {
+      "small": {
+        "mode": "fp8",
+        "gradient_clipping": 1.0,
+        "gradient_checkpointing": true
+      },
+      "medium": {
+        "mode": "fp8",
+        "gradient_clipping": 1.0,
+        "gradient_checkpointing": true
+      },
+      "large": {
+        "mode": "fp8",
+        "gradient_clipping": 1.0,
+        "gradient_checkpointing": true
+      }
+    },
+    "variant_effect": {
+      "small": {
+        "mode": "bf16",
+        "gradient_clipping": 0.5,
+        "gradient_checkpointing": false
+      },
+      "medium": {
+        "mode": "bf16",
+        "gradient_clipping": 0.5,
+        "gradient_checkpointing": false
+      },
+      "large": {
+        "mode": "bf16",
+        "gradient_clipping": 0.5,
+        "gradient_checkpointing": false
+      }
+    },
+    "protein_function": {
+      "small": {
+        "mode": "fp8",
+        "gradient_clipping": 1.0,
+        "gradient_checkpointing": true
+      },
+      "medium": {
+        "mode": "fp8",
+        "gradient_clipping": 1.0,
+        "gradient_checkpointing": true
+      },
+      "large": {
+        "mode": "fp8",
+        "gradient_clipping": 1.0,
+        "gradient_checkpointing": true
+      }
+    },
+    "generation": {
+      "small": {
+        "mode": "fp16",
+        "gradient_clipping": 2.0,
+        "gradient_checkpointing": true
+      },
+      "medium": {
+        "mode": "fp16",
+        "gradient_clipping": 2.0,
+        "gradient_checkpointing": true
+      },
+      "large": {
+        "mode": "fp16",
+        "gradient_clipping": 2.0,
+        "gradient_checkpointing": true
+      }
+    }
+  },
+  "benchmark_results": {
+    "fp32": {
+      "execution_time": 0.29263925552368164,
+      "memory_usage_mb": 8.12646484375,
+      "precision_stats": {
+        "overflow_count": 0,
+        "scale_updates": 0,
+        "current_scale": 65536.0,
+        "mode": "fp32"
+      }
+    },
+    "fp16": {
+      "execution_time": 0.0010523796081542969,
+      "memory_usage_mb": 0.0,
+      "precision_stats": {
+        "overflow_count": 0,
+        "scale_updates": 0,
+        "current_scale": 65536.0,
+        "mode": "fp16"
+      }
+    },
+    "bf16": {
+      "execution_time": 0.0009391307830810547,
+      "memory_usage_mb": 0.0,
+      "precision_stats": {
+        "overflow_count": 0,
+        "scale_updates": 0,
+        "current_scale": 65536.0,
+        "mode": "bf16"
+      }
+    },
+    "fp8": {
+      "execution_time": 0.0012080669403076172,
+      "memory_usage_mb": 0.0,
+      "precision_stats": {
+        "overflow_count": 0,
+        "scale_updates": 0,
+        "current_scale": 65536.0,
+        "mode": "fp8"
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+output:
+  format: hdf5
+  output_dir: processed_data/proteins/
+preprocessing:
+  input_path: data/proteins.fasta
+  max_length: 512
+  min_length: 20
+  remove_duplicates: true
+  sequence_type: protein
+  task: sequence_classification
+tokenization:
+  kmer_size: 3
+  vocab_size: 2048

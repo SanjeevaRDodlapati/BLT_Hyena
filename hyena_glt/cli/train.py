@@ -9,9 +9,11 @@ Usage:
 
 import argparse
 import json
+import yaml
 import logging
 import os
 import sys
+from pathlib import Path
 from typing import Any
 
 # Import core training modules
@@ -56,7 +58,7 @@ Examples:
 
     # Primary arguments
     parser.add_argument(
-        "--config", type=str, help="Path to training configuration JSON file"
+        "--config", type=str, help="Path to training configuration file (JSON or YAML)"
     )
 
     parser.add_argument(
@@ -129,15 +131,20 @@ Examples:
 
 
 def load_config(config_path: str) -> dict[str, Any]:
-    """Load configuration from JSON file."""
+    """Load configuration from JSON or YAML file."""
     try:
-        with open(config_path) as f:
-            config = json.load(f)
+        config_file = Path(config_path)
+        if config_file.suffix.lower() in ['.yml', '.yaml']:
+            with open(config_path) as f:
+                config = yaml.safe_load(f)
+        else:
+            with open(config_path) as f:
+                config = json.load(f)
         return config  # type: ignore[no-any-return]
     except FileNotFoundError as e:
         raise FileNotFoundError(f"Configuration file not found: {config_path}") from e
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON in configuration file: {e}") from e
+    except (json.JSONDecodeError, yaml.YAMLError) as e:
+        raise ValueError(f"Invalid format in configuration file: {e}") from e
 
 
 def validate_arguments(args: argparse.Namespace) -> None:

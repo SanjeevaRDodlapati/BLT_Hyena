@@ -1,0 +1,16 @@
+output:
+  format: hdf5
+  output_dir: processed_data/variant_effects/
+preprocessing:
+  input_path: data/variants.vcf
+  max_length: 2048
+  min_length: 100
+  reference_path: data/reference_genome.fa
+  sequence_type: dna
+  task: variant_effect
+system:
+  memory_limit: 16GB
+  num_workers: 8
+tokenization:
+  kmer_size: 8
+  vocab_size: 8192

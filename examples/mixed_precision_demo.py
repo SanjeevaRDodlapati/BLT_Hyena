@@ -224,7 +224,7 @@ def demonstrate_adaptive_precision():
     mp_config = MixedPrecisionConfig(
         mode=PrecisionMode.ADAPTIVE,
         monitor_overflow=True,
-        dynamic_loss_scaling=True,
+        dynamic_loss_scale=True,
     )
     precision_manager = MixedPrecisionManager(mp_config)
     

@@ -334,6 +334,11 @@ def main():
     analysis = benchmark.analyze_results(results)
 
     # Save results
+    import os
+    results_dir = os.path.join(os.getcwd(), "benchmark_results")
+    os.makedirs(results_dir, exist_ok=True)
+    results_file = os.path.join(results_dir, "blt_performance_benchmark.pt")
+    
     torch.save(
         {
             "results": results,
@@ -345,10 +350,10 @@ def main():
                 "num_iterations": benchmark.num_iterations,
             },
         },
-        "/Users/sanjeev/Downloads/Repos/BLT_Hyena/benchmark_results.pt",
+        results_file,
     )
 
-    print("\n💾 Results saved to benchmark_results.pt")
+    print(f"\n💾 Results saved to {results_file}")
     print("\n" + "=" * 60)
     print("BENCHMARK COMPLETE")
     print("=" * 60)

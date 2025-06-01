@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, random_split
 
 warnings.filterwarnings('ignore')
 
@@ -62,6 +62,11 @@ class EnhancedTrainingConfig:
     output_dir: str = "./enhanced_training_outputs"
     experiment_name: str = "enhanced_hyena_glt"
     seed: int = 42
+
+    # Training parameters
+    num_epochs: int = 1
+    max_steps: int = None
+    batch_size: int = 2
 
     # Multi-modal configuration
     use_multimodal: bool = True
@@ -127,16 +132,18 @@ class MultiModalGenomicDataset(Dataset):
 
         # Tokenize if tokenizers provided
         if self.tokenizers:
-            for modality, sequence in item.items():
+            # Create a copy of items to avoid "dictionary changed size during iteration" error
+            for modality, sequence in list(item.items()):
                 if modality in self.tokenizers and modality != 'label':
-                    tokens = self.tokenizers[modality].encode(
+                    tokens = self.tokenizers[modality].encode_plus(
                         sequence,
                         max_length=self.max_lengths[modality],
                         padding=True,
-                        truncation=True
+                        truncation=True,
+                        return_tensors="pt"
                     )
-                    item[f'{modality}_input_ids'] = torch.tensor(tokens['input_ids'])
-                    item[f'{modality}_attention_mask'] = torch.tensor(tokens['attention_mask'])
+                    item[f'{modality}_input_ids'] = tokens['input_ids'].squeeze(0)
+                    item[f'{modality}_attention_mask'] = tokens['attention_mask'].squeeze(0)
 
         return item
 
@@ -304,34 +311,42 @@ class EnhancedTrainingPipeline:
 
         self.logger.info(f"Setting up {self.config.curriculum_strategy} curriculum learning...")
 
+        # Import difficulty measures
+        from hyena_glt.training.curriculum import (
+            SequenceLengthDifficulty, 
+            GenomicComplexityDifficulty
+        )
+
+        # Create difficulty measures based on strategy
         if self.config.curriculum_strategy == "length_based":
-            curriculum = CurriculumLearning(
-                strategy="sequence_length",
-                num_stages=self.config.curriculum_stages,
-                progression_method="linear"
-            )
+            difficulty_measures = [SequenceLengthDifficulty(normalize=True, max_length=1024)]
         elif self.config.curriculum_strategy == "complexity_based":
-            curriculum = CurriculumLearning(
-                strategy="gc_content",
-                num_stages=self.config.curriculum_stages,
-                progression_method="exponential"
-            )
+            difficulty_measures = [GenomicComplexityDifficulty()]
         else:
-            curriculum = CurriculumLearning(
-                strategy="difficulty",
-                num_stages=self.config.curriculum_stages,
-                progression_method="sigmoid"
-            )
+            # Use both for difficulty-based strategy
+            difficulty_measures = [
+                SequenceLengthDifficulty(normalize=True, max_length=1024),
+                GenomicComplexityDifficulty()
+            ]
+
+        # Create curriculum with proper parameters
+        curriculum = CurriculumLearning(
+            difficulty_measures=difficulty_measures,
+            curriculum_strategy="linear",  # Use linear progression
+            start_difficulty=0.1,
+            end_difficulty=1.0,
+            curriculum_steps=50,  # Minimal steps for very fast testing
+        )
 
         return curriculum
 
     def create_training_config(self) -> TrainingConfig:
         """Create comprehensive training configuration."""
         return TrainingConfig(
-            # Basic parameters
-            num_epochs=10,
-            batch_size=8,
-            gradient_accumulation_steps=2,
+            # Basic parameters - Now configurable via command line
+            num_epochs=self.config.num_epochs,
+            batch_size=self.config.batch_size,
+            gradient_accumulation_steps=1,
             max_grad_norm=1.0,
 
             # Optimization
@@ -339,12 +354,12 @@ class EnhancedTrainingPipeline:
             weight_decay=0.01,
             optimizer_type="adamw",
             scheduler_type="cosine",
-            warmup_steps=200,
+            warmup_steps=50,  # Reduced from 200
 
-            # Logging and evaluation
-            eval_steps=50,
-            save_steps=100,
-            logging_steps=25,
+            # Logging and evaluation - More frequent for shorter runs
+            eval_steps=20,  # Reduced from 50
+            save_steps=50,  # Reduced from 100
+            logging_steps=10,  # Reduced from 25
             log_level="INFO",
 
             # Checkpointing
@@ -377,33 +392,51 @@ class EnhancedTrainingPipeline:
 
         self.logger.info("Analyzing attention patterns...")
 
-        model.eval()
-        with torch.no_grad():
-            # Get attention weights from model
-            outputs = model(**sample_data, output_attentions=True)
-
-            if hasattr(outputs, 'attentions') and outputs.attentions:
-                attention_weights = outputs.attentions
-
-                # Analyze attention patterns
+        try:
+            # Import Hyena-specific attention analyzer
+            from hyena_glt.interpretability.attention_analysis import HyenaAttentionAnalyzer
+            
+            # Create analyzer for Hyena models
+            analyzer = HyenaAttentionAnalyzer(model)
+            
+            # Extract input_ids from sample_data
+            input_ids = sample_data.get('input_ids')
+            if input_ids is None:
+                self.logger.warning("No input_ids found in sample_data for attention analysis")
+                return {}
+            
+            # Extract Hyena convolution patterns (attention-like patterns)
+            patterns = analyzer.extract_hyena_patterns(input_ids)
+            
+            if patterns:
+                # Analyze positional patterns 
+                positional_analysis = analyzer.analyze_positional_patterns(patterns)
+                
+                # Create summary analysis
                 analysis = {
-                    'num_layers': len(attention_weights),
-                    'num_heads': attention_weights[0].shape[1],
-                    'attention_entropy': [],
-                    'attention_sparsity': []
+                    'num_patterns': len(patterns),
+                    'pattern_names': list(patterns.keys()),
+                    'positional_analysis': positional_analysis,
+                    'avg_local_attention': np.mean([stats.get('local_attention', 0.0) 
+                                                   for stats in positional_analysis.values()]),
+                    'avg_long_range_attention': np.mean([stats.get('long_range_attention', 0.0) 
+                                                        for stats in positional_analysis.values()]),
+                    'avg_periodicity': np.mean([stats.get('periodicity', 0.0) 
+                                               for stats in positional_analysis.values()])
                 }
-
-                for _layer_idx, layer_attention in enumerate(attention_weights):
-                    # Calculate entropy and sparsity metrics
-                    entropy = -torch.sum(layer_attention * torch.log(layer_attention + 1e-8), dim=-1).mean()
-                    sparsity = (layer_attention < 0.1).float().mean()
-
-                    analysis['attention_entropy'].append(entropy.item())
-                    analysis['attention_sparsity'].append(sparsity.item())
-
+                
+                self.logger.info(f"Successfully analyzed {len(patterns)} Hyena convolution patterns")
                 return analysis
-
-        return {}
+            else:
+                self.logger.warning("No Hyena patterns found - model may not have convolution layers")
+                return {}
+                
+        except ImportError as e:
+            self.logger.warning(f"Could not import HyenaAttentionAnalyzer: {e}")
+            return {}
+        except Exception as e:
+            self.logger.warning(f"Attention analysis failed: {e}")
+            return {}
 
     def visualize_training_progress(self, metrics_history: dict[str, list[float]]):
         """Create real-time training visualization."""
@@ -455,11 +488,150 @@ class EnhancedTrainingPipeline:
         plt.savefig(f'{self.config.output_dir}/plots/training_progress.png', dpi=300, bbox_inches='tight')
         plt.close()
 
+    def train_with_step_control(self, trainer: HyenaGLTTrainer) -> dict[str, Any]:
+        """Custom training method that respects max_steps parameter."""
+        if self.config.max_steps is None:
+            # Use default trainer if no max_steps specified
+            return trainer.train()
+        
+        self.logger.info(f"Training with max_steps control: {self.config.max_steps} steps")
+        
+        # Start training with step control
+        trainer.logger.info("Starting training...")
+
+        if not trainer.train_dataloader:
+            raise ValueError("No training dataloader provided")
+
+        trainer.model.train()
+
+        # Training state tracking
+        global_step = 0
+        total_loss = 0.0
+        
+        # Progress tracking
+        from tqdm.auto import tqdm
+        progress_bar = tqdm(total=self.config.max_steps, desc="Training (Step Control)")
+
+        trainer.global_step = 0
+        trainer.epoch = 0
+
+        # Training loop with step control
+        for epoch in range(trainer.config.num_epochs):
+            trainer.epoch = epoch
+            epoch_loss = 0.0
+
+            for step, batch in enumerate(trainer.train_dataloader):
+                # Check if we've reached max_steps
+                if global_step >= self.config.max_steps:
+                    self.logger.info(f"Reached max_steps ({self.config.max_steps}). Stopping training.")
+                    break
+
+                # Forward pass using trainer's method
+                loss, metrics = trainer._training_step(batch)
+                epoch_loss += loss.item()
+                total_loss += loss.item()
+
+                # Backward pass
+                if trainer.config.fp16 and trainer.scaler:
+                    trainer.scaler.scale(loss).backward()
+                else:
+                    loss.backward()
+
+                # Gradient accumulation
+                if (step + 1) % trainer.config.gradient_accumulation_steps == 0:
+                    # Gradient clipping
+                    if trainer.config.max_grad_norm > 0:
+                        if trainer.config.fp16 and trainer.scaler:
+                            trainer.scaler.unscale_(trainer.optimizer)
+
+                        torch.nn.utils.clip_grad_norm_(
+                            trainer.model.parameters(), trainer.config.max_grad_norm
+                        )
+
+                    # Optimizer step
+                    if trainer.config.fp16 and trainer.scaler:
+                        trainer.scaler.step(trainer.optimizer)
+                        trainer.scaler.update()
+                    else:
+                        trainer.optimizer.step()
+
+                    if trainer.scheduler:
+                        trainer.scheduler.step()
+
+                    trainer.optimizer.zero_grad()
+                    global_step += 1
+                    trainer.global_step = global_step
+
+                # Logging
+                if global_step % trainer.config.logging_steps == 0:
+                    avg_loss = total_loss / global_step if global_step > 0 else 0.0
+                    trainer._log_metrics({"train_loss": loss.item(), "avg_loss": avg_loss, **metrics})
+
+                # Evaluation
+                if (
+                    global_step % trainer.config.eval_steps == 0
+                    and trainer.eval_dataloader
+                ):
+                    eval_metrics = trainer.evaluate()
+                    trainer._log_metrics(eval_metrics, prefix="eval")
+
+                    # Early stopping check
+                    if trainer.config.early_stopping:
+                        trainer._check_early_stopping(eval_metrics)
+
+                    trainer.model.train()  # Return to training mode
+
+                # Checkpointing
+                if global_step % trainer.config.save_steps == 0:
+                    trainer._save_checkpoint()
+
+                progress_bar.update(1)
+                progress_bar.set_postfix({"loss": loss.item(), "step": global_step})
+
+                # Early stopping check
+                if hasattr(trainer, 'early_stopping_counter') and trainer.early_stopping_counter >= trainer.config.early_stopping_patience:
+                    self.logger.info("Early stopping triggered")
+                    break
+
+            # Check if we've reached max_steps (break outer loop)
+            if global_step >= self.config.max_steps:
+                break
+
+            # End of epoch
+            avg_epoch_loss = epoch_loss / len(trainer.train_dataloader)
+            trainer.logger.info(f"Epoch {epoch} completed. Average loss: {avg_epoch_loss:.4f}")
+
+            if hasattr(trainer, 'early_stopping_counter') and trainer.early_stopping_counter >= trainer.config.early_stopping_patience:
+                break
+
+        progress_bar.close()
+
+        # Final evaluation
+        if trainer.eval_dataloader:
+            final_metrics = trainer.evaluate()
+            trainer.logger.info(f"Final evaluation metrics: {final_metrics}")
+
+        # Save final checkpoint
+        trainer._save_checkpoint()
+
+        trainer.logger.info(f"Training completed! Stopped at step {global_step}")
+
+        return {
+            "final_step": global_step,
+            "final_epoch": trainer.epoch,
+            "total_loss": total_loss,
+            "avg_loss": total_loss / global_step if global_step > 0 else 0.0,
+        }
+
     def run_enhanced_training(self):
         """Run the complete enhanced training pipeline."""
         self.logger.info("=" * 60)
         self.logger.info("STARTING ENHANCED HYENA-GLT TRAINING PIPELINE")
         self.logger.info("=" * 60)
+
+        # Store performance metrics separately
+        performance_metrics = {}
+        attention_analysis = {}
 
         try:
             # Performance monitoring context
@@ -468,8 +640,8 @@ class EnhancedTrainingPipeline:
                 # 1. Initialize tokenizers
                 self.initialize_tokenizers()
 
-                # 2. Create synthetic data
-                dna_seqs, rna_seqs, protein_seqs, labels = self.create_synthetic_data(1000)
+                # 2. Create synthetic data - Reduced size for faster testing
+                dna_seqs, rna_seqs, protein_seqs, labels = self.create_synthetic_data(200)  # Reduced from 1000
 
                 # 3. Create dataset
                 dataset = MultiModalGenomicDataset(
@@ -492,44 +664,94 @@ class EnhancedTrainingPipeline:
                 # 6. Setup curriculum learning
                 self.setup_curriculum_learning(train_dataset)
 
-                # 7. Create training configuration
+                # 7. Create training configuration with configurable parameters
                 training_config = self.create_training_config()
 
-                # 8. Initialize trainer
+                # 8. Create custom data loaders with key mapping and configurable batch size
+                def collate_fn(batch):
+                    """Custom collate function to map dataset keys to model input format."""
+                    # Use DNA as primary modality for input_ids
+                    collated = {}
+                    
+                    # Map dna_input_ids to input_ids (primary input)
+                    if 'dna_input_ids' in batch[0]:
+                        collated['input_ids'] = torch.stack([item['dna_input_ids'] for item in batch])
+                        collated['attention_mask'] = torch.stack([item['dna_attention_mask'] for item in batch])
+                    
+                    # Include labels
+                    if 'label' in batch[0]:
+                        collated['labels'] = torch.tensor([item['label'] for item in batch])
+                    
+                    return collated
+
+                train_dataloader = DataLoader(
+                    train_dataset, 
+                    batch_size=self.config.batch_size, 
+                    shuffle=True, 
+                    collate_fn=collate_fn
+                )
+                val_dataloader = DataLoader(
+                    val_dataset, 
+                    batch_size=self.config.batch_size, 
+                    shuffle=False, 
+                    collate_fn=collate_fn
+                )
+
+                # 9. Initialize trainer
                 trainer = HyenaGLTTrainer(
                     model=model,
                     config=training_config,
-                    train_dataloader=DataLoader(train_dataset, batch_size=8, shuffle=True),
-                    eval_dataloader=DataLoader(val_dataset, batch_size=8, shuffle=False),
+                    train_dataloader=train_dataloader,
+                    eval_dataloader=val_dataloader,
                     tokenizer=self.tokenizers.get('dna'),  # Primary tokenizer
                 )
 
-                # 9. Train model with enhanced monitoring
+                # 10. Train model with enhanced monitoring
                 self.logger.info("Starting enhanced training...")
 
-                training_results = trainer.train()
+                # Use custom training method that supports max_steps
+                training_results = self.train_with_step_control(trainer)
 
-                # 10. Analyze model interpretability
+                # 11. Analyze model interpretability
                 if self.config.enable_interpretability and val_dataset:
-                    sample_data = next(iter(DataLoader(val_dataset, batch_size=1)))
-                    attention_analysis = self.analyze_attention_patterns(model, sample_data)
+                    # Create a sample with correct key mapping and move to device
+                    sample_batch = collate_fn([val_dataset[0]])
+                    device = next(model.parameters()).device
+                    sample_batch = {k: v.to(device) if torch.is_tensor(v) else v for k, v in sample_batch.items()}
+                    attention_analysis = self.analyze_attention_patterns(model, sample_batch)
                     self.logger.info(f"Attention analysis: {attention_analysis}")
 
-                # 11. Save final model and results
+                # 12. Save final model and results
                 model.save_pretrained(f"{self.config.output_dir}/models/final_model")
 
-                # 12. Generate comprehensive report
-                self.generate_training_report(training_results, attention_analysis if self.config.enable_interpretability else {})
+            # Get performance metrics after profiler context has completed
+            if self.config.profile_performance and hasattr(self, 'profiler'):
+                try:
+                    performance_metrics = self.profiler.get_metrics()
+                except RuntimeError as e:
+                    self.logger.warning(f"Could not get profiler metrics: {e}")
+                    performance_metrics = {"error": "Profiler context not completed properly"}
 
-                self.logger.info("Enhanced training pipeline completed successfully!")
+            # 13. Generate comprehensive report
+            self.generate_training_report(
+                training_results, 
+                attention_analysis,
+                performance_metrics
+            )
+
+            self.logger.info("Enhanced training pipeline completed successfully!")
 
         except Exception as e:
             self.logger.error(f"Training pipeline failed: {str(e)}")
             raise
 
-    def generate_training_report(self, training_results: dict[str, Any], attention_analysis: dict[str, Any]):
+    def generate_training_report(self, training_results: dict[str, Any], attention_analysis: dict[str, Any], performance_metrics: dict[str, Any] = None):
         """Generate comprehensive training report."""
         self.logger.info("Generating training report...")
+
+        # Use provided performance metrics or empty dict
+        if performance_metrics is None:
+            performance_metrics = {}
 
         report = {
             'experiment_name': self.config.experiment_name,
@@ -537,7 +759,7 @@ class EnhancedTrainingPipeline:
             'config': asdict(self.config),
             'training_results': training_results,
             'attention_analysis': attention_analysis,
-            'performance_profile': self.profiler.get_summary() if self.config.profile_performance else {}
+            'performance_profile': performance_metrics
         }
 
         # Save report
@@ -591,6 +813,9 @@ def main():
     parser.add_argument("--output-dir", default="./enhanced_training_outputs", help="Output directory")
     parser.add_argument("--experiment-name", default="enhanced_hyena_glt", help="Experiment name")
     parser.add_argument("--model-size", choices=['small', 'base', 'large'], default='base', help="Model size")
+    parser.add_argument("--num-epochs", type=int, default=1, help="Number of training epochs")
+    parser.add_argument("--max-steps", type=int, default=None, help="Maximum number of training steps (overrides epochs)")
+    parser.add_argument("--batch-size", type=int, default=2, help="Training batch size")
     parser.add_argument("--disable-multimodal", action='store_true', help="Disable multi-modal training")
     parser.add_argument("--disable-curriculum", action='store_true', help="Disable curriculum learning")
     parser.add_argument("--disable-interpretability", action='store_true', help="Disable interpretability analysis")
@@ -604,6 +829,9 @@ def main():
         output_dir=args.output_dir,
         experiment_name=args.experiment_name,
         model_size=args.model_size,
+        num_epochs=args.num_epochs,
+        max_steps=args.max_steps,
+        batch_size=args.batch_size,
         use_multimodal=not args.disable_multimodal,
         use_curriculum=not args.disable_curriculum,
         enable_interpretability=not args.disable_interpretability,

@@ -1,0 +1,24 @@
+filtering:
+  filter_n_bases: true
+  filter_repeats: true
+  min_quality: 10.0
+output:
+  chunk_size: 50000
+  compress: true
+  format: hdf5
+  output_dir: processed_data/large_scale/
+preprocessing:
+  input_path: data/large_genome_dataset/
+  max_length: 4096
+  min_length: 100
+  overlap: 2048
+  sequence_type: dna
+  stride: 2048
+  task: sequence_classification
+system:
+  memory_limit: 32GB
+  num_workers: 16
+  show_progress: true
+tokenization:
+  kmer_size: 8
+  vocab_size: 16384

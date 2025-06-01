@@ -1,0 +1,20 @@
+# Protein Sequence Preprocessing Configuration
+# ===========================================
+# Configuration for preprocessing protein sequences
+# Uses smaller k-mer size optimized for protein data
+
+preprocessing:
+  task: sequence_classification
+  input_path: data/proteins.fasta  # Your protein data path
+  max_length: 512
+  min_length: 20
+  sequence_type: protein
+  remove_duplicates: true
+
+tokenization:
+  vocab_size: 2048
+  kmer_size: 3  # Smaller k-mer for proteins
+
+output:
+  output_dir: processed_data/proteins/
+  format: hdf5

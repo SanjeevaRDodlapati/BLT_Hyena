@@ -1,0 +1,39 @@
+# DNA Sequence Classification Preprocessing Configuration
+# =====================================================
+# Configuration for preprocessing genomic sequences for classification tasks
+# Similar to savanna configs but adapted for Hyena-GLT preprocessing
+
+preprocessing:
+  task: sequence_classification
+  input_path: data/genome_sequences.fasta  # Your input data path
+  max_length: 1024
+  min_length: 50
+  sequence_type: dna
+  remove_duplicates: true
+  normalize_case: true
+  filter_non_standard: true
+
+tokenization:
+  vocab_size: 4096
+  kmer_size: 6
+
+filtering:
+  filter_n_bases: true
+  max_ambiguous_fraction: 0.1
+
+splitting:
+  train_fraction: 0.8
+  val_fraction: 0.1
+  test_fraction: 0.1
+  random_seed: 42
+
+output:
+  output_dir: processed_data/dna_classification/
+  format: hdf5
+  compress: true
+  chunk_size: 10000
+
+system:
+  num_workers: 4
+  memory_limit: 8GB
+  show_progress: true

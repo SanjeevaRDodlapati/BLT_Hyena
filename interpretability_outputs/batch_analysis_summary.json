@@ -1,0 +1,27 @@
+{
+  "individual_results": [
+    {
+      "sequence": "<tensor_sequence_length_128>",
+      "length": 128
+    },
+    {
+      "sequence": "<tensor_sequence_length_128>",
+      "length": 128
+    },
+    {
+      "sequence": "<tensor_sequence_length_128>",
+      "length": 128
+    },
+    {
+      "sequence": "<tensor_sequence_length_128>",
+      "length": 128
+    }
+  ],
+  "consensus_motifs": [],
+  "summary_statistics": {
+    "num_sequences": 4,
+    "avg_length": 128.0,
+    "attention_stats": {},
+    "gradient_stats": {}
+  }
+}

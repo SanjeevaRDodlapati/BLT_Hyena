@@ -1,0 +1,89 @@
+# Hyena-GLT Pretraining Configuration Examples
+
+# Base configuration for MLM pretraining on small model
+model:
+  d_model: 512
+  n_layer: 12
+  n_head: 8
+  vocab_size: 32
+  max_position_embeddings: 8192
+  layer_norm_epsilon: 1e-5
+  dropout: 0.1
+  use_cache: false
+
+data:
+  data_paths:
+    - "/path/to/genomic/data"
+  data_types: ["fasta", "txt"]
+  max_sequence_length: 8192
+  tokenizer_type: "dna"
+  num_workers: 4
+  pin_memory: true
+  data_mixing_weights: [1.0]
+  validation_split: 0.1
+  validation_data_paths: []
+  preprocessing:
+    filter_short_sequences: true
+    min_sequence_length: 100
+    remove_ambiguous_bases: false
+    reverse_complement_augmentation: false
+
+strategy:
+  name: "mlm"
+  mask_probability: 0.15
+  mask_token_probability: 0.8
+  random_token_probability: 0.1
+  leave_unmasked_probability: 0.1
+  span_masking:
+    enable: false
+    mean_span_length: 3.0
+    max_span_length: 10
+  oadm:
+    enable: false
+    num_diffusion_steps: 1000
+    noise_schedule: "cosine"
+
+loss:
+  type: "cross_entropy"
+  label_smoothing: 0.0
+  focal_loss:
+    enable: false
+    alpha: 1.0
+    gamma: 2.0
+  ignore_index: -100
+
+optimization:
+  learning_rate: 1e-4
+  weight_decay: 0.01
+  batch_size: 32
+  gradient_accumulation_steps: 1
+  max_steps: 100000
+  warmup_steps: 5000
+  lr_scheduler: "cosine"
+  optimizer: "adamw"
+  max_grad_norm: 1.0
+  early_stopping:
+    enable: false
+    patience: 10
+    min_delta: 0.001
+
+hardware:
+  device: "auto"
+  mixed_precision: true
+  compile_model: false
+  dataloader_num_workers: 4
+  pin_memory: true
+
+logging:
+  output_dir: "./pretraining_output"
+  experiment_name: "hyena_glt_pretraining"
+  log_every_n_steps: 100
+  save_every_n_steps: 5000
+  validate_every_n_steps: 1000
+  max_checkpoints_to_keep: 3
+  wandb:
+    enable: false
+    project: "hyena-glt"
+    entity: null
+    tags: ["pretraining", "genomics"]
+  resume_from_checkpoint: null

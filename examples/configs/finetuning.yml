@@ -1,0 +1,23 @@
+data:
+  tokenizer_path: processed_data/task_specific/tokenizer.json
+  train_file: processed_data/task_specific/train.hdf5
+  val_file: processed_data/task_specific/val.hdf5
+model:
+  freeze_embeddings: false
+  freeze_encoder_layers: 0
+  model_type: hyena_glt
+  pretrained_model_path: models/pretrained_hyena_glt.pt
+optimization:
+  layer_wise_decay: 0.8
+  mixed_precision: true
+  optimizer: adamw
+  weight_decay: 0.001
+training:
+  batch_size: 32
+  data_path: processed_data/task_specific/
+  epochs: 3
+  learning_rate: 2.0e-05
+  max_length: 1024
+  output_dir: training_output/finetuned_model/
+  save_steps: 200
+  warmup_steps: 500

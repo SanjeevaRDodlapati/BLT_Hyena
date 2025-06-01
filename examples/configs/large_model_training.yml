@@ -1,0 +1,34 @@
+data:
+  tokenizer_path: processed_data/large_scale/tokenizer.json
+  train_file: processed_data/large_scale/train.hdf5
+  val_file: processed_data/large_scale/val.hdf5
+model:
+  hidden_size: 1024
+  kmer_size: 8
+  max_position_embeddings: 32768
+  model_size: large
+  model_type: hyena_glt
+  num_layers: 24
+  sequence_type: dna
+  vocab_size: 16384
+optimization:
+  gradient_clipping: 1.0
+  mixed_precision: true
+  optimizer: adamw
+  use_fsdp: true
+  weight_decay: 0.01
+system:
+  device: auto
+  gradient_checkpointing: true
+  num_workers: 8
+training:
+  batch_size: 8
+  data_path: processed_data/large_scale/
+  epochs: 5
+  eval_steps: 500
+  gradient_accumulation_steps: 4
+  learning_rate: 5.0e-05
+  max_length: 4096
+  output_dir: training_output/large_model/
+  save_steps: 1000
+  warmup_steps: 2000

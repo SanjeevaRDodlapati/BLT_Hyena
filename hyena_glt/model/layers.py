@@ -145,9 +145,10 @@ class AdaptiveTokenMerger(nn.Module):
 
             merge_signal = merge_signal * attention_mask
 
-        # Use adaptive thresholding
-        threshold = torch.quantile(merge_signal, 0.7, dim=1, keepdim=True)
-        merge_boundaries = (merge_signal < threshold).float()
+        # Use adaptive thresholding - ensure tensor is float for quantile operation
+        merge_signal_float = merge_signal.float()
+        threshold = torch.quantile(merge_signal_float, 0.7, dim=1, keepdim=True)
+        merge_boundaries = (merge_signal_float < threshold).float()
 
         # Ensure minimum and maximum patch sizes
         merge_boundaries = self._enforce_patch_size_constraints(merge_boundaries)

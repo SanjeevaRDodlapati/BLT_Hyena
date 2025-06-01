@@ -9,6 +9,7 @@ Usage:
 
 import argparse
 import json
+import yaml
 import logging
 import os
 import sys
@@ -80,7 +81,7 @@ Examples:
     )
 
     parser.add_argument(
-        "--config", type=str, help="Path to preprocessing configuration JSON file"
+        "--config", type=str, help="Path to preprocessing configuration file (JSON or YAML)"
     )
 
     # Sequence parameters
@@ -241,8 +242,13 @@ def setup_preprocessing_config(args: argparse.Namespace) -> dict[str, Any]:
     """Setup preprocessing configuration from arguments."""
     # Load base config if provided
     if args.config:
-        with open(args.config) as f:
-            config: dict[str, Any] = json.load(f)
+        config_path = Path(args.config)
+        if config_path.suffix.lower() in ['.yml', '.yaml']:
+            with open(config_path) as f:
+                config: dict[str, Any] = yaml.safe_load(f)
+        else:
+            with open(config_path) as f:
+                config: dict[str, Any] = json.load(f)
     else:
         config = {
             "preprocessing": {},

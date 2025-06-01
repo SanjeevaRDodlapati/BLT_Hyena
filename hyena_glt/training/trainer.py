@@ -130,7 +130,7 @@ class TrainingConfig:
     bf16: bool = False
     fp8: bool = False
     mixed_precision_mode: str = "fp16"  # "fp16", "bf16", "fp8", "adaptive"
-    dynamic_loss_scaling: bool = True
+    dynamic_loss_scale: bool = True
     loss_scale: float | None = None
     gradient_clipping: float = 1.0
     kernel_precision: str = "ieee"  # "ieee", "tf32", "tf32x3"
@@ -200,7 +200,7 @@ class HyenaGLTTrainer:
             
             mixed_precision_config = MixedPrecisionConfig(
                 mode=precision_mode,
-                dynamic_loss_scaling=config.dynamic_loss_scaling,
+                dynamic_loss_scale=config.dynamic_loss_scale,
                 loss_scale=config.loss_scale,
                 gradient_clipping=config.gradient_clipping,
                 kernel_precision=config.kernel_precision,
