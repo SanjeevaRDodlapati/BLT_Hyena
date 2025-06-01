@@ -1,16 +1,27 @@
 #!/bin/bash
-# Push to all configured remote repositories
-# Usage: ./scripts/git_push_all_remotes.sh [branch_name]
+# DEPRECATED: Use ./scripts/git_manager.sh push instead
+# This script is maintained for backward compatibility
+# 
+# Migration:
+#   ./scripts/git_push_all_remotes.sh main       -> ./scripts/git_manager.sh push main
+#   ./scripts/git_push_all_remotes.sh main --force-push -> ./scripts/git_manager.sh push main --force
 
-BRANCH=${1:-main}
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-
-echo "🚀 Pushing to all remote repositories..."
-echo "📁 Repository: $REPO_DIR"
-echo "🌿 Branch: $BRANCH"
+echo "⚠️  DEPRECATED: This script is deprecated."
+echo "💡 Use the new unified git manager instead:"
+echo "   ./scripts/git_manager.sh push $1 ${2:+--force}"
+echo ""
+echo "🔄 Redirecting to new script..."
 echo ""
 
-cd "$REPO_DIR" || exit 1
+# Parse arguments for compatibility
+BRANCH=${1:-main}
+FORCE_FLAG=""
+if [ "$2" = "--force-push" ]; then
+    FORCE_FLAG="--force"
+fi
+
+# Redirect to new script
+exec "$(dirname "${BASH_SOURCE[0]}")/git_manager.sh" push "$BRANCH" $FORCE_FLAG
 
 # Get list of all remotes
 REMOTES=$(git remote)
