@@ -2,6 +2,41 @@
 
 This document provides a comprehensive overview of the Hyena-GLT architecture, explaining how it combines BLT's byte latent tokenization with Savanna's Striped Hyena blocks for genomic sequence modeling.
 
+## 📚 Tutorial Navigation
+
+**Your Deep Architectural Guide To:**
+- 🏛️ **System design** and component relationships
+- 🔧 **Implementation details** for each architectural layer
+- 📊 **Performance characteristics** and optimization strategies
+- 🧬 **Genomic-specific adaptations** and domain expertise
+
+**Prerequisites (Essential):**
+- 📖 [Technical Guide](TECHNICAL_GUIDE.md) - Foundational BLT_Hyena concepts ***(START HERE)***
+- 🎯 [BLT Position Embeddings](BLT_POSITION_EMBEDDINGS.md) - Position system fundamentals
+- 👤 [User Guide](USER_GUIDE.md) - Practical implementation context
+
+**Related Specialized Guides:**
+- 🔧 [Patcher Implementation](PATCHER_IMPLEMENTATION.md) - External patcher integration details
+- 🚀 [Integration Guide](INTEGRATION_GUIDE.md) - Advanced integration patterns
+- 📊 [Performance Analysis](PERFORMANCE_ANALYSIS.md) - Benchmarking and optimization
+- 🔗 [API Reference](API_REFERENCE.md) - Implementation details and class documentation
+
+**Tutorial Learning Path:**
+1. **Foundation** → [Technical Guide](TECHNICAL_GUIDE.md) for high-level understanding
+2. **Architecture** → This guide for deep architectural concepts
+3. **Implementation** → [Patcher Implementation](PATCHER_IMPLEMENTATION.md) and [Integration Guide](INTEGRATION_GUIDE.md)
+4. **Optimization** → [Performance Analysis](PERFORMANCE_ANALYSIS.md) for production tuning
+5. **Application** → [User Guide](USER_GUIDE.md) for practical usage patterns
+
+**Quick Access:**
+- 🔗 [API Reference](API_REFERENCE.md) - Complete implementation documentation
+- 💡 [Examples](EXAMPLES.md) - Architectural pattern examples
+- 🛠️ [Troubleshooting](INTEGRATION_GUIDE.md#troubleshooting) - Common architectural issues
+
+> **🏛️ Architecture Focus**: This guide provides deep architectural understanding essential for advanced usage, optimization, and extension of the Hyena-GLT system. For practical implementation, start with the [User Guide](USER_GUIDE.md).
+
+---
+
 ## Table of Contents
 
 1. [Architecture Overview](#architecture-overview)
@@ -14,12 +49,25 @@ This document provides a comprehensive overview of the Hyena-GLT architecture, e
 
 ## Architecture Overview
 
+🔗 **Implementation Context**: For practical usage patterns, see [User Guide](USER_GUIDE.md#understanding-the-architecture) and [Technical Guide](TECHNICAL_GUIDE.md#architecture-overview)
+
 Hyena-GLT is a hybrid architecture that combines:
 
 1. **BLT's Byte Latent Tokenization**: Efficient tokenization for genomic sequences
+   - 🎯 **Deep Dive**: [BLT Position Embeddings](BLT_POSITION_EMBEDDINGS.md) - Complete position system implementation
+   - 🔧 **Integration**: [Patcher Implementation](PATCHER_IMPLEMENTATION.md) - External patcher details
+
 2. **Striped Hyena Blocks**: Long-range convolutions with subquadratic complexity
+   - 📊 **Performance**: [Performance Analysis](PERFORMANCE_ANALYSIS.md#hyena-operators) - Complexity analysis and benchmarks
+   - 🔗 **API Details**: [API Reference](API_REFERENCE.md#hyena-blocks) - Implementation documentation
+
 3. **Dynamic Token Merging**: Adaptive sequence compression for efficiency
+   - 🏛️ **Algorithm Details**: See [Dynamic Token Merging](#dynamic-token-merging) section below
+   - 📊 **Performance Impact**: [Performance Analysis](PERFORMANCE_ANALYSIS.md#token-merging-analysis) - Efficiency metrics
+
 4. **Genomic-Specific Adaptations**: Specialized components for biological sequences
+   - 💡 **Applications**: [Examples](EXAMPLES.md) - Genomic sequence modeling examples
+   - 👤 **Usage Patterns**: [User Guide](USER_GUIDE.md#supported-sequence-types) - Practical implementation
 
 ```
 Input Sequence
@@ -51,6 +99,10 @@ Output
 
 ### 1. Byte Latent Tokenization
 
+🔗 **Implementation**: [BLT Position Embeddings](BLT_POSITION_EMBEDDINGS.md#tokenization-integration) - Deep tokenization system details
+📊 **Performance**: [Performance Analysis](PERFORMANCE_ANALYSIS.md#tokenization-efficiency) - Tokenization benchmarks and comparisons
+🎯 **Configuration**: [Configuration Guide](CONFIGURATION_GUIDE.md#tokenization-settings) - Tokenization parameter tuning
+
 #### Tokenization Process
 
 ```python
@@ -67,10 +119,17 @@ compressed_tokens = byte_latent_tokenizer.encode(bytes_representation)
 #### Key Features
 
 - **Variable-length encoding**: Adapts to sequence complexity
+  - 🔧 **Implementation**: [API Reference](API_REFERENCE.md#variable-length-encoding) - Encoding methods and parameters
 - **Learned compression**: Training-time optimization of token boundaries
+  - 🎯 **Training**: [Training Guide](TRAINING_GUIDE.md#tokenization-training) - Optimizing tokenization during training
 - **Cross-modal compatibility**: Works with DNA, RNA, and protein sequences
+  - 💡 **Examples**: [Examples](EXAMPLES.md#multi-modal-sequences) - Cross-modal tokenization examples
 
 ### 2. Embedding Architecture
+
+🏛️ **Architecture**: [BLT Position Embeddings](BLT_POSITION_EMBEDDINGS.md#embedding-integration) - Advanced position embedding system
+🔧 **Implementation**: [API Reference](API_REFERENCE.md#embedding-layers) - Embedding layer APIs and usage
+📊 **Performance**: [Performance Analysis](PERFORMANCE_ANALYSIS.md#embedding-efficiency) - Embedding layer benchmarks
 
 ```python
 class HyenaGLTEmbedding(nn.Module):
@@ -97,7 +156,14 @@ class HyenaGLTEmbedding(nn.Module):
 
 ## Hyena Operators
 
+🏛️ **Core Concept**: [Technical Guide](TECHNICAL_GUIDE.md#hyena-architecture) - Hyena operator fundamentals and design principles
+📊 **Performance**: [Performance Analysis](PERFORMANCE_ANALYSIS.md#hyena-operators) - Detailed complexity analysis and benchmarks
+🔧 **Implementation**: [API Reference](API_REFERENCE.md#hyena-operators) - Complete operator API documentation
+
 ### 1. Standard Hyena Operator
+
+🔗 **Deep Dive**: [Hyena Layer Implementation](HYENA_LAYER_IMPLEMENTATION.md) - Detailed implementation analysis
+⚙️ **Configuration**: [Configuration Guide](CONFIGURATION_GUIDE.md#hyena-operator-settings) - Operator parameter tuning
 
 The core Hyena operator provides efficient long-range modeling through:
 
@@ -197,7 +263,15 @@ class GenomicHyenaOperator(HyenaOperator):
 
 ## Dynamic Token Merging
 
+🎯 **Core Innovation**: [Technical Guide](TECHNICAL_GUIDE.md#dynamic-token-merging) - Token merging fundamentals and motivation
+📊 **Performance Impact**: [Performance Analysis](PERFORMANCE_ANALYSIS.md#token-merging-analysis) - Efficiency metrics and scaling benefits
+🔧 **Configuration**: [Configuration Guide](CONFIGURATION_GUIDE.md#token-merging-settings) - Merging parameter optimization
+💡 **Applications**: [Examples](EXAMPLES.md#token-merging-examples) - Real-world token merging use cases
+
 ### 1. Merging Strategy
+
+🏛️ **Algorithm Details**: [BLT Position Embeddings](BLT_POSITION_EMBEDDINGS.md#token-merging-integration) - Position-aware merging
+⚙️ **Implementation**: [API Reference](API_REFERENCE.md#adaptive-token-merger) - Complete API documentation
 
 Dynamic token merging reduces sequence length adaptively:
 
@@ -278,7 +352,15 @@ class AdaptiveMergingLayer(DynamicMergingLayer):
 
 ## Task-Specific Heads
 
+🎯 **Application Layer**: [User Guide](USER_GUIDE.md#task-specific-configurations) - Practical head usage patterns
+🔧 **Implementation**: [API Reference](API_REFERENCE.md#task-heads) - Complete head API documentation
+💡 **Examples**: [Examples](EXAMPLES.md#task-specific-examples) - Real-world task implementations
+📊 **Performance**: [Performance Analysis](PERFORMANCE_ANALYSIS.md#task-head-analysis) - Head-specific performance benchmarks
+
 ### 1. Sequence Classification Head
+
+🏛️ **Architecture**: [Technical Guide](TECHNICAL_GUIDE.md#classification-heads) - Classification head design principles
+⚙️ **Configuration**: [Configuration Guide](CONFIGURATION_GUIDE.md#classification-settings) - Classification parameter tuning
 
 ```python
 class SequenceClassificationHead(nn.Module):
@@ -347,7 +429,15 @@ class RegressionHead(nn.Module):
 
 ## Training Dynamics
 
+🎯 **Training Strategy**: [Training Guide](TRAINING_GUIDE.md) - Comprehensive training methodologies and best practices
+📊 **Performance**: [Performance Analysis](PERFORMANCE_ANALYSIS.md#training-dynamics) - Training efficiency and convergence analysis
+⚙️ **Configuration**: [Configuration Guide](CONFIGURATION_GUIDE.md#training-settings) - Training parameter optimization
+💡 **Advanced Techniques**: [Advanced Training](ADVANCED_TRAINING.md) - Specialized training approaches
+
 ### 1. Curriculum Learning Integration
+
+🔗 **Implementation**: [Training Guide](TRAINING_GUIDE.md#curriculum-learning) - Detailed curriculum learning setup
+🏛️ **Theory**: [Technical Guide](TECHNICAL_GUIDE.md#curriculum-learning-theory) - Theoretical foundations
 
 ```python
 class HyenaGLTWithCurriculum(HyenaGLTModel):
@@ -405,7 +495,15 @@ class MultiTaskHyenaGLT(nn.Module):
 
 ## Performance Characteristics
 
+📊 **Comprehensive Analysis**: [Performance Analysis](PERFORMANCE_ANALYSIS.md) - Detailed benchmarks, profiling, and optimization analysis
+⚙️ **Optimization**: [Optimization Guide](OPTIMIZATION_GUIDE.md) - Performance tuning strategies and best practices
+🔧 **Monitoring**: [API Reference](API_REFERENCE.md#performance-monitoring) - Performance monitoring tools and APIs
+💡 **Real-world Results**: [Examples](EXAMPLES.md#performance-examples) - Performance examples across different tasks
+
 ### 1. Computational Complexity
+
+🏛️ **Theoretical Analysis**: [Technical Guide](TECHNICAL_GUIDE.md#complexity-analysis) - Mathematical complexity foundations
+📊 **Empirical Results**: [Performance Analysis](PERFORMANCE_ANALYSIS.md#complexity-benchmarks) - Real-world complexity measurements
 
 - **Standard Transformer**: O(n²d) for sequence length n and dimension d
 - **Hyena Operator**: O(n log n d) using FFT-based convolutions
@@ -453,13 +551,28 @@ def estimate_memory_usage(config, batch_size, sequence_length):
 
 ## BLT Position Embedding System
 
+🏛️ **Complete System**: [BLT Position Embeddings](BLT_POSITION_EMBEDDINGS.md) - Comprehensive BLT position system documentation
+📊 **Performance Analysis**: [Performance Analysis](PERFORMANCE_ANALYSIS.md#blt-position-system) - BLT position system benchmarks
+🔧 **Implementation**: [API Reference](API_REFERENCE.md#blt-position-embeddings) - Complete BLT position API
+⚙️ **Configuration**: [Configuration Guide](CONFIGURATION_GUIDE.md#position-embedding-settings) - Position system parameter tuning
+
 ### Overview
+
+🎯 **Innovation**: [Technical Guide](TECHNICAL_GUIDE.md#blt-position-innovations) - Position embedding innovations and design principles
+💡 **Applications**: [Examples](EXAMPLES.md#blt-position-examples) - Real-world BLT position system usage
 
 The BLT Position Embedding System is a sophisticated position tracking mechanism designed to handle dynamic token merging in genomic sequences. Unlike traditional position embeddings that lose positional information during token merging, the BLT system preserves both fine-grained and global positional information through a three-tier architecture.
 
 ### Architecture Components
 
+🏛️ **Deep Dive**: [BLT Position Embeddings](BLT_POSITION_EMBEDDINGS.md#architecture-components) - Detailed component architecture
+🔧 **Implementation**: [API Reference](API_REFERENCE.md#position-embedding-components) - Component APIs and interfaces
+⚙️ **Configuration**: [Configuration Guide](CONFIGURATION_GUIDE.md#blt-position-configuration) - Component-specific settings
+
 #### 1. Segment-Aware Positional Encoding
+
+🎯 **Core Innovation**: [Technical Guide](TECHNICAL_GUIDE.md#segment-aware-encoding) - Segment encoding principles
+📊 **Performance**: [Performance Analysis](PERFORMANCE_ANALYSIS.md#segment-encoding-performance) - Encoding efficiency metrics
 
 ```python
 class SegmentAwarePositionalEncoding(nn.Module):
@@ -481,6 +594,10 @@ class SegmentAwarePositionalEncoding(nn.Module):
 3. **Position in Patch** (`pos_in_patch`): Relative position within the merged patch (0.0 to 1.0)
 
 #### 2. Cross-Attention Position Bridge
+
+🔗 **Implementation Details**: [BLT Position Embeddings](BLT_POSITION_EMBEDDINGS.md#cross-attention-bridge) - Complete bridge implementation
+📊 **Performance Analysis**: [Performance Analysis](PERFORMANCE_ANALYSIS.md#cross-attention-performance) - Bridge efficiency and memory usage
+🔧 **API Reference**: [API Reference](API_REFERENCE.md#cross-attention-bridge) - Bridge API documentation
 
 ```python
 class CrossAttentionPositionBridge(nn.Module):
@@ -645,7 +762,15 @@ def decode_patch_to_byte(self, patch_repr, target_byte_len, patch_boundaries):
 
 ### Genomic-Specific Features
 
+🧬 **Biological Context**: [Technical Guide](TECHNICAL_GUIDE.md#genomic-adaptations) - Genomic modeling principles and biological context
+💡 **Applications**: [Examples](EXAMPLES.md#genomic-specific-examples) - Real-world genomic pattern detection examples
+🔧 **Implementation**: [API Reference](API_REFERENCE.md#genomic-features) - Genomic feature APIs and usage
+📊 **Performance**: [Performance Analysis](PERFORMANCE_ANALYSIS.md#genomic-feature-performance) - Genomic feature efficiency metrics
+
 #### 1. Codon Pattern Encoding
+
+🎯 **Biological Relevance**: [Technical Guide](TECHNICAL_GUIDE.md#codon-patterns) - Codon biology and modeling significance
+⚙️ **Configuration**: [Configuration Guide](CONFIGURATION_GUIDE.md#genomic-pattern-settings) - Codon pattern parameter tuning
 
 ```python
 def _add_genomic_patterns(self):
@@ -911,3 +1036,183 @@ def visualize_position_preservation(position_manager, sequence_length=64):
 ```
 
 This architecture guide provides the foundation for understanding how Hyena-GLT achieves efficient and effective genomic sequence modeling through its hybrid design.
+
+## Code-Documentation Cross-References
+
+### Implementation Files
+
+The concepts described in this document are implemented across several key files:
+
+#### Core Model Components
+- **`hyena_glt/model/hyena_glt.py`**: Main model implementation with full architecture integration
+- **`hyena_glt/model/layers.py`**: Contains `AdaptiveTokenMerger` and dynamic token merging logic
+- **`hyena_glt/model/position_embeddings.py`**: Complete BLT position embedding system implementation
+- **`hyena_glt/model/hyena_layer.py`**: Hyena operator implementations (Standard, Striped, Genomic-adapted)
+
+#### Configuration and Utilities  
+- **`hyena_glt/configuration_hyena_glt.py`**: Model configuration with all architectural parameters
+- **`hyena_glt/utils/`**: Utility functions for genomic data processing and visualization
+- **`scripts/demos/demo_blt_position_system.py`**: Demonstration of BLT position system functionality
+
+#### Integration Examples
+- **`scripts/training/train_hyena_glt.py`**: Complete training script showing architecture usage
+- **`scripts/evaluation/evaluate_model.py`**: Evaluation scripts demonstrating task-specific heads
+- **`examples/genomic_tasks/`**: Real-world genomic task implementations
+
+### External Patcher Integration
+
+For sophisticated patching capabilities beyond the built-in token merging:
+
+#### Advanced Patcher Implementation
+- **External Reference**: `bytelatent.data.patcher.Patcher` (see `PATCHER_IMPLEMENTATION.md`)
+- **Integration Guide**: See `INTEGRATION_GUIDE.md` for combining external patchers with BLT_Hyena
+- **API Reference**: Complete function signatures in `API_REFERENCE.md`
+
+#### Patching Modes Supported
+1. **Greedy Mode**: Fast, approximate patching
+2. **Optimal Mode**: Exact solution with dynamic programming
+3. **Entropy-Based**: Content-aware adaptive patching
+4. **Length-Constrained**: Genomic sequence-specific constraints
+5. **Dual-Threshold**: Advanced similarity scoring
+6. **Monotonic**: Preserves sequence ordering properties
+
+### Architecture Validation
+
+#### Performance Benchmarks
+- **Memory Usage**: See `PERFORMANCE_ANALYSIS.md` for detailed benchmarks
+- **Latency Analysis**: Comprehensive timing comparisons
+- **Scalability Tests**: Results for sequences up to 1M+ base pairs
+
+#### Integration Tests
+- **Unit Tests**: `tests/test_position_embeddings.py` - BLT position system validation
+- **Integration Tests**: `tests/test_hyena_glt_integration.py` - Full architecture testing
+- **Performance Tests**: `tests/test_performance.py` - Benchmark validation
+
+### Parameter Mapping
+
+#### Configuration Parameters
+```python
+# From hyena_glt/configuration_hyena_glt.py
+class HyenaGLTConfig:
+    # Architecture parameters documented in this guide
+    d_model: int = 256                    # Section: "Core Components"
+    n_layers: int = 12                    # Section: "Hyena Operators"
+    max_position_embeddings: int = 2048   # Section: "BLT Position Embedding System"
+    merge_ratio: float = 0.5              # Section: "Dynamic Token Merging"
+    
+    # Advanced features
+    use_blt_positions: bool = True        # Enables BLT position system
+    use_adaptive_merging: bool = True     # Enables dynamic token merging
+    use_genomic_patterns: bool = True     # Enables genomic-specific features
+```
+
+#### Runtime Parameters
+```python
+# Parameters referenced in architectural descriptions
+position_manager = BLTPositionManager(
+    d_model=config.d_model,               # Matches "Embedding Architecture"
+    max_len=config.max_position_embeddings, # Matches position encoding limits
+    num_heads=config.num_attention_heads  # Cross-attention bridge configuration
+)
+
+adaptive_merger = AdaptiveTokenMerger(
+    d_model=config.d_model,               # Matches "Dynamic Token Merging"
+    merge_ratio=config.merge_ratio,       # Configurable merging aggressiveness
+    threshold=config.merge_threshold      # Similarity threshold for merging
+)
+```
+
+### Real Implementation Examples
+
+The conceptual examples in this document have corresponding real implementations:
+
+#### BLT Position System (Section: "BLT Position Embedding System")
+```python
+# Real implementation in hyena_glt/model/position_embeddings.py
+class BLTPositionManager(nn.Module):
+    def encode_positions(self, hidden_states, **kwargs):
+        # Actual implementation of position encoding described in architecture
+        
+    def create_patch_representations(self, byte_hidden_states, patch_boundaries):
+        # Real cross-attention bridge implementation
+        
+    def reconstruct_byte_representations(self, patch_repr, position_info, target_shape):
+        # Actual position reconstruction implementation
+```
+
+#### Adaptive Token Merging (Section: "Dynamic Token Merging")
+```python
+# Real implementation in hyena_glt/model/layers.py
+class AdaptiveTokenMerger(nn.Module):
+    def forward(self, hidden_states, attention_mask=None):
+        # Actual implementation of merging logic described in architecture
+        content_scores = self._compute_content_similarity(hidden_states)
+        pattern_features = self._detect_genomic_patterns(hidden_states)
+        merge_decisions = self._make_merge_decisions(content_scores, pattern_features)
+        return self._perform_merging(hidden_states, merge_decisions, attention_mask)
+```
+
+#### Model Integration (Section: "Core Components")
+```python
+# Real usage in hyena_glt/model/hyena_glt.py
+class HyenaGLTModel(PreTrainedModel):
+    def __init__(self, config):
+        # Direct implementation of architecture described in this document
+        self.position_manager = BLTPositionManager(config)
+        self.token_merger = AdaptiveTokenMerger(config)
+        self.hyena_layers = nn.ModuleList([
+            HyenaGLTBlock(config) for _ in range(config.n_layers)
+        ])
+```
+
+This comprehensive cross-referencing ensures that every architectural concept has a direct implementation counterpart, making the documentation both conceptually clear and practically actionable.
+
+## Complete Architecture Cross-Reference Index
+
+### 🏛️ Core Architecture Documentation
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - This comprehensive architecture guide (current document)
+- **[TECHNICAL_GUIDE.md](TECHNICAL_GUIDE.md)** - Technical foundations and theoretical background
+- **[BLT_POSITION_EMBEDDINGS.md](BLT_POSITION_EMBEDDINGS.md)** - Complete BLT position embedding system
+- **[PATCHER_IMPLEMENTATION.md](PATCHER_IMPLEMENTATION.md)** - External patcher integration details
+
+### 📊 Performance and Analysis Resources
+- **[PERFORMANCE_ANALYSIS.md](PERFORMANCE_ANALYSIS.md)** - Comprehensive performance benchmarks and optimization analysis
+- **[OPTIMIZATION_GUIDE.md](OPTIMIZATION_GUIDE.md)** - Performance tuning strategies and best practices
+- **[BENCHMARKING.md](BENCHMARKING.md)** - Detailed benchmarking methodologies and results
+
+### ⚙️ Configuration and Setup Resources
+- **[CONFIGURATION_GUIDE.md](CONFIGURATION_GUIDE.md)** - Complete configuration parameter documentation
+- **[TRAINING_GUIDE.md](TRAINING_GUIDE.md)** - Training methodologies and curriculum learning
+- **[ADVANCED_TRAINING.md](ADVANCED_TRAINING.md)** - Specialized training techniques and approaches
+
+### 🔧 Implementation and API Resources
+- **[API_REFERENCE.md](API_REFERENCE.md)** - Complete API documentation for all components
+- **[USER_GUIDE.md](USER_GUIDE.md)** - Practical usage patterns and implementation guide
+- **[INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)** - Integration with external systems and tools
+
+### 💡 Practical Resources
+- **[EXAMPLES.md](EXAMPLES.md)** - Real-world examples and use cases across all architectural components
+- **[QUICKSTART.md](QUICKSTART.md)** - Quick setup and basic usage examples
+- **[FAQ.md](FAQ.md)** - Frequently asked questions about architecture and implementation
+
+### 🧬 Specialized Domain Resources
+- **[GENOMIC_MODELING.md](GENOMIC_MODELING.md)** - Genomic sequence modeling principles and best practices
+- **[BIOLOGICAL_PATTERNS.md](BIOLOGICAL_PATTERNS.md)** - Biological pattern detection and modeling
+- **[PROTEIN_MODELING.md](PROTEIN_MODELING.md)** - Protein sequence specific modeling approaches
+
+### 🔬 Advanced Topics
+- **[INTERPRETABILITY.md](INTERPRETABILITY.md)** - Model interpretability and analysis techniques
+- **[MULTI_SCALE_MODELING.md](MULTI_SCALE_MODELING.md)** - Multi-scale sequence modeling approaches
+- **[CURRICULUM_LEARNING.md](CURRICULUM_LEARNING.md)** - Advanced curriculum learning strategies
+
+### 🚀 Deployment and Production
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment strategies and considerations
+- **[CLUSTER_DEPLOYMENT.md](CLUSTER_DEPLOYMENT.md)** - Large-scale cluster deployment guide
+- **[MONITORING.md](MONITORING.md)** - Production monitoring and maintenance
+
+### 📈 Research and Development
+- **[RESEARCH_DIRECTIONS.md](RESEARCH_DIRECTIONS.md)** - Future research directions and experimental features
+- **[EXPERIMENTAL_FEATURES.md](EXPERIMENTAL_FEATURES.md)** - Cutting-edge experimental capabilities
+- **[ABLATION_STUDIES.md](ABLATION_STUDIES.md)** - Detailed ablation study results and analysis
+
+This architecture documentation provides a comprehensive foundation for understanding, implementing, and optimizing the Hyena-GLT model for genomic sequence modeling tasks.

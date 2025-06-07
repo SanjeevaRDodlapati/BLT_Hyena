@@ -46,6 +46,48 @@ This index provides an organized overview of all documentation available for the
 - Dynamic token merging mechanisms
 - Task-specific heads design
 - Training dynamics analysis
+- Code-documentation cross-references
+- Implementation file mapping
+
+### 🔧 [Patcher Implementation](PATCHER_IMPLEMENTATION.md)
+*Comprehensive external patcher integration guide*
+
+**Key Features:**
+- Six patching modes with detailed algorithms
+- Entropy calculation implementation
+- Monotonicity and dual-threshold systems
+- Integration with BLT position embeddings
+- Performance optimization strategies
+
+### 🚀 [Integration Guide](INTEGRATION_GUIDE.md)
+*Complete guide for combining BLT_Hyena with external patchers*
+
+**Includes:**
+- Advanced integration patterns
+- Real-world implementation examples
+- Performance optimization techniques
+- Distributed processing strategies
+- Debugging and troubleshooting
+
+### 📊 [Performance Analysis](PERFORMANCE_ANALYSIS.md)
+*Comprehensive benchmarking and optimization guide*
+
+**Coverage:**
+- Detailed performance benchmarks
+- Component-level analysis
+- Scaling characteristics
+- Memory usage optimization
+- Production deployment considerations
+
+### 🔗 [API Reference](API_REFERENCE.md)
+*Complete API documentation for all components*
+
+**Features:**
+- Function signatures and parameters
+- Class definitions and methods
+- Usage examples and patterns
+- Error handling guidelines
+- Configuration options
 
 ### 👤 [User Guide](USER_GUIDE.md)
 *Practical guide for users and developers*

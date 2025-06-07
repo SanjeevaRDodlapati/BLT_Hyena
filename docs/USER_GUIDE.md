@@ -2,6 +2,43 @@
 
 Welcome to the comprehensive Hyena-GLT user guide! This document provides practical guidance for using the Hyena-GLT framework for genomic sequence modeling, from installation to advanced applications.
 
+## 📚 Tutorial Navigation
+
+**Your Practical Guide To:**
+- 🚀 **Getting started** with Hyena-GLT installation and first models
+- 🔧 **Configuring models** for different genomic tasks
+- 🎯 **Training strategies** and best practices
+- 🚀 **Production deployment** and optimization
+
+**Prerequisites (Recommended):**
+- 📋 [Documentation Index](README.md) - Complete documentation navigation
+- 📖 [Technical Guide](TECHNICAL_GUIDE.md) - Architecture and component overview
+- ⚡ [Quick Start](QUICKSTART.md) - Basic setup and examples
+
+**Related Specialized Guides:**
+- 🏛️ [Architecture Guide](ARCHITECTURE.md) - Deep architectural understanding
+- 🎯 [Position Embeddings](BLT_POSITION_EMBEDDINGS.md) - BLT position system details  
+- 🔧 [Patcher Implementation](PATCHER_IMPLEMENTATION.md) - External patcher integration
+- 🚀 [Integration Guide](INTEGRATION_GUIDE.md) - Advanced integration patterns
+- 📊 [Performance Analysis](PERFORMANCE_ANALYSIS.md) - Benchmarking and optimization
+- 🔗 [API Reference](API_REFERENCE.md) - Complete function documentation
+
+**Tutorial Learning Path:**
+1. **Foundation** → This user guide for practical understanding
+2. **Architecture** → [Technical Guide](TECHNICAL_GUIDE.md) for technical concepts
+3. **Specialization** → Choose from specialized guides based on your needs
+4. **Implementation** → [Integration Guide](INTEGRATION_GUIDE.md) for advanced patterns
+5. **Production** → [Performance Analysis](PERFORMANCE_ANALYSIS.md) and [Deployment Guide](DEPLOYMENT.md)
+
+**Quick Access:**
+- 🛠️ [Troubleshooting](INTEGRATION_GUIDE.md#troubleshooting) - Common issues and solutions
+- 💡 [Examples](EXAMPLES.md) - Practical code examples
+- 🎓 [Training Guide](TRAINING_AND_INTERPRETABILITY_GUIDE.md) - Advanced training methods
+
+> **💡 User Guide Focus**: This guide emphasizes practical implementation and usage patterns. For theoretical background and architectural details, see the [Technical Guide](TECHNICAL_GUIDE.md) and [Architecture Guide](ARCHITECTURE.md).
+
+---
+
 ## Table of Contents
 
 1. [Getting Started](#getting-started)
@@ -110,17 +147,28 @@ This example demonstrates the core workflow: configure → create → prepare �
 
 ### The Hyena-GLT Framework
 
+🔗 **Architecture Deep Dive**: For complete technical details, see [Technical Guide](TECHNICAL_GUIDE.md) and [Architecture Guide](ARCHITECTURE.md)
+
 Hyena-GLT combines two powerful innovations:
 
 1. **BLT (Byte Latent Transformer)**: Efficient tokenization that compresses sequences
+   - 🎯 **Deep Dive**: [BLT Position Embeddings](BLT_POSITION_EMBEDDINGS.md) - Position system implementation
+   - 🔧 **Integration**: [Patcher Implementation](PATCHER_IMPLEMENTATION.md) - External patcher details
+
 2. **Striped Hyena**: Linear-complexity alternative to attention mechanisms
+   - 🏛️ **Architecture**: [Architecture Guide](ARCHITECTURE.md#hyena-operators) - Hyena operator details
+   - 📊 **Performance**: [Performance Analysis](PERFORMANCE_ANALYSIS.md) - Complexity comparisons
 
 #### Key Benefits
 
 - **Efficiency**: Linear O(n) complexity vs quadratic O(n²) attention
+  - 📊 **Benchmarks**: [Performance Analysis](PERFORMANCE_ANALYSIS.md#complexity-analysis) - Detailed performance comparisons
 - **Long Sequences**: Handle genomic sequences up to 1M+ tokens
+  - 🏛️ **Design**: [Architecture Guide](ARCHITECTURE.md#sequence-length-handling) - Long sequence architecture
 - **Compression**: BLT reduces sequence length while preserving information
+  - 🎯 **Details**: [BLT Position Embeddings](BLT_POSITION_EMBEDDINGS.md#compression-strategy) - Compression techniques
 - **Flexibility**: Adaptable to DNA, RNA, and protein sequences
+  - 💡 **Examples**: [Examples](EXAMPLES.md) - Multi-modal sequence examples
 
 #### Architecture Overview
 
@@ -154,7 +202,11 @@ Input Sequence (Raw DNA/RNA/Protein)
 
 ## Data Preparation
 
+🔗 **Complete Data Processing Guide**: [Data Preprocessing Guide](DATA_PREPROCESSING_GUIDE.md) - Comprehensive data preparation workflows
+
 ### Supported Sequence Types
+
+🎯 **Tokenization Details**: [BLT Position Embeddings](BLT_POSITION_EMBEDDINGS.md#tokenization) - Deep dive into BLT tokenization strategy
 
 #### DNA Sequences
 ```python
@@ -183,7 +235,11 @@ protein_sequence = "MKTVRQERLKSIVRILERSKEPVSGAQLAEELSVSRQVIVQDIAYLRSLGYNIVATPRGY
 tokens = tokenizer.encode(protein_sequence)
 ```
 
+🔗 **Advanced Tokenization**: [API Reference](API_REFERENCE.md#tokenizers) - Complete tokenizer API documentation
+
 ### Data Format Guidelines
+
+💡 **Practical Examples**: [Examples](EXAMPLES.md#data-preparation) - Real-world data preparation examples
 
 #### Input Data Structure
 
@@ -257,9 +313,15 @@ def quality_control(sequences, labels, min_length=50, max_length=2000):
 
 ## Model Configuration
 
+🔗 **Complete Configuration Guide**: [Configuration Guide](CONFIGURATION_GUIDE.md) - Comprehensive configuration options and best practices
+
+🏛️ **Architecture Context**: [Architecture Guide](ARCHITECTURE.md#core-components) - Understanding configuration parameters in architectural context
+
 ### Basic Configuration
 
 The `HyenaGLTConfig` class controls all model parameters:
+
+🔗 **API Details**: [API Reference](API_REFERENCE.md#configuration) - Complete configuration API documentation
 
 ```python
 from hyena_glt.models import HyenaGLTConfig
@@ -283,6 +345,8 @@ config = HyenaGLTConfig(
     layer_norm_eps=1e-5
 )
 ```
+
+🎯 **Position System Configuration**: [BLT Position Embeddings](BLT_POSITION_EMBEDDINGS.md#configuration) - Position embedding system parameters
 
 ### Task-Specific Configurations
 
@@ -363,7 +427,13 @@ large_config = HyenaGLTConfig(
 
 ## Training Your Models
 
+🎓 **Advanced Training Guide**: [Training and Interpretability Guide](TRAINING_AND_INTERPRETABILITY_GUIDE.md) - Comprehensive training strategies and advanced techniques
+
+📊 **Performance Optimization**: [Performance Analysis](PERFORMANCE_ANALYSIS.md#training-optimization) - Training performance analysis and optimization
+
 ### Basic Training Setup
+
+🔗 **API Details**: [API Reference](API_REFERENCE.md#training) - Complete training API documentation
 
 ```python
 from hyena_glt.training import HyenaGLTTrainer, TrainingConfig
@@ -614,7 +684,15 @@ curriculum_trainer.train()
 
 ## Production Deployment
 
+🚀 **Complete Deployment Guide**: [Deployment Guide](DEPLOYMENT.md) - Comprehensive production deployment strategies
+
+⚙️ **Performance Optimization**: [Optimization Guide](OPTIMIZATION.md) - Production performance optimization techniques
+
+📊 **Performance Analysis**: [Performance Analysis](PERFORMANCE_ANALYSIS.md) - Benchmarking and monitoring in production
+
 ### Model Optimization
+
+🔗 **Advanced Optimization**: [Optimization Guide](OPTIMIZATION.md#model-optimization) - Complete optimization strategies
 
 #### Quantization
 
@@ -855,7 +933,13 @@ print(f"Gradient norm: {grad_norm}")
 
 ## Best Practices
 
+🎓 **Advanced Best Practices**: [Training and Interpretability Guide](TRAINING_AND_INTERPRETABILITY_GUIDE.md#best-practices) - Advanced training and optimization best practices
+
+📊 **Performance Best Practices**: [Performance Analysis](PERFORMANCE_ANALYSIS.md#optimization-guidelines) - Performance optimization best practices
+
 ### Data Preparation Best Practices
+
+🔗 **Complete Data Guide**: [Data Preprocessing Guide](DATA_PREPROCESSING_GUIDE.md#best-practices) - Comprehensive data preparation best practices
 
 1. **Quality First**: Always prioritize data quality over quantity
 2. **Balanced Datasets**: Ensure reasonable class balance
@@ -864,6 +948,10 @@ print(f"Gradient norm: {grad_norm}")
 5. **Reproducibility**: Set random seeds and document preprocessing steps
 
 ### Model Configuration Best Practices
+
+🏛️ **Architecture Best Practices**: [Architecture Guide](ARCHITECTURE.md#design-principles) - Architectural design best practices
+
+🔗 **Configuration Best Practices**: [Configuration Guide](CONFIGURATION_GUIDE.md#best-practices) - Complete configuration best practices
 
 1. **Start Small**: Begin with smaller models and scale up
 2. **Progressive Training**: Use curriculum learning for complex tasks
@@ -927,6 +1015,45 @@ We welcome contributions! Please see:
 
 ---
 
+## 📖 Complete Cross-Reference Index
+
+### Core Documentation
+- 📋 [Documentation Index](README.md) - Complete documentation navigation
+- 📖 [Technical Guide](TECHNICAL_GUIDE.md) - Comprehensive technical overview and architecture
+- 🏛️ [Architecture Guide](ARCHITECTURE.md) - Deep architectural understanding and component relationships
+- ⚡ [Quick Start](QUICKSTART.md) - Basic setup and first examples
+
+### Specialized Guides
+- 🎯 [BLT Position Embeddings](BLT_POSITION_EMBEDDINGS.md) - Position system implementation and theory
+- 🔧 [Patcher Implementation](PATCHER_IMPLEMENTATION.md) - External patcher integration details
+- 🚀 [Integration Guide](INTEGRATION_GUIDE.md) - Advanced integration patterns and troubleshooting
+- 📊 [Performance Analysis](PERFORMANCE_ANALYSIS.md) - Benchmarking, optimization, and performance monitoring
+
+### Configuration and Setup
+- ⚙️ [Configuration Guide](CONFIGURATION_GUIDE.md) - Comprehensive configuration options and best practices
+- 🔗 [API Reference](API_REFERENCE.md) - Complete function and class documentation
+- 📄 [Data Preprocessing Guide](DATA_PREPROCESSING_GUIDE.md) - Comprehensive data preparation workflows
+
+### Training and Optimization
+- 🎓 [Training and Interpretability Guide](TRAINING_AND_INTERPRETABILITY_GUIDE.md) - Advanced training strategies and interpretability methods
+- ⚙️ [Optimization Guide](OPTIMIZATION.md) - Production performance optimization techniques
+- 🚀 [Deployment Guide](DEPLOYMENT.md) - Production deployment strategies and infrastructure
+
+### Practical Resources
+- 💡 [Examples](EXAMPLES.md) - Practical code examples and use cases
+- 🧪 [Testing Guide](testing.md) - Testing frameworks and methodologies
+- 📊 [Fine-tuning Guide](FINE_TUNING.md) - Task-specific fine-tuning strategies
+
+### External References
+- **Hyena Paper**: [Hyena Hierarchy: Towards Larger Convolutional Language Models](https://arxiv.org/abs/2302.10866)
+- **BLT Paper**: [Byte Latent Transformer: Patches Scale Better Than Tokens](https://arxiv.org/abs/2309.00268)
+- **Genomic Applications**: Domain-specific research papers and applications
+- **Community Forums**: GitHub Discussions and Issues for community support
+
+> **🎯 Learning Path**: Start with this User Guide for practical understanding → Explore [Technical Guide](TECHNICAL_GUIDE.md) for architectural concepts → Choose specialized guides based on your needs → Apply with [Integration Guide](INTEGRATION_GUIDE.md) → Optimize with [Performance Analysis](PERFORMANCE_ANALYSIS.md)
+
+---
+
 **Happy genomic modeling with Hyena-GLT!** 🧬🚀
 
-This user guide provides comprehensive coverage of the Hyena-GLT framework. For specific technical details, refer to the API documentation and architecture guide. For hands-on learning, check out the tutorial notebooks in the `examples/notebooks/` directory.
+This user guide provides comprehensive practical guidance for the Hyena-GLT framework. For specific technical details, refer to the specialized documentation and API reference. For hands-on learning, check out the tutorial notebooks and examples.
